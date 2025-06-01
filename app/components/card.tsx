@@ -34,7 +34,7 @@ export default function Card({
 }: CardProps) {
     return (
         <>
-            <div className="bg-gray-800 text-white rounded-lg shadow-lg m-4 w-80">
+            <div className="bg-gray-800 text-white rounded-lg shadow-lg m-4 w-80 flex flex-col">
                 <Link
                     href={`/${gameName}/mods/${modId}`}
                     className="block relative w-full h-48 mb-4"
@@ -48,7 +48,7 @@ export default function Card({
                         loading="lazy"
                     />
                 </Link>
-                <div className="pb-2 px-3 flex flex-col h-full">
+                <div className="pb-2 px-3 flex flex-col flex-grow">
                     <Link href={`/${gameName}/mods/${modId}`} className="block">
                         <h2
                             className="text-xl font-bold mb-0.5 truncate"

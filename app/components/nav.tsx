@@ -11,7 +11,7 @@ export default function NavBar() {
                         Home
                     </span>
                 </Link>
-                <Link className="hover:text-purple-500" href="/Mods">
+                <Link className="hover:text-purple-500" href="/mods">
                     Mods
                 </Link>
                 <Link className="hover:text-purple-500" href="/games">
