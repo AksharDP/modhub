@@ -35,8 +35,10 @@ export default function Card({
     return (
         <>
             <div className="bg-gray-800 text-white rounded-lg shadow-lg m-4 w-80">
-                
-                <Link href={`/${gameName}/mods/${modId}`} className="block relative w-full h-48 mb-4">
+                <Link
+                    href={`/${gameName}/mods/${modId}`}
+                    className="block relative w-full h-48 mb-4"
+                >
                     <Image
                         src={imageUrl}
                         alt={title}
@@ -47,10 +49,7 @@ export default function Card({
                     />
                 </Link>
                 <div className="pb-2 px-3 flex flex-col h-full">
-                    <Link
-                        href={`/${gameName}/mods/${modId}`}
-                        className="block"
-                    >
+                    <Link href={`/${gameName}/mods/${modId}`} className="block">
                         <h2
                             className="text-xl font-bold mb-0.5 truncate"
                             title={title}
@@ -64,7 +63,12 @@ export default function Card({
                     <div className="mt-auto text-xs text-gray-500">
                         <div className="flex justify-between items-center mb-1.5">
                             <div className="flex flex-col space-y-1.5">
-                                <Link href={`/profile/${encodeURIComponent(author)}/mods`} className="flex items-center hover:underline">
+                                <Link
+                                    href={`/author/${encodeURIComponent(
+                                        author
+                                    )}/mods`}
+                                    className="flex items-center hover:underline"
+                                >
                                     <Image
                                         src={authorPFP}
                                         alt={`${author}'s profile picture`}
