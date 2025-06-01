@@ -11,17 +11,16 @@ interface Mod {
 interface ModHeaderProps {
     mod: Mod;
     gamename: string;
-    modid: string;
 }
 
-const ModHeader: React.FC<ModHeaderProps> = ({ mod, gamename, modid }) => {
+const ModHeader: React.FC<ModHeaderProps> = ({ mod, gamename }) => {
     return (
         <header className="mb-6 border-b border-gray-700 pb-4">
             <h1 className="text-4xl font-bold text-purple-400 mb-3">
                 {mod.title}
             </h1>
             <p className="text-sm text-gray-500 mb-3">
-                Game: {gamename} | Mod ID: {modid}
+                Game: {gamename}
             </p>
             <div className="flex items-center text-sm text-gray-300">
                 <Image

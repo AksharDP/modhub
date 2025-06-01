@@ -139,7 +139,7 @@ export default function ModPage({
 
     return (
         <div className="container mx-auto p-4 bg-gray-900 text-white min-h-screen max-w-7xl">
-            <ModHeader mod={mod} gamename={gamename} modid={modid} />
+            <ModHeader mod={mod} gamename={gamename} />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Left Column: Image Gallery and Tabs */}
