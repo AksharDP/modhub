@@ -43,7 +43,20 @@ const mockModData: ModPageProps = {
     size: "100 MB",
     uploaded: new Date("2024-01-15T10:00:00Z"),
     lastUpdated: new Date("2025-05-20T14:30:00Z"),
-    allImageUrls: ["/next.svg", "/globe.svg", "/file.svg", "/window.svg"],
+    allImageUrls: [
+        "/next.svg",
+        "/globe.svg",
+        "/file.svg",
+        "/window.svg",
+        "/placeholder1.svg",
+        "/placeholder2.svg",
+        "/placeholder3.svg",
+        "/placeholder4.svg",
+        "/placeholder5.svg",
+        "/placeholder6.svg",
+        "/placeholder7.svg",
+        "/placeholder8.svg",
+    ],
     fullDescription: `
         <p>This is the <strong>full description</strong> of the awesome mod. It can contain <em>rich text</em> and multiple paragraphs.</p>
         <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
@@ -110,19 +123,34 @@ export default function ModPage({
     const [activeTab, setActiveTab] = useState<"description" | "files">(
         "description"
     );
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const IMAGES_PER_VIEW = 4; // Number of images to show in the gallery view at once
 
     const nextImage = () => {
-        setCurrentImageIndex((prevIndex) =>
+        setSelectedImageIndex((prevIndex) =>
             prevIndex === mod.allImageUrls.length - 1 ? 0 : prevIndex + 1
         );
     };
 
     const prevImage = () => {
-        setCurrentImageIndex((prevIndex) =>
+        setSelectedImageIndex((prevIndex) =>
             prevIndex === 0 ? mod.allImageUrls.length - 1 : prevIndex - 1
         );
     };
+
+    const numImages = mod.allImageUrls.length;
+
+    // Determine the current page of images to display in the gallery view
+    const currentViewPage = Math.floor(selectedImageIndex / IMAGES_PER_VIEW);
+    const viewStartIndex = currentViewPage * IMAGES_PER_VIEW;
+
+    // Get the actual image objects to display in the current view
+    const imagesToDisplayInView = mod.allImageUrls
+        .slice(viewStartIndex, Math.min(viewStartIndex + IMAGES_PER_VIEW, numImages))
+        .map((url, indexInSlice) => ({
+            url,
+            originalIndex: viewStartIndex + indexInSlice,
+        }));
 
     const formatDate = (date: string | number | Date) => {
         return new Date(date).toLocaleDateString(undefined, {
@@ -133,24 +161,24 @@ export default function ModPage({
     };
 
     return (
-        <div className="container mx-auto p-4 bg-gray-900 text-white min-h-screen max-w-7xl">
-            <header className="mb-6">
-                <h1 className="text-4xl font-bold text-purple-400 mb-2">
+        <div className="container mx-auto px-32 py-8 bg-gray-900 text-white min-h-screen">
+            <header className="mb-4">
+                <h1 className="text-3xl font-bold text-purple-400">
                     {mod.title}
                 </h1>
-                <p className="text-sm text-gray-500">
-                    Game: {gamename}, Mod ID: {modid}
+                <p className="text-xs text-gray-500">
+                    Game: {gamename}
                 </p>
-                <div className="flex items-center text-sm text-gray-400 mt-1">
+                <div className="flex items-center text-xs text-gray-400 mt-0.5">
                     <Image
                         src={mod.authorPFP}
                         alt={`${mod.author}'s profile picture`}
-                        width={24}
-                        height={24}
-                        className="rounded-full mr-2"
+                        width={20}
+                        height={20}
+                        className="rounded-full mr-1.5"
                     />
                     <span>By {mod.author}</span>
-                    <span className="mx-2">|</span>
+                    <span className="mx-1.5">|</span>
                     <span>
                         Category:{" "}
                         <a
@@ -163,115 +191,141 @@ export default function ModPage({
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="md:col-span-2">
+            {/* Replaced "grid grid-cols-1 md:grid-cols-3 gap-4" with space-y-6 for vertical stacking */}
+            <div className="space-y-6">
+                {/* Image Gallery Section - now takes full width */}
+                <div> {/* Removed md:col-span-2 */}
                     {mod.allImageUrls && mod.allImageUrls.length > 0 && (
-                        <div className="relative w-full h-96 mb-6 bg-gray-800 rounded-lg shadow-lg">
-                            <Image
-                                src={mod.allImageUrls[currentImageIndex]}
-                                alt={`${mod.title} - image ${
-                                    currentImageIndex + 1
-                                }`}
-                                layout="fill"
-                                objectFit="contain"
-                                className="rounded-lg"
-                                loading="lazy"
-                            />
-                            {mod.allImageUrls.length > 1 && (
+                        // This container holds the gallery view and its navigation
+                        <div className="relative w-full bg-gray-800 rounded-md shadow-md p-2">
+                            {/* Gallery View: Row of Images */}
+                            <div className="flex space-x-2 justify-center">
+                                {imagesToDisplayInView.map((image) => (
+                                    <div
+                                        key={image.originalIndex}
+                                        className={`cursor-pointer rounded-md transition-all w-1/4 aspect-video relative group ${ // Adjusted: removed explicit heights, added aspect-video
+                                            selectedImageIndex === image.originalIndex
+                                                ? "ring-2 ring-purple-500 ring-offset-2 ring-offset-gray-800" // Highlight for selected image
+                                                : "ring-1 ring-gray-700 hover:ring-purple-400"
+                                        }`}
+                                        onClick={() => setSelectedImageIndex(image.originalIndex)}
+                                        role="button"
+                                        tabIndex={0}
+                                        onKeyDown={(e) => e.key === 'Enter' && setSelectedImageIndex(image.originalIndex)}
+                                        aria-label={`View image ${image.originalIndex + 1}`}
+                                    >
+                                        <Image
+                                            src={image.url}
+                                            alt={`${mod.title} - image ${image.originalIndex + 1}`}
+                                            layout="fill"
+                                            objectFit="cover" 
+                                            className="rounded-md"
+                                            priority={image.originalIndex < IMAGES_PER_VIEW} // Prioritize images in the first potential view
+                                            loading={image.originalIndex < IMAGES_PER_VIEW ? undefined : "lazy"}
+                                        />
+                                    </div>
+                                ))}
+                                {/* Fill remaining flex items if less than IMAGES_PER_VIEW to maintain w-1/4 */}
+                                {imagesToDisplayInView.length > 0 && imagesToDisplayInView.length < IMAGES_PER_VIEW &&
+                                    Array.from({ length: IMAGES_PER_VIEW - imagesToDisplayInView.length }).map((_, i) => (
+                                        <div key={`placeholder-${i}`} className="w-1/4 aspect-video" /> // Placeholder: removed explicit heights, added aspect-video
+                                    ))
+                                }
+                            </div>
+
+                            {/* Global Next/Prev buttons for selectedImageIndex, navigating through all images */}
+                            {numImages > 1 && (
                                 <>
                                     <button
                                         onClick={prevImage}
-                                        className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
+                                        className="absolute top-1/2 left-1 sm:left-1.5 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-1.5 sm:p-2 rounded-full hover:bg-opacity-70 transition-opacity text-base sm:text-lg z-10"
                                         aria-label="Previous image"
                                     >
                                         &lt;
                                     </button>
                                     <button
                                         onClick={nextImage}
-                                        className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-opacity"
+                                        className="absolute top-1/2 right-1 sm:right-1.5 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-1.5 sm:p-2 rounded-full hover:bg-opacity-70 transition-opacity text-base sm:text-lg z-10"
                                         aria-label="Next image"
                                     >
                                         &gt;
                                     </button>
                                 </>
                             )}
-                            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                                {mod.allImageUrls.map((_, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() =>
-                                            setCurrentImageIndex(index)
-                                        }
-                                        className={`w-3 h-3 rounded-full ${
-                                            currentImageIndex === index
-                                                ? "bg-purple-500"
-                                                : "bg-gray-400"
-                                        } hover:bg-purple-400 transition-colors`}
-                                        aria-label={`Go to image ${index + 1}`}
-                                    />
-                                ))}
-                            </div>
                         </div>
                     )}
                 </div>
 
-                <aside className="md:col-span-1 bg-gray-800 p-4 rounded-lg shadow-lg h-fit">
-                    <h2 className="text-2xl font-semibold mb-3 text-purple-300">
+                {/* Mod Details Section - moved here, takes full width, restyled for horizontal content */}
+                <div className="bg-gray-800 p-4 rounded-md shadow-md">
+                    <h2 className="text-xl font-semibold mb-4 text-purple-300"> {/* Increased mb slightly for heading */}
                         Mod Details
                     </h2>
-                    <div className="space-y-2 text-sm">
-                        <p>
-                            <strong>Uploaded:</strong>{" "}
-                            {formatDate(mod.uploaded)}
-                        </p>
-                        <p>
-                            <strong>Last Updated:</strong>{" "}
-                            {formatDate(mod.lastUpdated)}
-                        </p>
-                        <p>
-                            <strong>Likes:</strong> {mod.likes.toLocaleString()}
-                        </p>
-                        <p>
-                            <strong>Downloads:</strong>{" "}
-                            {mod.downloads.toLocaleString()}
-                        </p>
-                        <p>
-                            <strong>Size:</strong> {mod.size}
-                        </p>
-                        {mod.tags && mod.tags.length > 0 && (
-                            <div>
-                                <strong>Tags:</strong>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                    {mod.tags.map((tag) => (
-                                        <span
-                                            key={tag}
-                                            className="bg-gray-700 text-xs px-2 py-0.5 rounded-full"
-                                        >
-                                            {tag}
-                                        </span>
-                                    ))}
-                                </div>
+                    {/* Grid for two-column layout on medium screens and up */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-6 lg:gap-x-8 gap-y-4">
+                        {/* Left Column: Primary Details */}
+                        <div>
+                            <div className="flex flex-col space-y-1.5 text-xs"> {/* Changed to flex-col for consistent spacing */}
+                                <p>
+                                    <strong>Uploaded:</strong>{" "}
+                                    {formatDate(mod.uploaded)}
+                                </p>
+                                <p>
+                                    <strong>Last Updated:</strong>{" "}
+                                    {formatDate(mod.lastUpdated)}
+                                </p>
+                                <p>
+                                    <strong>Likes:</strong> {mod.likes.toLocaleString()}
+                                </p>
+                                <p>
+                                    <strong>Downloads:</strong>{" "}
+                                    {mod.downloads.toLocaleString()}
+                                </p>
+                                <p>
+                                    <strong>Size:</strong> {mod.size}
+                                </p>
                             </div>
-                        )}
-                    </div>
-                    {mod.fileVersions.find((f) => f.isLatest) && (
-                        <a
-                            href={
-                                mod.fileVersions.find((f) => f.isLatest)
-                                    ?.downloadUrl
-                            }
-                            className="mt-4 block w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded text-center transition-colors"
-                        >
-                            Download Latest (
-                            {mod.fileVersions.find((f) => f.isLatest)?.version})
-                        </a>
-                    )}
-                </aside>
+                        </div>
 
-                <div className="md:col-span-3 mt-0">
-                    <div className="border-b border-gray-700 mb-4">
+                        {/* Right Column: Tags and Download Button */}
+                        <div>
+                            {mod.tags && mod.tags.length > 0 && (
+                                <div className="mb-3">
+                                    <strong>Tags:</strong>
+                                    <div className="flex flex-wrap gap-1 mt-0.5">
+                                        {mod.tags.map((tag) => (
+                                            <span
+                                                key={tag}
+                                                className="bg-gray-700 text-xs px-1.5 py-0.5 rounded-full"
+                                            >
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {mod.fileVersions.find((f) => f.isLatest) && (
+                                <a
+                                    href={
+                                        mod.fileVersions.find((f) => f.isLatest)
+                                            ?.downloadUrl
+                                    }
+                                    className="mt-3 block w-full sm:w-auto sm:inline-block bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded text-center transition-colors text-sm" // Adjusted padding and display for button
+                                >
+                                    Download Latest (
+                                    {mod.fileVersions.find((f) => f.isLatest)?.version})
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Tabs Section - takes full width */}
+                <div className="mt-0"> {/* Removed md:col-span-3. mt-0 is fine, space-y-6 on parent handles top margin. */}
+                    <div className="border-b border-gray-700 mb-3">
                         <nav
-                            className="-mb-px flex space-x-8"
+                            className="-mb-px flex space-x-6"
                             aria-label="Tabs"
                         >
                             <button
@@ -280,7 +334,7 @@ export default function ModPage({
                                     activeTab === "description"
                                         ? "border-purple-500 text-purple-400"
                                         : "border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300"
-                                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                } whitespace-nowrap py-3 px-1 border-b-2 font-medium text-xs sm:text-sm`}
                             >
                                 Description
                             </button>
@@ -290,7 +344,7 @@ export default function ModPage({
                                     activeTab === "files"
                                         ? "border-purple-500 text-purple-400"
                                         : "border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-300"
-                                } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+                                } whitespace-nowrap py-3 px-1 border-b-2 font-medium text-xs sm:text-sm`}
                             >
                                 Files ({mod.fileVersions.length})
                             </button>
@@ -299,7 +353,7 @@ export default function ModPage({
 
                     <div>
                         {activeTab === "description" && (
-                            <article className="prose prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-xl max-w-none bg-gray-800 p-6 rounded-lg shadow">
+                            <article className="prose prose-invert prose-xs sm:prose-sm lg:prose-base max-w-none bg-gray-800 p-3 sm:p-4 rounded-md shadow">
                                 <div
                                     dangerouslySetInnerHTML={{
                                         __html: mod.fullDescription,
@@ -309,11 +363,11 @@ export default function ModPage({
                         )}
 
                         {activeTab === "files" && (
-                            <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow">
-                                <h2 className="text-xl font-semibold mb-4 text-purple-300">
+                            <div className="bg-gray-800 p-3 sm:p-4 rounded-md shadow">
+                                <h2 className="text-lg font-semibold mb-3 text-purple-300">
                                     Available Files
                                 </h2>
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {mod.fileVersions
                                         .sort(
                                             (a, b) =>
@@ -325,29 +379,29 @@ export default function ModPage({
                                         .map((file) => (
                                             <div
                                                 key={file.id}
-                                                className={`p-4 rounded-md ${
+                                                className={`p-3 rounded ${
                                                     file.isLatest
-                                                        ? "bg-gray-700 border-l-4 border-purple-500"
+                                                        ? "bg-gray-700 border-l-2 border-purple-500"
                                                         : "bg-gray-750"
                                                 }`}
                                             >
-                                                <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-2">
-                                                    <h3 className="text-lg font-medium text-purple-400">
+                                                <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-1.5">
+                                                    <h3 className="text-base font-medium text-purple-400">
                                                         {file.fileName}{" "}
                                                         {file.isLatest && (
-                                                            <span className="text-xs bg-purple-500 text-white px-1.5 py-0.5 rounded-full ml-2">
+                                                            <span className="text-2xs bg-purple-500 text-white px-1 py-0.5 rounded-full ml-1.5 align-middle leading-none"> {/* Adjusted alignment and leading */}
                                                                 Latest
                                                             </span>
                                                         )}
                                                     </h3>
                                                     <a
                                                         href={file.downloadUrl}
-                                                        className="mt-2 sm:mt-0 bg-green-500 hover:bg-green-600 text-white font-semibold py-1.5 px-3 rounded text-sm transition-colors"
+                                                        className="mt-1.5 sm:mt-0 bg-green-500 hover:bg-green-600 text-white font-semibold py-1 px-2.5 rounded text-xs transition-colors"
                                                     >
                                                         Download
                                                     </a>
                                                 </div>
-                                                <div className="text-xs text-gray-400 space-y-0.5 sm:space-y-0 sm:flex sm:space-x-4">
+                                                <div className="text-2xs text-gray-400 space-y-0.5 sm:space-y-0 sm:flex sm:space-x-3">
                                                     <span>
                                                         Version: {file.version}
                                                     </span>
@@ -362,11 +416,11 @@ export default function ModPage({
                                                     </span>
                                                 </div>
                                                 {file.changelog && (
-                                                    <details className="mt-2 text-sm">
-                                                        <summary className="cursor-pointer text-gray-300 hover:text-white">
+                                                    <details className="mt-1.5 text-xs">
+                                                        <summary className="cursor-pointer text-gray-300 hover:text-white text-2xs"> {/* text-2xs for consistency */}
                                                             View Changelog
                                                         </summary>
-                                                        <div className="mt-1 p-2 bg-gray-600 rounded text-gray-300 whitespace-pre-wrap">
+                                                        <div className="mt-1 p-1.5 bg-gray-600 rounded text-gray-300 whitespace-pre-wrap text-2xs"> {/* text-2xs for consistency */}
                                                             {file.changelog}
                                                         </div>
                                                     </details>
