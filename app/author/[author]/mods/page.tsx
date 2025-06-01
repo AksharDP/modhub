@@ -4,7 +4,7 @@ import { use, useState, useEffect } from "react";
 import Image from "next/image";
 import Card from "@/app/components/card"; // Assuming @ points to the project root
 
-interface Mod {
+export interface Mod {
     modId: number;
     gameName: string;
     title: string;
@@ -21,7 +21,6 @@ interface Mod {
 }
 
 // Mock data - in a real app, this would be fetched from an API
-// Ensure the author property matches the MOCK_AUTHOR_NAME for these to appear
 const MOCK_AUTHOR_NAME = "ModderExtraordinaire"; // Example author name for mock data
 
 const allModsDatabase: Mod[] = [
@@ -32,7 +31,7 @@ const allModsDatabase: Mod[] = [
         description: "Makes Skyrim weather more dynamic and immersive.",
         imageUrl: "/images/placeholders/skyrim_weather.jpg",
         author: MOCK_AUTHOR_NAME,
-        authorPFP: "/images/placeholders/author_pfp.png",
+        authorPFP: "/images/placeholders/author_pfp.png", // Ensure this path is correct or use a placeholder
         category: "Visuals",
         likes: 1250,
         downloads: 15000,
@@ -101,7 +100,6 @@ const allModsDatabase: Mod[] = [
         uploaded: new Date("2023-04-01"),
         lastUpdated: new Date("2023-07-15"),
     },
-    // Add a mod by a different author to test filtering
     {
         modId: 6,
         gameName: "Skyrim",
@@ -119,6 +117,8 @@ const allModsDatabase: Mod[] = [
     },
 ];
 
+const DEFAULT_PFP = "https://placehold.co/128x128/7C3AED/FFFFFF/png?text=PFP"; // Default/fallback PFP
+
 export default function AuthorModsPage({
     params,
 }: {
@@ -130,28 +130,34 @@ export default function AuthorModsPage({
     const [authorMods, setAuthorMods] = useState<Mod[]>([]);
     const [games, setGames] = useState<string[]>([]);
     const [selectedGame, setSelectedGame] = useState<string>("All Games");
-    const [authorPFP, setAuthorPFP] = useState<string>(
-        "/images/placeholders/default_pfp.png"
-    );
+    const [authorPFP, setAuthorPFP] = useState<string>(DEFAULT_PFP);
 
     useEffect(() => {
-        // Simulate fetching mods for the specific author
-        const fetchedMods = allModsDatabase.filter(
-            (mod) => mod.author === authorName
-        );
-        setAuthorMods(fetchedMods);
-
-        if (fetchedMods.length > 0) {
-            setAuthorPFP(fetchedMods[0].authorPFP); // Use PFP from the first mod
-            const uniqueGames = Array.from(
-                new Set(fetchedMods.map((mod) => mod.gameName))
+        // Simulate API call delay
+        const timer = setTimeout(() => {
+            const fetchedMods = allModsDatabase.filter(
+                (mod) => mod.author === authorName
             );
-            setGames(["All Games", ...uniqueGames.sort()]);
-        } else {
-            setGames(["All Games"]);
-            // Potentially fetch author details separately if PFP should be shown even with no mods
-        }
-        setSelectedGame("All Games"); // Reset filter when author changes
+            setAuthorMods(fetchedMods);
+
+            if (fetchedMods.length > 0) {
+                // Use PFP from the first mod if available, otherwise keep default
+                setAuthorPFP(fetchedMods[0].authorPFP || DEFAULT_PFP);
+                const uniqueGames = Array.from(
+                    new Set(fetchedMods.map((mod) => mod.gameName))
+                );
+                setGames(["All Games", ...uniqueGames.sort()]);
+            } else {
+                // If no mods, ensure PFP is default and games list is minimal
+                setAuthorPFP(DEFAULT_PFP);
+                setGames(["All Games"]);
+                // Potentially fetch author details separately if PFP should be shown even with no mods
+                // For now, we assume PFP is tied to their mods or a general default.
+            }
+            setSelectedGame("All Games"); // Reset filter when author changes
+        }, 500); // Simulate 0.5 second load time
+
+        return () => clearTimeout(timer); // Cleanup timer on unmount
     }, [authorName]);
 
     const filteredMods =
@@ -160,89 +166,109 @@ export default function AuthorModsPage({
             : authorMods.filter((mod) => mod.gameName === selectedGame);
 
     return (
-        <div className="container mx-auto p-4 sm:p-6 bg-gray-900 text-white min-h-screen max-w-7xl">
-            <header className="mb-8 pt-4">
-                <div className="flex flex-col items-center text-center">
+        // Outer div for full viewport background
+        <div className="bg-gray-900 text-white min-h-screen w-full">
+            {/* Inner div for content, centered and max-width constrained, with padding */}
+            <div className="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
+                {/* Enhanced Author Profile Section */}
+                <header className="mb-10 p-6 bg-gray-800 rounded-xl shadow-xl flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-start gap-6">
                     <Image
                         src={authorPFP}
                         alt={`${authorName}'s profile picture`}
-                        width={100}
-                        height={100}
-                        className="rounded-full mb-3 border-2 border-purple-500 object-cover"
-                        onError={() =>
-                            setAuthorPFP("/images/placeholders/default_pfp.png")
-                        } // Fallback PFP
+                        width={128}
+                        height={128}
+                        className="rounded-full border-4 border-purple-500 object-cover flex-shrink-0 shadow-md"
+                        onError={() => setAuthorPFP(DEFAULT_PFP)} // Fallback PFP on error
                     />
-                    <h1 className="text-3xl sm:text-4xl font-bold text-purple-400 mb-1">
-                        {authorName}
-                    </h1>
-                    <p className="text-gray-400 text-sm">
-                        Viewing all mods by {authorName}
-                    </p>
-                </div>
-            </header>
+                    <div className="flex-grow mt-4 sm:mt-0">
+                        <h1 className="text-4xl sm:text-5xl font-bold text-purple-400 mb-2">
+                            {authorName}
+                        </h1>
+                        <p className="text-gray-400 text-md mb-3">
+                            Showcasing all mods by {authorName}.
+                        </p>
+                        {authorMods.length > 0 && (
+                             <div className="text-sm text-gray-500">
+                                <span className="font-medium text-gray-300">{authorMods.length}</span> Mod{authorMods.length === 1 ? '' : 's'} Published
+                                {/* You could calculate total downloads here if needed:
+                                const totalDownloads = authorMods.reduce((sum, mod) => sum + mod.downloads, 0);
+                                <span className="mx-2">|</span>
+                                <span className="font-medium text-gray-300">{totalDownloads.toLocaleString()}</span> Total Downloads
+                                */}
+                            </div>
+                        )}
+                    </div>
+                </header>
 
-            {authorMods.length > 0 && (
-                <div className="mb-6 flex justify-center sm:justify-start">
-                    <div className="relative">
-                        <label htmlFor="gameFilter" className="sr-only">
-                            Filter mods by game
-                        </label>
-                        <select
-                            id="gameFilter"
-                            value={selectedGame}
-                            onChange={(e) => setSelectedGame(e.target.value)}
-                            className="bg-gray-700 text-white border border-gray-600 rounded-md py-2 px-3 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                        >
-                            {games.map((game) => (
-                                <option key={game} value={game}>
-                                    {game}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
-                            <svg
-                                className="fill-current h-4 w-4"
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 20 20"
+                {/* Filter Section - Only show if there are mods to filter */}
+                {authorMods.length > 0 && games.length > 1 && ( // Only show filter if there's something to filter by
+                    <div className="mb-8 flex justify-center sm:justify-start">
+                        <div className="relative">
+                            <label htmlFor="gameFilter" className="sr-only">
+                                Filter mods by game
+                            </label>
+                            <select
+                                id="gameFilter"
+                                value={selectedGame}
+                                onChange={(e) => setSelectedGame(e.target.value)}
+                                className="bg-gray-700 hover:bg-gray-600 text-white border-2 border-gray-600 rounded-lg py-2.5 px-4 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors text-base shadow-sm"
                             >
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                            </svg>
+                                {games.map((game) => (
+                                    <option key={game} value={game}>
+                                        {game}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+                                <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {filteredMods.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                    {filteredMods.map((mod) => (
-                        <Card
-                            key={`${mod.gameName}-${mod.modId}`} // Unique key for each card
-                            modId={mod.modId}
-                            gameName={mod.gameName}
-                            title={mod.title}
-                            description={mod.description}
-                            imageUrl={mod.imageUrl}
-                            author={mod.author}
-                            authorPFP={mod.authorPFP}
-                            category={mod.category}
-                            likes={mod.likes}
-                            downloads={mod.downloads}
-                            size={mod.size}
-                            uploaded={mod.uploaded}
-                            lastUpdated={mod.lastUpdated}
-                        />
-                    ))}
-                </div>
-            ) : (
-                <div className="text-center py-10">
-                    <p className="text-gray-400 text-xl">
-                        {authorMods.length === 0
-                            ? `${authorName} hasn't uploaded any mods yet.`
-                            : `No mods found by ${authorName} for ${selectedGame}.`}
-                    </p>
-                </div>
-            )}
+                {/* Mod Grid / Empty State */}
+                {filteredMods.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {filteredMods.map((mod) => (
+                            <Card
+                                key={`${mod.gameName}-${mod.modId}`}
+                                modId={mod.modId}
+                                gameName={mod.gameName}
+                                title={mod.title}
+                                description={mod.description}
+                                imageUrl={mod.imageUrl}
+                                author={mod.author}
+                                authorPFP={mod.authorPFP} // Pass the potentially updated PFP
+                                category={mod.category}
+                                likes={mod.likes}
+                                downloads={mod.downloads}
+                                size={mod.size}
+                                uploaded={mod.uploaded}
+                                lastUpdated={mod.lastUpdated}
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-16 bg-gray-800 rounded-xl shadow-lg">
+                        <svg className="mx-auto h-16 w-16 text-gray-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.764m-4.764 4.764a15.995 15.995 0 014.764-4.764m0 0A15.995 15.995 0 0012 3.042a15.995 15.995 0 00-4.764 4.764m0 0a15.995 15.995 0 014.764-4.764" />
+                             <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                        </svg>
+                        <h2 className="text-2xl font-semibold text-gray-300 mb-2">
+                            {authorMods.length === 0
+                                ? "No Mods Yet"
+                                : "No Mods Found"}
+                        </h2>
+                        <p className="text-gray-400 text-lg max-w-md mx-auto">
+                            {authorMods.length === 0
+                                ? `${authorName} hasn't uploaded any mods yet. Check back later!`
+                                : `We couldn't find any mods by ${authorName} for "${selectedGame}". Try selecting "All Games" or a different game.`}
+                        </p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
