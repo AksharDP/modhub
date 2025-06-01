@@ -147,7 +147,7 @@ export default function ModPage({
     };
 
     return (
-        <div className="container mx-auto p-4 bg-gray-900 text-white min-h-screen max-w-7xl">
+        <div className="container px-32 py-8 bg-gray-900 text-white min-h-screen">
             <ModHeader mod={mod} gamename={gamename} />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
