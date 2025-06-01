@@ -175,8 +175,10 @@ export default function ModPage({
                 </div>
 
                 {/* Right Column: Mod Details Sidebar */}
-                {/* The ModDetailsSidebar component already has an aside tag with appropriate classes */}
-                <ModDetailsSidebar mod={mod} formatDate={formatDate} />
+                {/* Wrap ModDetailsSidebar in a div with explicit column span */}
+                <div className="md:col-span-1">
+                    <ModDetailsSidebar mod={mod} formatDate={formatDate} />
+                </div>
             </div>
         </div>
     );
