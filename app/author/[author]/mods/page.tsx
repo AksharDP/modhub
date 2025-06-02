@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from "react";
 import Image from "next/image";
-import Card from "@/app/components/card"; // Assuming @ points to the project root
+import Card from "@/app/components/card";
 
 export interface Mod {
     modId: number;
@@ -20,8 +20,7 @@ export interface Mod {
     lastUpdated: Date;
 }
 
-// Mock data - in a real app, this would be fetched from an API
-const MOCK_AUTHOR_NAME = "ModderExtraordinaire"; // Example author name for mock data
+const MOCK_AUTHOR_NAME = "ModderExtraordinaire";
 
 const allModsDatabase: Mod[] = [
     {
@@ -31,7 +30,7 @@ const allModsDatabase: Mod[] = [
         description: "Makes Skyrim weather more dynamic and immersive.",
         imageUrl: "/images/placeholders/skyrim_weather.jpg",
         author: MOCK_AUTHOR_NAME,
-        authorPFP: "/images/placeholders/author_pfp.png", // Ensure this path is correct or use a placeholder
+        authorPFP: "/images/placeholders/author_pfp.png",
         category: "Visuals",
         likes: 1250,
         downloads: 15000,
@@ -117,7 +116,7 @@ const allModsDatabase: Mod[] = [
     },
 ];
 
-const DEFAULT_PFP = "https://placehold.co/128x128/7C3AED/FFFFFF/png?text=PFP"; // Default/fallback PFP
+const DEFAULT_PFP = "https://placehold.co/128x128/7C3AED/FFFFFF/png?text=PFP";
 
 export default function AuthorModsPage({
     params,
@@ -133,7 +132,6 @@ export default function AuthorModsPage({
     const [authorPFP, setAuthorPFP] = useState<string>(DEFAULT_PFP);
 
     useEffect(() => {
-        // Simulate API call delay
         const timer = setTimeout(() => {
             const fetchedMods = allModsDatabase.filter(
                 (mod) => mod.author === authorName
@@ -141,23 +139,19 @@ export default function AuthorModsPage({
             setAuthorMods(fetchedMods);
 
             if (fetchedMods.length > 0) {
-                // Use PFP from the first mod if available, otherwise keep default
                 setAuthorPFP(fetchedMods[0].authorPFP || DEFAULT_PFP);
                 const uniqueGames = Array.from(
                     new Set(fetchedMods.map((mod) => mod.gameName))
                 );
                 setGames(["All Games", ...uniqueGames.sort()]);
             } else {
-                // If no mods, ensure PFP is default and games list is minimal
                 setAuthorPFP(DEFAULT_PFP);
                 setGames(["All Games"]);
-                // Potentially fetch author details separately if PFP should be shown even with no mods
-                // For now, we assume PFP is tied to their mods or a general default.
             }
-            setSelectedGame("All Games"); // Reset filter when author changes
-        }, 500); // Simulate 0.5 second load time
+            setSelectedGame("All Games");
+        }, 500);
 
-        return () => clearTimeout(timer); // Cleanup timer on unmount
+        return () => clearTimeout(timer);
     }, [authorName]);
 
     const filteredMods =
@@ -167,7 +161,6 @@ export default function AuthorModsPage({
 
     return (
         <div className="bg-gray-900 text-white min-h-screen w-full">
-            {/* Inner div for content, centered and max-width constrained, with padding */}
             <div className="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
                 
                 <header className="mb-10 p-6 bg-gray-800 rounded-[5px] shadow-xl flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-start gap-6">
@@ -177,7 +170,7 @@ export default function AuthorModsPage({
                         width={128}
                         height={128}
                         className="rounded-[5px] border-4 border-purple-500 object-cover flex-shrink-0 shadow-md"
-                        onError={() => setAuthorPFP(DEFAULT_PFP)} // Fallback PFP on error
+                        onError={() => setAuthorPFP(DEFAULT_PFP)}
                     />
                     <div className="flex-grow mt-4 sm:mt-0">
                         <h1 className="text-4xl sm:text-5xl font-bold text-purple-400 mb-2">
@@ -189,18 +182,12 @@ export default function AuthorModsPage({
                         {authorMods.length > 0 && (
                              <div className="text-sm text-gray-500">
                                 <span className="font-medium text-gray-300">{authorMods.length}</span> Mod{authorMods.length === 1 ? '' : 's'} Published
-                                {/* You could calculate total downloads here if needed:
-                                const totalDownloads = authorMods.reduce((sum, mod) => sum + mod.downloads, 0);
-                                <span className="mx-2">|</span>
-                                <span className="font-medium text-gray-300">{totalDownloads.toLocaleString()}</span> Total Downloads
-                                */}
                             </div>
                         )}
                     </div>
                 </header>
 
-                {/* Filter Section - Only show if there are mods to filter */}
-                {authorMods.length > 0 && games.length > 1 && ( // Only show filter if there's something to filter by
+                {authorMods.length > 0 && games.length > 1 && (
                     <div className="mb-8 flex justify-center sm:justify-start">
                         <div className="relative">
                             <label htmlFor="gameFilter" className="sr-only">
@@ -227,7 +214,6 @@ export default function AuthorModsPage({
                     </div>
                 )}
 
-                {/* Mod Grid / Empty State */}
                 {filteredMods.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filteredMods.map((mod) => (
@@ -239,7 +225,7 @@ export default function AuthorModsPage({
                                 description={mod.description}
                                 imageUrl={mod.imageUrl}
                                 author={mod.author}
-                                authorPFP={mod.authorPFP} // Pass the potentially updated PFP
+                                authorPFP={mod.authorPFP}
                                 category={mod.category}
                                 likes={mod.likes}
                                 downloads={mod.downloads}
