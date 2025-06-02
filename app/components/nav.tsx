@@ -6,10 +6,8 @@ export default function NavBar() {
         <>
             <nav className="flex items-center pl-12 space-x-4 p-4 bg-gray-800 text-white">
                 {/* Fixed Home link with border on inner span */}
-                <Link href="/">
-                    <span className="hover:text-purple-500 text-sm border-b-2 border-purple-500 pb-1">
-                        Home
-                    </span>
+                <Link className="hover:text-purple-500" href="/">
+                    Home
                 </Link>
                 <Link className="hover:text-purple-500" href="/mods">
                     Mods
@@ -20,7 +18,6 @@ export default function NavBar() {
                 <Link className="hover:text-purple-500" href="/collections">
                     Collections
                 </Link>
-                {/* Create a search bar and avatar log to the right */}
                 <div className="flex-grow"></div>
                 <div className="flex items-center space-x-2">
                     <input
