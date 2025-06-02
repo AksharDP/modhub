@@ -38,7 +38,7 @@ const ChevronDownIcon = () => (
 
 const FilesSection: React.FC<FilesSectionProps> = ({ mod, formatDate }) => {
     return (
-        <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow">
+        <div className="bg-gray-800 p-4 sm:p-6 rounded-[5px] shadow">
             <h2 className="text-xl font-semibold mb-4 text-purple-300">
                 Available Files
             </h2>
@@ -52,7 +52,7 @@ const FilesSection: React.FC<FilesSectionProps> = ({ mod, formatDate }) => {
                     .map((file: FileVersion) => (
                         <div
                             key={file.id}
-                            className={`rounded-md shadow-sm hover:shadow-md transition-shadow duration-150 ease-in-out p-5 ${
+                            className={`rounded-[5px] shadow-sm hover:shadow-md transition-shadow duration-150 ease-in-out p-5 ${
                                 // Base padding p-5
                                 file.isLatest
                                     ? "bg-gray-700 border-l-4 border-purple-500"

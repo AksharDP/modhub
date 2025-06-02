@@ -21,21 +21,21 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
 }) => {
     if (!mod.allImageUrls || mod.allImageUrls.length === 0) {
         return (
-            <div className="relative w-full h-96 mb-6 bg-gray-800 rounded-lg shadow-lg flex items-center justify-center text-gray-500">
+            <div className="relative w-full h-96 mb-6 bg-gray-800 rounded-[5px] shadow-lg flex items-center justify-center text-gray-500">
                 No images available.
             </div>
         );
     }
 
     return (
-        <div className="relative w-full h-96 mb-6 bg-gray-800 rounded-lg shadow-lg group">
+        <div className="relative w-full h-96 mb-6 bg-gray-800 rounded-[5px] shadow-lg group">
             <Image
                 key={mod.allImageUrls[currentImageIndex]}
                 src={mod.allImageUrls[currentImageIndex]}
                 alt={`${mod.title} - image ${currentImageIndex + 1}`}
                 layout="fill"
                 objectFit="contain"
-                className="rounded-lg"
+                className="rounded-[5px]"
                 loading="lazy"
             />
             {mod.allImageUrls.length > 1 && (

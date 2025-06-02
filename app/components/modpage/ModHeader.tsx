@@ -28,7 +28,7 @@ const ModHeader: React.FC<ModHeaderProps> = ({ mod, gamename }) => {
                     alt={`${mod.author}'s profile picture`}
                     width={24}
                     height={24}
-                    className="rounded-full mr-2"
+                    className="rounded-[5px] mr-2"
                 />
                 <span>
                     By{" "}

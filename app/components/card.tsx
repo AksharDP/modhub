@@ -34,7 +34,7 @@ export default function Card({
 }: CardProps) {
     return (
         <>
-            <div className="bg-gray-800 text-white rounded-lg shadow-lg m-4 w-80 flex flex-col">
+            <div className="bg-gray-800 text-white rounded-[5px] shadow-lg m-4 w-80 flex flex-col">
                 <Link
                     href={`/${gameName}/mods/${modId}`}
                     className="block relative w-full h-48 mb-4"
@@ -44,7 +44,7 @@ export default function Card({
                         alt={title}
                         layout="fill"
                         objectFit="cover"
-                        className="rounded-t-lg"
+                        className="rounded-t-[5px]"
                         loading="lazy"
                     />
                 </Link>

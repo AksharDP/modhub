@@ -1,26 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #8A2BE2; /* Purple */
+  --color-secondary: #4A5568; /* Gray */
+  --color-accent: #6366F1; /* Indigo */
+  --color-background: #111827; /* Dark Gray */
+  --color-foreground: #F3F4F6; /* Light Gray */
+  --color-nav-bg: #1F2937; /* Darker Gray for Nav */
+  --color-card-bg: #1F2937; /* Darker Gray for Cards */
+  --color-button-bg: var(--color-primary);
+  --color-button-text: var(--color-foreground);
+
+  --border-radius-custom: 5px;
+  --border-radius-card: var(--border-radius-custom);
+  --border-radius-button: var(--border-radius-custom);
+  --border-radius-input: var(--border-radius-custom);
+  --border-radius-avatar: var(--border-radius-custom);
+
+  --nav-padding-x: 3rem; /* 48px */
+  --nav-padding-y: 1rem; /* 16px */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Removed @theme rule as it's not standard CSS and Tailwind handles theming via tailwind.config.ts */
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-background);
+  color: var(--color-foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Example of how you might use these variables in other CSS if needed, though Tailwind classes are preferred */
+.custom-component {
+  background-color: var(--color-primary);
+  border-radius: var(--border-radius-custom);
+  padding: var(--nav-padding-y) var(--nav-padding-x);
 }

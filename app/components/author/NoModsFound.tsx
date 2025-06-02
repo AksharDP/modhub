@@ -8,7 +8,7 @@ interface NoModsFoundProps {
 
 const NoModsFound: React.FC<NoModsFoundProps> = ({ authorName, selectedGame, hasAuthorUploadedMods }) => {
     return (
-        <div className="text-center py-16 bg-gray-800 rounded-xl shadow-lg">
+        <div className="text-center py-16 bg-gray-800 rounded-[5px] shadow-lg">
             <svg
                 className="mx-auto h-16 w-16 text-gray-500 mb-4"
                 fill="none"

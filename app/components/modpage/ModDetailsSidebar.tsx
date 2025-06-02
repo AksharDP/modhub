@@ -179,7 +179,7 @@ const ModDetailsSidebar: React.FC<ModDetailsSidebarProps> = ({
                             {mod.tags.map((tag) => (
                                 <span
                                     key={tag}
-                                    className="bg-gray-700 text-xs px-2 py-1 rounded-full hover:bg-gray-600 transition-colors cursor-default"
+                                    className="bg-gray-700 text-xs px-2 py-1 rounded-[5px] hover:bg-gray-600 transition-colors cursor-default"
                                 >
                                     {tag}
                                 </span>

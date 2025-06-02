@@ -118,7 +118,7 @@ export default function ModPage({
     const { gamename, modid } = use(params);
     const mod = {
         ...mockModData,
-        title: `${mockModData.title} for ${gamename} (Mod ID: ${modid})`,
+        title: `${mockModData.title} for ${gamename}`,
     };
 
     const [activeTab, setActiveTab] = useState<"description" | "files">(

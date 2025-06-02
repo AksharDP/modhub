@@ -16,13 +16,13 @@ const AuthorPageHeader: React.FC<AuthorPageHeaderProps> = ({
     setAuthorPFP,
 }) => {
     return (
-        <header className="mb-10 p-6 bg-gray-800 rounded-xl shadow-xl flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-start gap-6">
+        <header className="mb-10 p-6 bg-gray-800 rounded-[5px] shadow-xl flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-start gap-6">
             <Image
                 src={authorPFP}
                 alt={`${authorName}'s profile picture`}
                 width={128}
                 height={128}
-                className="rounded-full border-4 border-purple-500 object-cover flex-shrink-0 shadow-md"
+                className="rounded-[5px] border-4 border-purple-500 object-cover flex-shrink-0 shadow-md"
                 onError={() => setAuthorPFP(DEFAULT_PFP)}
             />
             <div className="flex-grow mt-4 sm:mt-0">

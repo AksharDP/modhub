@@ -26,7 +26,7 @@ export default function NavBar() {
                     <input
                         type="text"
                         placeholder="Search..."
-                        className="p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="p-2 rounded-[5px] bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                     <Link href="/profile">
                         <Image
@@ -34,7 +34,7 @@ export default function NavBar() {
                             alt="User Avatar"
                             width={32}
                             height={32}
-                            className="rounded-full border border-purple-500"
+                            className="rounded-[5px] border border-purple-500"
                         />
                     </Link>
                 </div>

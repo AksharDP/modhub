@@ -166,18 +166,17 @@ export default function AuthorModsPage({
             : authorMods.filter((mod) => mod.gameName === selectedGame);
 
     return (
-        // Outer div for full viewport background
         <div className="bg-gray-900 text-white min-h-screen w-full">
             {/* Inner div for content, centered and max-width constrained, with padding */}
             <div className="container mx-auto max-w-7xl p-4 sm:p-6 lg:p-8">
-                {/* Enhanced Author Profile Section */}
-                <header className="mb-10 p-6 bg-gray-800 rounded-xl shadow-xl flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-start gap-6">
+                
+                <header className="mb-10 p-6 bg-gray-800 rounded-[5px] shadow-xl flex flex-col items-center text-center sm:flex-row sm:text-left sm:items-start gap-6">
                     <Image
                         src={authorPFP}
                         alt={`${authorName}'s profile picture`}
                         width={128}
                         height={128}
-                        className="rounded-full border-4 border-purple-500 object-cover flex-shrink-0 shadow-md"
+                        className="rounded-[5px] border-4 border-purple-500 object-cover flex-shrink-0 shadow-md"
                         onError={() => setAuthorPFP(DEFAULT_PFP)} // Fallback PFP on error
                     />
                     <div className="flex-grow mt-4 sm:mt-0">

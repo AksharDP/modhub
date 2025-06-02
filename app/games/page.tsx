@@ -94,7 +94,7 @@ export default function GamesPage() {
                                 href={`/games/${game.slug}`}
                                 legacyBehavior
                             >
-                                <a className="group bg-gray-800 rounded-lg shadow-xl overflow-hidden hover:shadow-purple-500/30 transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col">
+                                <a className="group bg-gray-800 rounded-[5px] shadow-xl overflow-hidden hover:shadow-purple-500/30 transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col">
                                     <div className="relative w-full h-48">
                                         <Image
                                             src={game.imageUrl}
