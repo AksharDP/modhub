@@ -34,7 +34,7 @@ export default function Card({
 }: CardProps) {
     return (
         <>
-            <div className="bg-gray-800 text-white rounded-[5px] shadow-lg m-2 w-80 flex flex-col">
+            <div className="bg-gray-800 text-white rounded-[var(--border-radius-custom)] shadow-lg m-2 w-80 h-[400px] flex flex-col overflow-hidden">
                 <Link
                     href={`/${gameName}/mods/${modId}`}
                     className="block relative w-full h-48 mb-4"
@@ -44,20 +44,20 @@ export default function Card({
                         alt={title}
                         layout="fill"
                         objectFit="cover"
-                        className="rounded-t-[5px]"
+                        className="rounded-t-[var(--border-radius-custom)]"
                         loading="lazy"
                     />
                 </Link>
                 <div className="pb-2 px-3 flex flex-col flex-grow">
                     <Link href={`/${gameName}/mods/${modId}`} className="block">
                         <h2
-                            className="text-xl font-bold mb-0.5 truncate"
+                            className="text-xl font-bold mb-0.5 truncate overflow-hidden whitespace-nowrap text-ellipsis"
                             title={title}
                         >
                             {title}
                         </h2>
                     </Link>
-                    <p className="text-sm text-gray-400 mb-1 h-12 overflow-hidden">
+                    <p className="text-sm text-gray-400 mb-1 h-12 truncate overflow-hidden whitespace-nowrap text-ellipsis">
                         {description}
                     </p>
                     <div className="mt-auto text-xs text-gray-500">
