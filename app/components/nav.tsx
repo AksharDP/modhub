@@ -35,12 +35,6 @@ export default function NavBar() {
                         />
                     </Link>
                 </div>
-                <Link className="hover:text-purple-500" href="/login">
-                    Login
-                </Link>
-                <Link className="hover:text-purple-500" href="/register">
-                    Register
-                </Link>
             </nav>
         </>
     );
