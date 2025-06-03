@@ -43,6 +43,7 @@ export default function Card({
                         src={imageUrl}
                         alt={title}
                         fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="rounded-t-[var(--border-radius-custom)] object-cover"
                         loading="lazy"
                     />
