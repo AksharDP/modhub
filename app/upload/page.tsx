@@ -1,6 +1,12 @@
-"use client"; // Required for useState and event handlers
+"use client";
 
-import React, { useState, ChangeEvent, FormEvent, useEffect, useRef } from "react";
+import React, {
+    useState,
+    ChangeEvent,
+    FormEvent,
+    useEffect,
+    useRef,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
 import NavBar from "../components/nav";
@@ -8,6 +14,7 @@ import NavBar from "../components/nav";
 const MAX_IMAGES = 10;
 
 interface ImagePreview {
+    id: string; // Added for stable keys
     file: File;
     url: string;
 }
@@ -15,16 +22,13 @@ interface ImagePreview {
 const UploadPage = () => {
     const [title, setTitle] = useState<string>("");
     const [version, setVersion] = useState<string>("");
-    const [tags, setTags] = useState<string>(""); // Simple comma-separated tags
+    const [tags, setTags] = useState<string>("");
     const [description, setDescription] = useState<string>("");
     const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
     const [selectedImages, setSelectedImages] = useState<ImagePreview[]>([]);
     const [imageError, setImageError] = useState<string>("");
-
-    // Ref to hold the latest selectedImages for cleanup
     const selectedImagesRef = useRef(selectedImages);
 
-    // Effect to update the ref whenever selectedImages changes
     useEffect(() => {
         selectedImagesRef.current = selectedImages;
     }, [selectedImages]);
@@ -46,6 +50,7 @@ const UploadPage = () => {
         const imageObjects = newImages
             .filter((file) => file.type.startsWith("image/"))
             .map((file) => ({
+                id: crypto.randomUUID(), // Assign a unique ID
                 file,
                 url: URL.createObjectURL(file),
             }));
@@ -66,23 +71,38 @@ const UploadPage = () => {
             if (imageToRemove) {
                 URL.revokeObjectURL(imageToRemove.url);
             }
-            return prevImages.filter((_, index) => index !== indexToRemove);
+            const updatedImages = prevImages.filter((_, index) => index !== indexToRemove);
+            return updatedImages;
         });
         setImageError("");
     };
 
     useEffect(() => {
-        // Cleanup function runs on component unmount
         return () => {
-            // Use the ref to access the latest selectedImages
-            selectedImagesRef.current.forEach((image) => URL.revokeObjectURL(image.url));
+            selectedImagesRef.current.forEach((image) =>
+                URL.revokeObjectURL(image.url)
+            );
         };
     }, []); // Empty dependency array ensures this runs only on mount and unmount
+
+    const moveImage = (currentIndex: number, direction: "left" | "right") => {
+        setSelectedImages((prevImages) => {
+            const newImages = [...prevImages];
+            const targetIndex = direction === "left" ? currentIndex - 1 : currentIndex + 1;
+
+            if (targetIndex < 0 || targetIndex >= newImages.length) {
+                return newImages; // Should not happen if buttons are disabled correctly
+            }
+
+            // Swap elements
+            [newImages[currentIndex], newImages[targetIndex]] = [newImages[targetIndex], newImages[currentIndex]];
+            return newImages;
+        });
+    };
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
-        // Basic validation example (can be expanded)
         if (!title.trim()) {
             alert("Title is required.");
             return;
@@ -98,15 +118,12 @@ const UploadPage = () => {
             tags: tags
                 .split(",")
                 .map((tag) => tag.trim())
-                .filter((tag) => tag !== ""), // Split tags into an array
+                .filter((tag) => tag !== ""),
             description,
-            images: selectedImages.map((imgPreview) => imgPreview.file), // Get the actual File objects
+            images: selectedImages.map((imgPreview) => imgPreview.file),
         };
 
         console.log("Mock Form Submission Data:", formData);
-
-        // Mock API call simulation (optional)
-        // await new Promise(resolve => setTimeout(resolve, 1000));
 
         alert(
             `Mock submission successful!\nTitle: ${formData.title}\nVersion: ${
@@ -118,30 +135,20 @@ const UploadPage = () => {
                 30
             )}...\nImages: ${formData.images.length}`
         );
-
-        // Here you would typically send formData to a backend API
-        // For now, we can also reset parts of the form if desired
-        // setTitle('');
-        // setVersion('');
-        // setTags('');
-        // setDescription('');
-        // setSelectedImages([]);
-        // setImageError('');
-        // setActiveTab('edit');
     };
 
     return (
         <>
             <NavBar />
-            <main className="container mx-auto p-4 pt-20 sm:pt-24"> {/* Adjusted padding top */}
+            <main className="container mx-auto p-4 pt-20 sm:pt-24">
+                {" "}
                 <h1 className="text-2xl font-bold mb-6 text-center text-foreground">
                     Upload Mod
                 </h1>
                 <form
                     onSubmit={handleSubmit}
-                    className="space-y-6 bg-card-bg p-6 shadow-md rounded-card max-w-3xl mx-auto" /* Added max-width and mx-auto */
+                    className="space-y-6 bg-card-bg p-6 shadow-md rounded-card max-w-3xl mx-auto"
                 >
-                    {/* Title Field */}
                     <div>
                         <label
                             htmlFor="title"
@@ -155,12 +162,11 @@ const UploadPage = () => {
                             id="title"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-400 rounded-input p-2 bg-background text-foreground"
+                            className="shadow-sm block w-full sm:text-sm border border-transparent focus:ring-primary focus:border-primary rounded-global p-2 bg-gray-700 text-input-foreground"
                             required
                         />
                     </div>
 
-                    {/* Version Field */}
                     <div>
                         <label
                             htmlFor="version"
@@ -174,12 +180,11 @@ const UploadPage = () => {
                             id="version"
                             value={version}
                             onChange={(e) => setVersion(e.target.value)}
-                            className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-400 rounded-input p-2 bg-background text-foreground"
+                            className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-transparent rounded-global p-2 bg-gray-700 text-input-foreground"
                             placeholder="e.g., 1.0.0"
                         />
                     </div>
 
-                    {/* Tags Field */}
                     <div>
                         <label
                             htmlFor="tags"
@@ -193,7 +198,7 @@ const UploadPage = () => {
                             id="tags"
                             value={tags}
                             onChange={(e) => setTags(e.target.value)}
-                            className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-400 rounded-input p-2 bg-background text-foreground"
+                            className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-transparent rounded-global p-2 bg-gray-700 text-input-foreground"
                             placeholder="e.g., survival, tech, magic (comma-separated)"
                         />
                         <p className="mt-1 text-xs text-gray-500">
@@ -201,7 +206,6 @@ const UploadPage = () => {
                         </p>
                     </div>
 
-                    {/* Description Section */}
                     <div className="mb-4">
                         <label
                             htmlFor="description"
@@ -211,7 +215,7 @@ const UploadPage = () => {
                         </label>
                         <div className="flex border-b border-gray-300 mb-2">
                             <button
-                                type="button" // Prevent form submission
+                                type="button"
                                 className={`py-2 px-4 ${
                                     activeTab === "edit"
                                         ? "border-b-2 border-primary text-primary"
@@ -222,7 +226,7 @@ const UploadPage = () => {
                                 Text
                             </button>
                             <button
-                                type="button" // Prevent form submission
+                                type="button"
                                 className={`py-2 px-4 ${
                                     activeTab === "preview"
                                         ? "border-b-2 border-primary text-primary"
@@ -238,14 +242,14 @@ const UploadPage = () => {
                                 id="description"
                                 name="description"
                                 rows={10}
-                                className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-gray-400 rounded-input p-2 bg-background text-foreground"
+                                className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-transparent rounded-global p-2 bg-gray-700 text-input-foreground"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Enter mod description using Markdown..."
                                 required
                             />
                         ) : (
-                            <div className="prose lg:prose-xl p-2 border border-gray-400 rounded-input min-h-[200px] bg-background text-foreground">
+                            <div className="prose lg:prose-xl p-2 border border-transparent rounded-global min-h-[200px] bg-gray-700 text-input-foreground">
                                 <ReactMarkdown>
                                     {description ||
                                         "*No description yet. Write something in the Text tab.*"}
@@ -254,7 +258,6 @@ const UploadPage = () => {
                         )}
                     </div>
 
-                    {/* Image Upload Section */}
                     <div className="mb-4">
                         <label
                             htmlFor="image-upload"
@@ -268,11 +271,11 @@ const UploadPage = () => {
                             multiple
                             accept="image/jpeg,image/png,image/gif"
                             onChange={handleImageChange}
-                            className="block w-full text-sm text-gray-500
+                            className="block w-full text-sm text-gray-500 rounded-global
                        file:mr-4 file:py-2 file:px-4
-                       file:rounded-button file:border-0
+                       file:rounded-global file:
                        file:text-sm file:font-semibold
-                       file:bg-primary file:text-white 
+                       file:bg-purple-700 file:text-white
                        hover:file:opacity-90"
                         />
                         {imageError && (
@@ -284,17 +287,21 @@ const UploadPage = () => {
                         {selectedImages.length > 0 && (
                             <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {selectedImages.map((image, index) => (
-                                    <div key={index} className="relative group w-full h-32 rounded-md border border-gray-300 overflow-hidden">
+                                    <div
+                                        key={image.id} // Use unique ID as key
+                                        className="relative group w-full h-32 rounded-md border border-gray-300 overflow-hidden"
+                                    >
                                         <Image
                                             src={image.url}
                                             alt={`Preview ${image.file.name}`}
                                             fill
                                             className="object-cover"
                                         />
+                                        {/* Remove Button */}
                                         <button
-                                            type="button" // Prevent form submission
+                                            type="button"
                                             onClick={() => removeImage(index)}
-                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs opacity-75 group-hover:opacity-100 transition-opacity"
+                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs opacity-75 group-hover:opacity-100 transition-opacity z-10"
                                             aria-label="Remove image"
                                         >
                                             <svg
@@ -312,23 +319,43 @@ const UploadPage = () => {
                                                 />
                                             </svg>
                                         </button>
+                                        {/* Reorder Buttons */}
+                                        <div className="absolute bottom-1 left-1 right-1 flex justify-between z-10 opacity-75 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                type="button"
+                                                onClick={() => moveImage(index, "left")}
+                                                disabled={index === 0}
+                                                className="bg-gray-700 text-white p-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                                                aria-label="Move image left"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => moveImage(index, "right")}
+                                                disabled={index === selectedImages.length - 1}
+                                                className="bg-gray-700 text-white p-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                                                aria-label="Move image right"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
                         )}
                     </div>
 
-                    {/* Submit Button */}
                     <div>
                         <button
                             type="submit"
-                            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-button shadow-sm text-sm font-medium text-white bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                            className="w-full flex justify-center py-2 px-4 border border-transparent bg-purple-700 rounded-global bg-shadow-sm text-sm font-medium text-white bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                         >
                             Submit Mod
                         </button>
                     </div>
                 </form>
-            </main> {/* Changed div to main and adjusted padding */}
+            </main>{" "}
         </>
     );
 };
