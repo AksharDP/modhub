@@ -6,6 +6,7 @@ import React, {
     FormEvent,
     useEffect,
     useRef,
+    useCallback, // Import useCallback
 } from "react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
@@ -14,10 +15,109 @@ import NavBar from "../components/nav";
 const MAX_IMAGES = 10;
 
 interface ImagePreview {
-    id: string; // Added for stable keys
+    id: string;
     file: File;
     url: string;
 }
+
+// Define ImagePreviewItem component
+interface ImagePreviewItemProps {
+    image: ImagePreview;
+    index: number;
+    isFirst: boolean;
+    isLast: boolean;
+    onRemove: (index: number) => void;
+    onMove: (index: number, direction: "left" | "right") => void;
+}
+
+const ImagePreviewItem = React.memo<ImagePreviewItemProps>(
+    ({ image, index, isFirst, isLast, onRemove, onMove }) => {
+        return (
+            <div
+                key={image.id}
+                className="relative group w-full h-32 rounded-md border border-gray-300 overflow-hidden"
+            >
+                <Image
+                    src={image.url}
+                    alt={`Preview ${image.file.name}`}
+                    fill
+                    className="object-cover"
+                    priority={index < 3} // Prioritize loading for first few images
+                />
+                {/* Remove Button */}
+                <button
+                    type="button"
+                    onClick={() => onRemove(index)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs opacity-75 group-hover:opacity-100 transition-opacity z-10"
+                    aria-label="Remove image"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                        />
+                    </svg>
+                </button>
+                {/* Reorder Buttons */}
+                <div className="absolute bottom-1 left-1 right-1 flex justify-between z-10 opacity-75 group-hover:opacity-100 transition-opacity">
+                    <button
+                        type="button"
+                        onClick={() => onMove(index, "left")}
+                        disabled={isFirst}
+                        className="bg-gray-700 text-white p-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Move image left"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 19l-7-7 7-7"
+                            />
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => onMove(index, "right")}
+                        disabled={isLast}
+                        className="bg-gray-700 text-white p-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Move image right"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                            />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        );
+    }
+);
+ImagePreviewItem.displayName = "ImagePreviewItem";
 
 const UploadPage = () => {
     const [title, setTitle] = useState<string>("");
@@ -65,7 +165,7 @@ const UploadPage = () => {
         event.target.value = "";
     };
 
-    const removeImage = (indexToRemove: number) => {
+    const removeImage = useCallback((indexToRemove: number) => {
         setSelectedImages((prevImages) => {
             const imageToRemove = prevImages[indexToRemove];
             if (imageToRemove) {
@@ -75,7 +175,7 @@ const UploadPage = () => {
             return updatedImages;
         });
         setImageError("");
-    };
+    }, []);
 
     useEffect(() => {
         return () => {
@@ -85,20 +185,19 @@ const UploadPage = () => {
         };
     }, []); // Empty dependency array ensures this runs only on mount and unmount
 
-    const moveImage = (currentIndex: number, direction: "left" | "right") => {
+    const moveImage = useCallback((currentIndex: number, direction: "left" | "right") => {
         setSelectedImages((prevImages) => {
             const newImages = [...prevImages];
             const targetIndex = direction === "left" ? currentIndex - 1 : currentIndex + 1;
 
             if (targetIndex < 0 || targetIndex >= newImages.length) {
-                return newImages; // Should not happen if buttons are disabled correctly
+                return newImages;
             }
 
-            // Swap elements
             [newImages[currentIndex], newImages[targetIndex]] = [newImages[targetIndex], newImages[currentIndex]];
             return newImages;
         });
-    };
+    }, []);
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -287,60 +386,15 @@ const UploadPage = () => {
                         {selectedImages.length > 0 && (
                             <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                                 {selectedImages.map((image, index) => (
-                                    <div
-                                        key={image.id} // Use unique ID as key
-                                        className="relative group w-full h-32 rounded-md border border-gray-300 overflow-hidden"
-                                    >
-                                        <Image
-                                            src={image.url}
-                                            alt={`Preview ${image.file.name}`}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                        {/* Remove Button */}
-                                        <button
-                                            type="button"
-                                            onClick={() => removeImage(index)}
-                                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 text-xs opacity-75 group-hover:opacity-100 transition-opacity z-10"
-                                            aria-label="Remove image"
-                                        >
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-4 w-4"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M6 18L18 6M6 6l12 12"
-                                                />
-                                            </svg>
-                                        </button>
-                                        {/* Reorder Buttons */}
-                                        <div className="absolute bottom-1 left-1 right-1 flex justify-between z-10 opacity-75 group-hover:opacity-100 transition-opacity">
-                                            <button
-                                                type="button"
-                                                onClick={() => moveImage(index, "left")}
-                                                disabled={index === 0}
-                                                className="bg-gray-700 text-white p-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
-                                                aria-label="Move image left"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => moveImage(index, "right")}
-                                                disabled={index === selectedImages.length - 1}
-                                                className="bg-gray-700 text-white p-1 rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
-                                                aria-label="Move image right"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <ImagePreviewItem
+                                        key={image.id}
+                                        image={image}
+                                        index={index}
+                                        isFirst={index === 0}
+                                        isLast={index === selectedImages.length - 1}
+                                        onRemove={removeImage}
+                                        onMove={moveImage}
+                                    />
                                 ))}
                             </div>
                         )}
