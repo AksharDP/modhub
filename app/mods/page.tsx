@@ -1,7 +1,8 @@
 import NavBar from "@/app/components/nav";
 import Card from "@/app/components/card"; // Assuming Card component path
+import mockMods from "@/app/MockModData.json"; // Import the JSON data
 
-// Define the Mod interface based on CardProps
+// Define the Mod interface based on CardProps and available JSON data
 interface Mod {
     modId: number;
     gameName: string; // This will be used in the URL, so it should be URL-friendly
@@ -11,47 +12,29 @@ interface Mod {
     author: string;
     authorPFP: string;
     category: string;
-    likes: number;
+    likes: number; // Corresponds to rating * some factor, or a default
     downloads: number;
-    size: string;
-    uploaded: string | number | Date;
+    size: string; // Placeholder, as not in JSON
+    uploaded: string | number | Date; // Corresponds to lastUpdated or a fixed date
     lastUpdated: string | number | Date;
 }
 
-// Placeholder data for mods
-const modsData: Mod[] = [
-    {
-        modId: 1,
-        gameName: "skyrim", // Example game name
-        title: "Super Cool Sword",
-        description: "A very cool sword that does a lot of damage.",
-        imageUrl: "https://placehold.co/600x400/png", // Replace with actual image path
-        author: "Modder123",
-        authorPFP: "https://placehold.co/30x30/png", // Replace with actual image path
-        category: "Weapons",
-        likes: 1500,
-        downloads: 5000,
-        size: "10 MB",
-        uploaded: new Date("2023-10-01T10:00:00Z"),
-        lastUpdated: new Date("2023-10-15T14:30:00Z"),
-    },
-    {
-        modId: 2,
-        gameName: "fallout4", // Example game name
-        title: "Enhanced Graphics Pack",
-        description: "Improves the overall graphics of the game.",
-        imageUrl: "https://placehold.co/600x400/png", // Replace with actual image path
-        author: "GraphicsGuru",
-        authorPFP: "https://placehold.co/30x30/png", // Replace with actual image path
-        category: "Visuals",
-        likes: 2500,
-        downloads: 10000,
-        size: "500 MB",
-        uploaded: new Date("2023-09-20T08:00:00Z"),
-        lastUpdated: new Date("2023-10-20T12:00:00Z"),
-    },
-    // Add more placeholder mods as needed
-];
+// Process mockMods to fit the Mod interface
+const modsData: Mod[] = mockMods.map((mod) => ({
+    modId: mod.id,
+    gameName: "genericgame", // Placeholder, as not in JSON, or derive from tags/name
+    title: mod.name,
+    description: mod.description,
+    imageUrl: mod.imageUrl,
+    author: mod.author,
+    authorPFP: "https://placehold.co/30x30/png", // Placeholder, as not in JSON
+    category: mod.tags[0] || "General", // Use first tag as category or a default
+    likes: Math.round(mod.rating * 100), // Example conversion from rating
+    downloads: mod.downloads,
+    size: "N/A", // Placeholder, as not in JSON
+    uploaded: new Date(mod.lastUpdated), // Assuming lastUpdated can serve as uploaded for now
+    lastUpdated: new Date(mod.lastUpdated),
+}));
 
 export default function ModsPage() {
     return (
@@ -67,7 +50,7 @@ export default function ModsPage() {
                     </p>
                 </header>
                 {modsData.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div className="flex flex-wrap justify-center">
                         {modsData.map((mod) => (
                             <Card
                                 key={mod.modId}
