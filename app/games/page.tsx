@@ -89,38 +89,38 @@ export default function GamesPage() {
 
                     <div className="flex flex-wrap justify-center">
                         {gamesData.map((game) => (
-                            <Link
+                            <div
                                 key={game.id}
-                                href={`/games/${game.slug}`}
-                                legacyBehavior
+                                className="bg-gray-800 rounded-[var(--border-radius-card)] shadow-xl overflow-hidden transition-all duration-300 ease-in-out flex flex-col m-2 w-80"
                             >
-                                <a className="bg-gray-800 rounded-[var(--border-radius-card)] shadow-xl overflow-hidden transition-all duration-300 ease-in-out flex flex-col m-2 w-80">
-                                    <div className="relative w-full h-48">
+                                <Link href={`/games/${game.slug}`}>
+                                    <div className="relative w-full h-48 cursor-pointer">
                                         <Image
                                             src={game.imageUrl}
                                             alt={game.name}
-                                            layout="fill"
-                                            objectFit="cover"
-                                            className="transition-transform duration-300"
+                                            fill
+                                            className="transition-transform duration-300 object-cover"
                                         />
                                         <div className="absolute inset-0 bg-black bg-opacity-20 transition-opacity duration-300"></div>
                                     </div>
-                                    <div className="p-5 flex flex-col flex-grow">
-                                        <h2 className="text-xl font-semibold text-white transition-colors duration-300 mb-1 truncate">
+                                </Link>
+                                <div className="p-5 flex flex-col flex-grow">
+                                    <Link href={`/games/${game.slug}`}>
+                                        <h2 className="text-xl font-semibold text-white transition-colors duration-300 mb-1 truncate hover:text-purple-400 cursor-pointer">
                                             {game.name}
                                         </h2>
-                                        <p className="text-gray-400 text-sm mb-3 flex-grow h-16 overflow-hidden">
-                                            {game.description}
-                                        </p>
-                                        <div className="mt-auto">
-                                            <span className="text-xs font-semibold bg-gray-700 text-gray-300 px-2.5 py-1 rounded-full transition-colors duration-300">
-                                                {game.modCount.toLocaleString()}{" "}
-                                                Mods
-                                            </span>
-                                        </div>
+                                    </Link>
+                                    <p className="text-gray-400 text-sm mb-3 flex-grow h-16 overflow-hidden">
+                                        {game.description}
+                                    </p>
+                                    <div className="mt-auto">
+                                        <span className="text-xs font-semibold bg-gray-700 text-gray-300 px-2.5 py-1 rounded-full transition-colors duration-300">
+                                            {game.modCount.toLocaleString()}{" "}
+                                            Mods
+                                        </span>
                                     </div>
-                                </a>
-                            </Link>
+                                </div>
+                            </div>
                         ))}
                     </div>
                 </div>
