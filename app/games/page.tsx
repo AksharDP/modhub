@@ -87,33 +87,33 @@ export default function GamesPage() {
                         </p>
                     </header>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div className="flex flex-wrap justify-center">
                         {gamesData.map((game) => (
                             <Link
                                 key={game.id}
                                 href={`/games/${game.slug}`}
                                 legacyBehavior
                             >
-                                <a className="group bg-gray-800 rounded-[5px] shadow-xl overflow-hidden hover:shadow-purple-500/30 transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col">
+                                <a className="bg-gray-800 rounded-[var(--border-radius-card)] shadow-xl overflow-hidden transition-all duration-300 ease-in-out flex flex-col m-2 w-80">
                                     <div className="relative w-full h-48">
                                         <Image
                                             src={game.imageUrl}
                                             alt={game.name}
                                             layout="fill"
                                             objectFit="cover"
-                                            className="transition-transform duration-300 group-hover:scale-105"
+                                            className="transition-transform duration-300"
                                         />
-                                        <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-10 transition-opacity duration-300"></div>
+                                        <div className="absolute inset-0 bg-black bg-opacity-20 transition-opacity duration-300"></div>
                                     </div>
                                     <div className="p-5 flex flex-col flex-grow">
-                                        <h2 className="text-xl font-semibold text-white group-hover:text-purple-400 transition-colors duration-300 mb-1 truncate">
+                                        <h2 className="text-xl font-semibold text-white transition-colors duration-300 mb-1 truncate">
                                             {game.name}
                                         </h2>
                                         <p className="text-gray-400 text-sm mb-3 flex-grow h-16 overflow-hidden">
                                             {game.description}
                                         </p>
                                         <div className="mt-auto">
-                                            <span className="text-xs font-semibold bg-gray-700 group-hover:bg-purple-600 text-gray-300 group-hover:text-white px-2.5 py-1 rounded-full transition-colors duration-300">
+                                            <span className="text-xs font-semibold bg-gray-700 text-gray-300 px-2.5 py-1 rounded-full transition-colors duration-300">
                                                 {game.modCount.toLocaleString()}{" "}
                                                 Mods
                                             </span>
