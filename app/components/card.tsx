@@ -42,9 +42,8 @@ export default function Card({
                     <Image
                         src={imageUrl}
                         alt={title}
-                        layout="fill"
-                        objectFit="cover"
-                        className="rounded-t-[var(--border-radius-custom)]"
+                        fill
+                        className="rounded-t-[var(--border-radius-custom)] object-cover"
                         loading="lazy"
                     />
                 </Link>
