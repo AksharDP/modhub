@@ -24,14 +24,23 @@ const gamesData: Game[] = [
         description: "An open-world, action-adventure story set in Night City.",
     },
     {
-        id: "2",
-        name: "The Witcher 3: Wild Hunt",
-        slug: "the-witcher-3",
+        id: "4",
+        name: "Fallout 4",
+        slug: "fallout-4",
         imageUrl:
-            "https://placehold.co/400x225/DC2626/FFFFFF/png?text=Witcher+3",
-        modCount: 456,
+            "https://placehold.co/400x225/16A34A/FFFFFF/png?text=Fallout+4",
+        modCount: 1011,
         description:
-            "A story-driven, open world RPG set in a visually stunning fantasy universe.",
+            "Enter the Wasteland in the ambitious open-world game from Bethesda Game Studios.",
+    },
+    {
+        id: "6",
+        name: "Minecraft",
+        slug: "minecraft",
+        imageUrl:
+            "https://placehold.co/400x225/059669/FFFFFF/png?text=Minecraft",
+        modCount: 5000,
+        description: "A game about placing blocks and going on adventures.",
     },
     {
         id: "3",
@@ -43,16 +52,6 @@ const gamesData: Game[] = [
         description: "The epic fantasy masterpiece from Bethesda Game Studios.",
     },
     {
-        id: "4",
-        name: "Fallout 4",
-        slug: "fallout-4",
-        imageUrl:
-            "https://placehold.co/400x225/16A34A/FFFFFF/png?text=Fallout+4",
-        modCount: 1011,
-        description:
-            "Enter the Wasteland in the ambitious open-world game from Bethesda Game Studios.",
-    },
-    {
         id: "5",
         name: "Stardew Valley",
         slug: "stardew-valley",
@@ -62,15 +61,16 @@ const gamesData: Game[] = [
         description: "Create the farm of your dreams in this country-life RPG.",
     },
     {
-        id: "6",
-        name: "Minecraft",
-        slug: "minecraft",
+        id: "2",
+        name: "The Witcher 3: Wild Hunt",
+        slug: "the-witcher-3",
         imageUrl:
-            "https://placehold.co/400x225/059669/FFFFFF/png?text=Minecraft",
-        modCount: 5000,
-        description: "A game about placing blocks and going on adventures.",
+            "https://placehold.co/400x225/DC2626/FFFFFF/png?text=Witcher+3",
+        modCount: 456,
+        description:
+            "A story-driven, open world RPG set in a visually stunning fantasy universe.",
     },
-];
+].sort((a, b) => a.name.localeCompare(b.name));
 
 export default function GamesPage() {
     return (
