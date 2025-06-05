@@ -12,7 +12,7 @@ export interface CardProps {
     imageUrl: string;
     author: string;
     authorPFP: string;
-    category: string;
+    category: string | string[];
     likes: number;
     downloads: number;
     size: string;
@@ -63,6 +63,13 @@ const Card = memo(function Card({
     const modUrl = `/${gameName}/mods/${modId}`;
     const authorUrl = `/author/${encodeURIComponent(author)}/mods`;
 
+    // Ensure categories is always an array
+    const categories: string[] = Array.isArray(category)
+        ? category
+        : category
+        ? [category]
+        : [];
+
     return (
         <div className="bg-gray-800 text-white rounded-[var(--border-radius-custom)] shadow-lg m-2 w-80 h-[400px] flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-200">
             <Link href={modUrl} className="block h-44 w-full relative group">
@@ -74,9 +81,6 @@ const Card = memo(function Card({
                     sizes="320px"
                     priority={false}
                 />
-                <span className="absolute top-2 left-2 bg-purple-700 text-xs px-2 py-1 rounded font-semibold shadow">
-                    {category}
-                </span>
             </Link>
             <div className="flex-1 flex flex-col justify-between p-4">
                 <div>
@@ -85,17 +89,40 @@ const Card = memo(function Card({
                     </Link>
                     <p className="text-gray-300 text-sm mt-1 line-clamp-2 min-h-[40px]">{description}</p>
                 </div>
-                <div className="flex items-center mt-3 mb-2">
-                    <Link href={authorUrl} className="flex items-center group">
-                        <Image
-                            src={authorPFP}
-                            alt={author}
-                            width={24}
-                            height={24}
-                            className="rounded-full mr-2 border border-purple-400"
-                        />
-                        <span className="text-xs text-gray-200 group-hover:underline">{author}</span>
-                    </Link>
+                <div className="flex flex-col">
+                    <div className="flex items-center mt-3 mb-2">
+                        <Link href={authorUrl} className="flex items-center group">
+                            <Image
+                                src={authorPFP}
+                                alt={author}
+                                width={24}
+                                height={24}
+                                className="rounded-full mr-2 border border-purple-400"
+                            />
+                            <span className="text-xs text-gray-200 group-hover:underline">{author}</span>
+                        </Link>
+                    </div>
+                    {/* Category badges below author, styled as links */}
+                    <div
+                        className="flex flex-nowrap gap-2 mt-2 mb-2 overflow-hidden"
+                        style={{
+                            minHeight: "24px",
+                            maxHeight: "24px",
+                        }}
+                        title={categories.join(", ")}
+                    >
+                        {categories.map((cat, idx) => (
+                            <span
+                                key={cat + idx}
+                                className="text-xs font-semibold text-purple-300 hover:underline cursor-pointer whitespace-nowrap text-ellipsis overflow-hidden"
+                                style={{
+                                    maxWidth: "120px",
+                                }}
+                            >
+                                {cat}
+                            </span>
+                        ))}
+                    </div>
                 </div>
                 <div className="flex items-center justify-between text-xs text-gray-400 mt-2">
                     <span title="Likes" className="flex items-center gap-1">
