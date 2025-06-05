@@ -3,14 +3,19 @@
 import React, {
     useState,
     ChangeEvent,
-    FormEvent,
+    // FormEvent, // No longer directly used for <Form action>
     useEffect,
     useRef,
-    useCallback, // Import useCallback
+    useCallback,
 } from "react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
 import NavBar from "../components/nav";
+// Update import from 'react-dom' to 'react' for useActionState
+import { useFormStatus } from "react-dom"; 
+import { useActionState } from "react"; // Import useActionState from React
+import Form from "next/form"; // Import Next.js Form
+import { uploadModAction, UploadState } from "./actions"; // Import server action
 
 const MAX_IMAGES = 10;
 
@@ -119,6 +124,25 @@ const ImagePreviewItem = React.memo<ImagePreviewItemProps>(
 );
 ImagePreviewItem.displayName = "ImagePreviewItem";
 
+const initialState: UploadState = {
+    message: null,
+    errors: {},
+    success: false,
+};
+
+function SubmitButton() {
+    const { pending } = useFormStatus();
+    return (
+        <button
+            type="submit"
+            disabled={pending}
+            className="w-full flex justify-center py-2 px-4 border border-transparent bg-purple-700 rounded-global shadow-sm text-sm font-medium text-white bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 cursor-pointer"
+        >
+            {pending ? "Submitting..." : "Submit Mod"}
+        </button>
+    );
+}
+
 const UploadPage = () => {
     const [title, setTitle] = useState<string>("");
     const [version, setVersion] = useState<string>("");
@@ -128,10 +152,37 @@ const UploadPage = () => {
     const [selectedImages, setSelectedImages] = useState<ImagePreview[]>([]);
     const [imageError, setImageError] = useState<string>("");
     const selectedImagesRef = useRef(selectedImages);
+    const fileInputRef = useRef<HTMLInputElement>(null); // Ref for the file input
+
+    // Rename useFormState to useActionState
+    const [state, formAction] = useActionState(uploadModAction, initialState);
 
     useEffect(() => {
         selectedImagesRef.current = selectedImages;
     }, [selectedImages]);
+
+    useEffect(() => {
+        if (state.success && state.message) {
+            alert(state.message); // Or use a more sophisticated notification system
+            // Optionally reset form fields here
+            setTitle("");
+            setVersion("");
+            setTags("");
+            setDescription("");
+            setSelectedImages([]);
+            setImageError("");
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+            // Reset form state if needed, though useFormState might handle this if action is re-triggered
+        } else if (!state.success && state.message && !state.errors?.general) {
+             // General message not tied to specific fields, but not a field validation error message
+            if(Object.keys(state.errors || {}).length === 0) {
+                alert(`Error: ${state.message}`);
+            }
+        }
+    }, [state]);
+
 
     const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
         setImageError("");
@@ -162,7 +213,10 @@ const UploadPage = () => {
         }
 
         setSelectedImages((prevImages) => [...prevImages, ...imageObjects]);
-        event.target.value = "";
+        // Clear the input value to allow selecting the same file again or different files in subsequent actions
+        if (event.target) {
+            event.target.value = "";
+        }
     };
 
     const removeImage = useCallback((indexToRemove: number) => {
@@ -199,42 +253,26 @@ const UploadPage = () => {
         });
     }, []);
 
-    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+    // Removed old handleSubmit function
 
-        if (!title.trim()) {
-            alert("Title is required.");
-            return;
+    const handleFormSubmitAttempt = () => {
+        // Populate the actual file input with the files from selectedImages state.
+        if (fileInputRef.current) {
+            const dataTransfer = new DataTransfer();
+            if (selectedImages.length > 0) {
+                selectedImages.forEach(imgPreview => {
+                    dataTransfer.items.add(imgPreview.file);
+                });
+                fileInputRef.current.files = dataTransfer.files;
+            } else {
+                // If no images are selected, ensure the FileList is truly empty.
+                fileInputRef.current.files = new DataTransfer().files;
+            }
         }
-        if (!description.trim()) {
-            alert("Description is required.");
-            return;
-        }
-
-        const formData = {
-            title,
-            version,
-            tags: tags
-                .split(",")
-                .map((tag) => tag.trim())
-                .filter((tag) => tag !== ""),
-            description,
-            images: selectedImages.map((imgPreview) => imgPreview.file),
-        };
-
-        console.log("Mock Form Submission Data:", formData);
-
-        alert(
-            `Mock submission successful!\nTitle: ${formData.title}\nVersion: ${
-                formData.version
-            }\nTags: ${formData.tags.join(
-                ", "
-            )}\nDescription: ${formData.description.substring(
-                0,
-                30
-            )}...\nImages: ${formData.images.length}`
-        );
+        // Client-side validation alerts removed. Rely on server validation feedback.
+        return true; // Indicate client-side preparation is done
     };
+
 
     return (
         <>
@@ -244,8 +282,22 @@ const UploadPage = () => {
                 <h1 className="text-2xl font-bold mb-6 text-center text-foreground">
                     Upload Mod
                 </h1>
-                <form
-                    onSubmit={handleSubmit}
+                {/* Use Next.js Form component and pass the server action */}
+                <Form
+                    action={formAction}
+                    onSubmit={() => {
+                        console.log("Client: Form onSubmit triggered. Calling handleFormSubmitAttempt."); // Diagnostic log
+                        // This onSubmit is for client-side tasks before server action.
+                        // The actual submission to server action is handled by <Form action={...}>.
+                        // We call handleFormSubmitAttempt to populate file input and do basic validation.
+                        // If basic client validation fails, we can prevent form submission here,
+                        // though `next/form` might not support `e.preventDefault()` in the same way.
+                        // For now, `handleFormSubmitAttempt` populates files.
+                        // The alerts for title/description will show, but form might still submit.
+                        // Proper way with server actions is to rely on server validation primarily.
+                        // The `handleFormSubmitAttempt` mainly serves to prepare the file input.
+                        handleFormSubmitAttempt();
+                    }}
                     className="space-y-6 bg-card-bg p-6 shadow-md rounded-card max-w-3xl mx-auto"
                 >
                     <div>
@@ -257,13 +309,14 @@ const UploadPage = () => {
                         </label>
                         <input
                             type="text"
-                            name="title"
+                            name="title" // Add name attribute
                             id="title"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             className="shadow-sm block w-full sm:text-sm border border-transparent focus:ring-primary focus:border-primary rounded-global p-2 bg-gray-700 text-input-foreground"
                             required
                         />
+                        {state.errors?.title && <p className="text-red-500 text-sm mt-1">{state.errors.title.join(", ")}</p>}
                     </div>
 
                     <div>
@@ -275,7 +328,7 @@ const UploadPage = () => {
                         </label>
                         <input
                             type="text"
-                            name="version"
+                            name="version" // Add name attribute
                             id="version"
                             value={version}
                             onChange={(e) => setVersion(e.target.value)}
@@ -293,7 +346,7 @@ const UploadPage = () => {
                         </label>
                         <input
                             type="text"
-                            name="tags"
+                            name="tags" // Add name attribute
                             id="tags"
                             value={tags}
                             onChange={(e) => setTags(e.target.value)}
@@ -339,7 +392,7 @@ const UploadPage = () => {
                         {activeTab === "edit" ? (
                             <textarea
                                 id="description"
-                                name="description"
+                                name="description" // Add name attribute
                                 rows={10}
                                 className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-transparent rounded-global p-2 bg-gray-700 text-input-foreground"
                                 value={description}
@@ -355,6 +408,7 @@ const UploadPage = () => {
                                 </ReactMarkdown>
                             </div>
                         )}
+                        {state.errors?.description && <p className="text-red-500 text-sm mt-1">{state.errors.description.join(", ")}</p>}
                     </div>
 
                     <div className="mb-4">
@@ -366,13 +420,15 @@ const UploadPage = () => {
                         </label>
                         <input
                             id="image-upload"
+                            name="modImages" // Add name attribute for server action
                             type="file"
                             multiple
                             accept="image/jpeg,image/png,image/gif"
                             onChange={handleImageChange}
+                            ref={fileInputRef} // Assign ref
                             className="block w-full text-sm text-gray-500 rounded-global
                        file:mr-4 file:py-2 file:px-4
-                       file:rounded-global file:
+                       file:rounded-global file:border-0
                        file:text-sm file:font-semibold
                        file:bg-purple-700 file:text-white
                        hover:file:opacity-90"
@@ -382,6 +438,8 @@ const UploadPage = () => {
                                 {imageError}
                             </p>
                         )}
+                        {state.errors?.images && <p className="text-red-500 text-sm mt-1">{state.errors.images.join(", ")}</p>}
+
 
                         {selectedImages.length > 0 && (
                             <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -399,16 +457,19 @@ const UploadPage = () => {
                             </div>
                         )}
                     </div>
+                    {state.errors?.general && <p className="text-red-500 text-sm mt-1">{state.errors.general.join(", ")}</p>}
+                    {!state.success && state.message && Object.keys(state.errors || {}).length > 0 && (
+                        <p className="text-red-500 text-sm mt-1">Please correct the errors above.</p>
+                    )}
+                     {state.success && state.message && (
+                        <p className="text-green-500 text-sm mt-1">{state.message}</p>
+                    )}
+
 
                     <div>
-                        <button
-                            type="submit"
-                            className="w-full flex justify-center py-2 px-4 border border-transparent bg-purple-700 rounded-global bg-shadow-sm text-sm font-medium text-white bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                        >
-                            Submit Mod
-                        </button>
+                        <SubmitButton />
                     </div>
-                </form>
+                </Form>
             </main>{" "}
         </>
     );

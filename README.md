@@ -1,20 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ModHub - Mod Management Platform
+
+This is a [Next.js](https://nextjs.org) project for managing and distributing game modifications.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Bun runtime installed
+- PostgreSQL database server
+
+### Environment Setup
+
+1. Copy the environment template:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
+```
+
+2. Update the `.env` file with your PostgreSQL connection string:
+```bash
+DATABASE_URI=postgresql://username:password@localhost:5432/modhub
+```
+
+### Installation and Development
+
+1. Install dependencies:
+```bash
+bun install
+```
+
+2. Run database migrations:
+```bash
+bun run db:migrate
+```
+
+3. Start the development server:
+```bash
+bun run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Database
+
+This project uses PostgreSQL with Drizzle ORM. Key commands:
+
+- `bun run db:generate` - Generate migrations from schema changes
+- `bun run db:migrate` - Apply migrations to database
+- `bun run db:studio` - Open Drizzle Studio for database management
+
+## Recent Changes
+
+### Fixed Issues:
+- ✅ Updated database configuration from SQLite to PostgreSQL
+- ✅ Fixed Next.js 13+ viewport configuration
+- ✅ Removed deprecated Turbopack experimental config
+- ✅ Cleaned up unused files and components
+- ✅ Fixed TypeScript errors in mod data handling
+- ✅ Updated dependencies (removed @libsql/client, added postgres)
+- ✅ Application now builds and runs successfully
+
+### Architecture:
+- Frontend: Next.js 15 with React 19
+- Backend: tRPC for type-safe API
+- Database: PostgreSQL with Drizzle ORM
+- Styling: Tailwind CSS
+- Package Manager: Bun
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

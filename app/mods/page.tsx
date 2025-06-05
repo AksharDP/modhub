@@ -1,44 +1,72 @@
 "use client";
 
 import NavBar from "@/app/components/nav";
-import Card from "@/app/components/card"; // Assuming Card component path
-import mockMods from "@/app/MockModData.json"; // Import the JSON data
-
-// Define the Mod interface based on CardProps and available JSON data
-interface Mod {
-    modId: number;
-    gameName: string; // This will be used in the URL, so it should be URL-friendly
-    title: string;
-    description: string;
-    imageUrl: string;
-    author: string;
-    authorPFP: string;
-    category: string;
-    likes: number; // Corresponds to rating * some factor, or a default
-    downloads: number;
-    size: string; // Placeholder, as not in JSON
-    uploaded: string | number | Date; // Corresponds to lastUpdated or a fixed date
-    lastUpdated: string | number | Date;
-}
-
-// Process mockMods to fit the Mod interface
-const modsData: Mod[] = mockMods.map((mod) => ({
-    modId: mod.id,
-    gameName: "genericgame", // Placeholder, as not in JSON, or derive from tags/name
-    title: mod.name,
-    description: mod.description,
-    imageUrl: mod.imageUrl,
-    author: mod.author,
-    authorPFP: "https://placehold.co/30x30/png", // Placeholder, as not in JSON
-    category: mod.tags[0] || "General", // Use first tag as category or a default
-    likes: Math.round(mod.rating * 100), // Example conversion from rating
-    downloads: mod.downloads,
-    size: "N/A", // Placeholder, as not in JSON
-    uploaded: new Date(mod.lastUpdated), // Assuming lastUpdated can serve as uploaded for now
-    lastUpdated: new Date(mod.lastUpdated),
-}));
+import Card from "@/app/components/card";
+import DatabaseError from "@/app/components/DatabaseError";
+import { trpc } from "@/app/lib/trpc";
 
 export default function ModsPage() {
+    const { data, isLoading, error } = trpc.mod.getMods.useQuery({
+        limit: 20,
+        offset: 0,
+        sortBy: 'created',
+        sortOrder: 'desc'
+    });
+
+    if (isLoading) {
+        return (
+            <div className="bg-gray-900 min-h-screen flex flex-col">
+                <NavBar />
+                <main className="flex-grow container mx-auto px-4 py-8">
+                    <header className="mb-8 text-center">
+                        <h1 className="text-4xl font-bold text-purple-400">
+                            Recent Mods
+                        </h1>
+                        <p className="text-gray-400 mt-2">
+                            Explore the latest additions to our modding community.
+                        </p>
+                    </header>
+                    <div className="text-center">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                        <p className="mt-2 text-gray-400">Loading mods...</p>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
+    if (error) {
+        // Check if it's a database connection error
+        const isDatabaseError = error.message.includes('DATABASE_URI') || 
+                               error.message.includes('Failed query') || 
+                               error.message.includes('connection') ||
+                               error.message.includes('does not exist');
+        
+        if (isDatabaseError) {
+            return <DatabaseError error={error.message} />;
+        }
+
+        // Generic error fallback
+        return (
+            <div className="bg-gray-900 min-h-screen flex flex-col">
+                <NavBar />
+                <main className="flex-grow container mx-auto px-4 py-8">
+                    <header className="mb-8 text-center">
+                        <h1 className="text-4xl font-bold text-purple-400">
+                            Recent Mods
+                        </h1>
+                        <p className="text-gray-400 mt-2">
+                            Explore the latest additions to our modding community.
+                        </p>
+                    </header>
+                    <div className="text-center text-red-400">
+                        <p>Error loading mods: {error.message}</p>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-gray-900 min-h-screen flex flex-col">
             <NavBar />
@@ -50,25 +78,24 @@ export default function ModsPage() {
                     <p className="text-gray-400 mt-2">
                         Explore the latest additions to our modding community.
                     </p>
-                </header>
-                {modsData.length > 0 ? (
+                </header>                {data?.mods && data.mods.length > 0 ? (
                     <div className="flex flex-wrap justify-center">
-                        {modsData.map((mod) => (
+                        {data.mods.map((mod) => (
                             <Card
-                                key={mod.modId}
-                                modId={mod.modId}
-                                gameName={mod.gameName}
+                                key={mod.id}
+                                modId={mod.id}
+                                gameName={mod.game?.slug || 'unknown'}
                                 title={mod.title}
                                 description={mod.description}
-                                imageUrl={mod.imageUrl}
-                                author={mod.author}
-                                authorPFP={mod.authorPFP}
-                                category={mod.category}
-                                likes={mod.likes}
-                                downloads={mod.downloads}
-                                size={mod.size}
-                                uploaded={mod.uploaded}
-                                lastUpdated={mod.lastUpdated}
+                                imageUrl={mod.imageUrl || "https://placehold.co/300x200/4F46E5/FFFFFF/png?text=Mod"}
+                                author={mod.author?.username || 'Unknown'}
+                                authorPFP={mod.author?.profilePicture || "https://placehold.co/30x30/7C3AED/FFFFFF/png?text=U"}
+                                category={mod.category?.name || 'Other'}
+                                likes={mod.stats?.likes || 0}
+                                downloads={mod.stats?.totalDownloads || 0}
+                                size={mod.size || "N/A"}
+                                uploaded={mod.createdAt || ''}
+                                lastUpdated={mod.updatedAt || ''}
                             />
                         ))}
                     </div>

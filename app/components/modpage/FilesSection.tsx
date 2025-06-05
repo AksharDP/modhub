@@ -53,7 +53,6 @@ const FilesSection: React.FC<FilesSectionProps> = ({ mod, formatDate }) => {
                         <div
                             key={file.id}
                             className={`rounded-[5px] shadow-sm hover:shadow-md transition-shadow duration-150 ease-in-out p-5 ${
-                                // Base padding p-5
                                 file.isLatest
                                     ? "bg-gray-700 border-l-4 border-purple-500"
                                     : "bg-gray-750"
