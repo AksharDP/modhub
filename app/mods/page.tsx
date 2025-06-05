@@ -1,3 +1,5 @@
+"use client";
+
 import NavBar from "@/app/components/nav";
 import Card from "@/app/components/card"; // Assuming Card component path
 import mockMods from "@/app/MockModData.json"; // Import the JSON data

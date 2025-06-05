@@ -1,3 +1,5 @@
+"use client";
+
 import Card from "./components/card";
 import NavBar from "./components/nav";
 import mockMods from "./MockModData.json";
