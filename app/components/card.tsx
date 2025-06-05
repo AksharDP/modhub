@@ -70,7 +70,7 @@ const Card = memo(function Card({
                     src={imageUrl}
                     alt={title}
                     fill
-                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
+                    className="object-cover w-full h-full"
                     sizes="320px"
                     priority={false}
                 />
