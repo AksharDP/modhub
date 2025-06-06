@@ -48,6 +48,32 @@ This project uses PostgreSQL with Drizzle ORM. Key commands:
 - `bun run db:migrate` - Apply migrations to database
 - `bun run db:studio` - Open Drizzle Studio for database management
 
+## Admin Panel
+
+The application includes a comprehensive admin panel for managing users and mods:
+
+### Features:
+- **User Management**: View, edit roles, and manage user accounts
+- **Mod Management**: Control mod status, featured status, and moderation
+- **Dashboard Statistics**: Overview of platform metrics and health
+- **Role-Based Access Control**: Three user roles (admin, supporter, user)
+
+### Admin Scripts:
+```bash
+# List all users and their roles
+bun run admin:list
+
+# Promote a user to admin role
+bun run admin:make <username>
+```
+
+### Access:
+- Only users with "admin" role can access the admin panel at `/admin`
+- Admin link appears in navigation for admin users
+- Comprehensive security and validation throughout
+
+For detailed admin documentation, see [ADMIN.md](./ADMIN.md)
+
 ## Recent Changes
 
 ### Fixed Issues:

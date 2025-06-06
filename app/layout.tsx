@@ -2,19 +2,21 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { TRPCProvider } from "./components/TRPCProvider";
+import NavBar from "./components/nav";
+import { getCurrentSession } from "./lib/auth";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
     subsets: ["latin"],
-    display: "swap", // Optimize font loading
+    display: "swap",
     preload: true,
 });
 
 const geistMono = Geist_Mono({
     variable: "--font-geist-mono",
     subsets: ["latin"],
-    display: "swap", // Optimize font loading
-    preload: false, // Only preload primary font
+    display: "swap",
+    preload: false,
 });
 
 export const metadata: Metadata = {
@@ -31,19 +33,20 @@ export const metadata: Metadata = {
     },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const { user } = await getCurrentSession();
+
     return (
         <html lang="en">
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
-                <TRPCProvider>
-                    {children}
-                </TRPCProvider>
+                <NavBar user={user} />
+                <TRPCProvider>{children}</TRPCProvider>
             </body>
         </html>
     );

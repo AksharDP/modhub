@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import NavBar from "./components/nav";
 import PerformanceMonitor from "./components/PerformanceMonitor";
 import DatabaseError from "./components/DatabaseError";
 import { trpc } from "./lib/trpc";
@@ -51,20 +50,16 @@ export default function Home() {
         isLoading,
         error,
     } = trpc.mod.getFeaturedMods.useQuery({ limit: 4 });
-
     if (isLoading) {
         return (
-            <>
-                <NavBar />
-                <main className="p-8 text-white">
-                    <div className="text-center">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
-                        <p className="mt-2 text-gray-400">
-                            Loading featured mods...
-                        </p>
-                    </div>
-                </main>
-            </>
+            <main className="p-8 text-white">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                    <p className="mt-2 text-gray-400">
+                        Loading featured mods...
+                    </p>
+                </div>
+            </main>
         );
     }
     if (error) {
@@ -77,22 +72,17 @@ export default function Home() {
         if (isDatabaseError) {
             return <DatabaseError error={error.message} />;
         }
-
         return (
-            <>
-                <NavBar />
-                <main className="p-8 text-white">
-                    <div className="text-center text-red-400">
-                        <p>Error loading featured mods: {error.message}</p>
-                    </div>
-                </main>
-            </>
+            <main className="p-8 text-white">
+                <div className="text-center text-red-400">
+                    <p>Error loading featured mods: {error.message}</p>
+                </div>
+            </main>
         );
     }
     return (
         <>
             <PerformanceMonitor pageName="Home" />
-            <NavBar />
             <main>
                 <div className="p-8 text-white">
                     <h1 className="text-4xl font-bold text-center mb-8 text-purple-400">

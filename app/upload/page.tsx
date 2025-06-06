@@ -3,19 +3,16 @@
 import React, {
     useState,
     ChangeEvent,
-    // FormEvent, // No longer directly used for <Form action>
     useEffect,
     useRef,
     useCallback,
 } from "react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
-import NavBar from "../components/nav";
-// Update import from 'react-dom' to 'react' for useActionState
-import { useFormStatus } from "react-dom"; 
-import { useActionState } from "react"; // Import useActionState from React
-import Form from "next/form"; // Import Next.js Form
-import { uploadModAction, UploadState } from "./actions"; // Import server action
+import { useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import Form from "next/form";
+import { uploadModAction, UploadState } from "./actions";
 
 const MAX_IMAGES = 10;
 
@@ -25,7 +22,6 @@ interface ImagePreview {
     url: string;
 }
 
-// Define ImagePreviewItem component
 interface ImagePreviewItemProps {
     image: ImagePreview;
     index: number;
@@ -47,9 +43,8 @@ const ImagePreviewItem = React.memo<ImagePreviewItemProps>(
                     alt={`Preview ${image.file.name}`}
                     fill
                     className="object-cover"
-                    priority={index < 3} // Prioritize loading for first few images
+                    priority={index < 3}
                 />
-                {/* Remove Button */}
                 <button
                     type="button"
                     onClick={() => onRemove(index)}
@@ -71,7 +66,6 @@ const ImagePreviewItem = React.memo<ImagePreviewItemProps>(
                         />
                     </svg>
                 </button>
-                {/* Reorder Buttons */}
                 <div className="absolute bottom-1 left-1 right-1 flex justify-between z-10 opacity-75 group-hover:opacity-100 transition-opacity">
                     <button
                         type="button"
@@ -152,9 +146,8 @@ const UploadPage = () => {
     const [selectedImages, setSelectedImages] = useState<ImagePreview[]>([]);
     const [imageError, setImageError] = useState<string>("");
     const selectedImagesRef = useRef(selectedImages);
-    const fileInputRef = useRef<HTMLInputElement>(null); // Ref for the file input
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Rename useFormState to useActionState
     const [state, formAction] = useActionState(uploadModAction, initialState);
 
     useEffect(() => {
@@ -163,8 +156,7 @@ const UploadPage = () => {
 
     useEffect(() => {
         if (state.success && state.message) {
-            alert(state.message); // Or use a more sophisticated notification system
-            // Optionally reset form fields here
+            alert(state.message);
             setTitle("");
             setVersion("");
             setTags("");
@@ -174,15 +166,12 @@ const UploadPage = () => {
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
-            // Reset form state if needed, though useFormState might handle this if action is re-triggered
         } else if (!state.success && state.message && !state.errors?.general) {
-             // General message not tied to specific fields, but not a field validation error message
-            if(Object.keys(state.errors || {}).length === 0) {
+            if (Object.keys(state.errors || {}).length === 0) {
                 alert(`Error: ${state.message}`);
             }
         }
     }, [state]);
-
 
     const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
         setImageError("");
@@ -201,7 +190,7 @@ const UploadPage = () => {
         const imageObjects = newImages
             .filter((file) => file.type.startsWith("image/"))
             .map((file) => ({
-                id: crypto.randomUUID(), // Assign a unique ID
+                id: crypto.randomUUID(),
                 file,
                 url: URL.createObjectURL(file),
             }));
@@ -213,7 +202,6 @@ const UploadPage = () => {
         }
 
         setSelectedImages((prevImages) => [...prevImages, ...imageObjects]);
-        // Clear the input value to allow selecting the same file again or different files in subsequent actions
         if (event.target) {
             event.target.value = "";
         }
@@ -225,7 +213,9 @@ const UploadPage = () => {
             if (imageToRemove) {
                 URL.revokeObjectURL(imageToRemove.url);
             }
-            const updatedImages = prevImages.filter((_, index) => index !== indexToRemove);
+            const updatedImages = prevImages.filter(
+                (_, index) => index !== indexToRemove
+            );
             return updatedImages;
         });
         setImageError("");
@@ -237,65 +227,57 @@ const UploadPage = () => {
                 URL.revokeObjectURL(image.url)
             );
         };
-    }, []); // Empty dependency array ensures this runs only on mount and unmount
-
-    const moveImage = useCallback((currentIndex: number, direction: "left" | "right") => {
-        setSelectedImages((prevImages) => {
-            const newImages = [...prevImages];
-            const targetIndex = direction === "left" ? currentIndex - 1 : currentIndex + 1;
-
-            if (targetIndex < 0 || targetIndex >= newImages.length) {
-                return newImages;
-            }
-
-            [newImages[currentIndex], newImages[targetIndex]] = [newImages[targetIndex], newImages[currentIndex]];
-            return newImages;
-        });
     }, []);
 
-    // Removed old handleSubmit function
+    const moveImage = useCallback(
+        (currentIndex: number, direction: "left" | "right") => {
+            setSelectedImages((prevImages) => {
+                const newImages = [...prevImages];
+                const targetIndex =
+                    direction === "left" ? currentIndex - 1 : currentIndex + 1;
+
+                if (targetIndex < 0 || targetIndex >= newImages.length) {
+                    return newImages;
+                }
+
+                [newImages[currentIndex], newImages[targetIndex]] = [
+                    newImages[targetIndex],
+                    newImages[currentIndex],
+                ];
+                return newImages;
+            });
+        },
+        []
+    );
+
 
     const handleFormSubmitAttempt = () => {
-        // Populate the actual file input with the files from selectedImages state.
         if (fileInputRef.current) {
             const dataTransfer = new DataTransfer();
             if (selectedImages.length > 0) {
-                selectedImages.forEach(imgPreview => {
+                selectedImages.forEach((imgPreview) => {
                     dataTransfer.items.add(imgPreview.file);
                 });
                 fileInputRef.current.files = dataTransfer.files;
             } else {
-                // If no images are selected, ensure the FileList is truly empty.
                 fileInputRef.current.files = new DataTransfer().files;
             }
         }
-        // Client-side validation alerts removed. Rely on server validation feedback.
-        return true; // Indicate client-side preparation is done
+        return true;
     };
-
-
     return (
-        <>
-            <NavBar />
+        <div>
             <main className="container mx-auto p-4 pt-20 sm:pt-24">
                 {" "}
                 <h1 className="text-2xl font-bold mb-6 text-center text-foreground">
                     Upload Mod
                 </h1>
-                {/* Use Next.js Form component and pass the server action */}
                 <Form
                     action={formAction}
                     onSubmit={() => {
-                        console.log("Client: Form onSubmit triggered. Calling handleFormSubmitAttempt."); // Diagnostic log
-                        // This onSubmit is for client-side tasks before server action.
-                        // The actual submission to server action is handled by <Form action={...}>.
-                        // We call handleFormSubmitAttempt to populate file input and do basic validation.
-                        // If basic client validation fails, we can prevent form submission here,
-                        // though `next/form` might not support `e.preventDefault()` in the same way.
-                        // For now, `handleFormSubmitAttempt` populates files.
-                        // The alerts for title/description will show, but form might still submit.
-                        // Proper way with server actions is to rely on server validation primarily.
-                        // The `handleFormSubmitAttempt` mainly serves to prepare the file input.
+                        console.log(
+                            "Client: Form onSubmit triggered. Calling handleFormSubmitAttempt."
+                        );
                         handleFormSubmitAttempt();
                     }}
                     className="space-y-6 bg-card-bg p-6 shadow-md rounded-card max-w-3xl mx-auto"
@@ -309,16 +291,19 @@ const UploadPage = () => {
                         </label>
                         <input
                             type="text"
-                            name="title" // Add name attribute
+                            name="title"
                             id="title"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             className="shadow-sm block w-full sm:text-sm border border-transparent focus:ring-primary focus:border-primary rounded-global p-2 bg-gray-700 text-input-foreground"
                             required
                         />
-                        {state.errors?.title && <p className="text-red-500 text-sm mt-1">{state.errors.title.join(", ")}</p>}
+                        {state.errors?.title && (
+                            <p className="text-red-500 text-sm mt-1">
+                                {state.errors.title.join(", ")}
+                            </p>
+                        )}
                     </div>
-
                     <div>
                         <label
                             htmlFor="version"
@@ -328,7 +313,7 @@ const UploadPage = () => {
                         </label>
                         <input
                             type="text"
-                            name="version" // Add name attribute
+                            name="version"
                             id="version"
                             value={version}
                             onChange={(e) => setVersion(e.target.value)}
@@ -336,7 +321,6 @@ const UploadPage = () => {
                             placeholder="e.g., 1.0.0"
                         />
                     </div>
-
                     <div>
                         <label
                             htmlFor="tags"
@@ -346,7 +330,7 @@ const UploadPage = () => {
                         </label>
                         <input
                             type="text"
-                            name="tags" // Add name attribute
+                            name="tags"
                             id="tags"
                             value={tags}
                             onChange={(e) => setTags(e.target.value)}
@@ -357,7 +341,6 @@ const UploadPage = () => {
                             Comma-separated values.
                         </p>
                     </div>
-
                     <div className="mb-4">
                         <label
                             htmlFor="description"
@@ -392,7 +375,7 @@ const UploadPage = () => {
                         {activeTab === "edit" ? (
                             <textarea
                                 id="description"
-                                name="description" // Add name attribute
+                                name="description"
                                 rows={10}
                                 className="shadow-sm focus:ring-primary focus:border-primary block w-full sm:text-sm border border-transparent rounded-global p-2 bg-gray-700 text-input-foreground"
                                 value={description}
@@ -408,9 +391,12 @@ const UploadPage = () => {
                                 </ReactMarkdown>
                             </div>
                         )}
-                        {state.errors?.description && <p className="text-red-500 text-sm mt-1">{state.errors.description.join(", ")}</p>}
+                        {state.errors?.description && (
+                            <p className="text-red-500 text-sm mt-1">
+                                {state.errors.description.join(", ")}
+                            </p>
+                        )}
                     </div>
-
                     <div className="mb-4">
                         <label
                             htmlFor="image-upload"
@@ -420,12 +406,12 @@ const UploadPage = () => {
                         </label>
                         <input
                             id="image-upload"
-                            name="modImages" // Add name attribute for server action
+                            name="modImages"
                             type="file"
                             multiple
                             accept="image/jpeg,image/png,image/gif"
                             onChange={handleImageChange}
-                            ref={fileInputRef} // Assign ref
+                            ref={fileInputRef}
                             className="block w-full text-sm text-gray-500 rounded-global
                        file:mr-4 file:py-2 file:px-4
                        file:rounded-global file:border-0
@@ -438,8 +424,11 @@ const UploadPage = () => {
                                 {imageError}
                             </p>
                         )}
-                        {state.errors?.images && <p className="text-red-500 text-sm mt-1">{state.errors.images.join(", ")}</p>}
-
+                        {state.errors?.images && (
+                            <p className="text-red-500 text-sm mt-1">
+                                {state.errors.images.join(", ")}
+                            </p>
+                        )}
 
                         {selectedImages.length > 0 && (
                             <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -449,29 +438,39 @@ const UploadPage = () => {
                                         image={image}
                                         index={index}
                                         isFirst={index === 0}
-                                        isLast={index === selectedImages.length - 1}
+                                        isLast={
+                                            index === selectedImages.length - 1
+                                        }
                                         onRemove={removeImage}
                                         onMove={moveImage}
                                     />
                                 ))}
                             </div>
                         )}
-                    </div>
-                    {state.errors?.general && <p className="text-red-500 text-sm mt-1">{state.errors.general.join(", ")}</p>}
-                    {!state.success && state.message && Object.keys(state.errors || {}).length > 0 && (
-                        <p className="text-red-500 text-sm mt-1">Please correct the errors above.</p>
+                    </div>{" "}
+                    {state.errors?.general && (
+                        <p className="text-red-500 text-sm mt-1">
+                            {state.errors.general.join(", ")}
+                        </p>
                     )}
-                     {state.success && state.message && (
-                        <p className="text-green-500 text-sm mt-1">{state.message}</p>
+                    {!state.success &&
+                        state.message &&
+                        Object.keys(state.errors || {}).length > 0 && (
+                            <p className="text-red-500 text-sm mt-1">
+                                Please correct the errors above.
+                            </p>
+                        )}
+                    {state.success && state.message && (
+                        <p className="text-green-500 text-sm mt-1">
+                            {state.message}
+                        </p>
                     )}
-
-
                     <div>
                         <SubmitButton />
                     </div>
                 </Form>
-            </main>{" "}
-        </>
+            </main>
+        </div>
     );
 };
 

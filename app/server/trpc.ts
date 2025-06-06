@@ -1,5 +1,5 @@
-import { initTRPC } from '@trpc/server';
-import { db } from '../db';
+import { initTRPC } from "@trpc/server";
+import { db } from "../db";
 
 /**
  * Initialization of tRPC backend
@@ -18,9 +18,9 @@ export const publicProcedure = t.procedure;
  * Create context for tRPC (can include user session, database, etc.)
  */
 export function createTRPCContext() {
-  return {
-    db,
-  };
+    return {
+        db,
+    };
 }
 
 export type Context = ReturnType<typeof createTRPCContext>;
