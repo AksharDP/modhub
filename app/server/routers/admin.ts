@@ -38,6 +38,45 @@ const updateModStatusInput = z.object({
     isFeatured: z.boolean().optional(),
 });
 
+// Game management schemas
+const formFieldSchema = z.object({
+    id: z.string(),
+    type: z.enum(['text', 'textarea', 'select', 'checkbox', 'file', 'static-text']),
+    label: z.string(),
+    placeholder: z.string().optional(),
+    required: z.boolean(),
+    options: z.array(z.string()).optional(),
+    content: z.string().optional(),
+    color: z.string().optional(),
+    order: z.number(),
+});
+
+const createGameInput = z.object({
+    name: z.string().min(1, "Game name is required"),
+    slug: z.string().min(1, "Game slug is required"),
+    description: z.string().optional(),
+    imageUrl: z.string().url("Must be a valid URL").optional(),
+    visibleToUsers: z.boolean().default(true),
+    visibleToSupporters: z.boolean().default(true),
+    formSchema: z.array(formFieldSchema).default([]),
+});
+
+const updateGameInput = z.object({
+    id: z.number().int().positive(),
+    name: z.string().min(1, "Game name is required").optional(),
+    slug: z.string().min(1, "Game slug is required").optional(),
+    description: z.string().optional(),
+    imageUrl: z.string().url("Must be a valid URL").optional(),
+    isActive: z.boolean().optional(),
+    visibleToUsers: z.boolean().optional(),
+    visibleToSupporters: z.boolean().optional(),
+    formSchema: z.array(formFieldSchema).optional(),
+});
+
+const deleteGameInput = z.object({
+    gameId: z.number().int().positive(),
+});
+
 export const adminRouter = router({
     getDashboardStats: publicProcedure.query(async ({ ctx }) => {
         await requireAdmin();
@@ -348,9 +387,7 @@ export const adminRouter = router({
             }
 
             return updatedMod;
-        }),
-
-    deleteMod: publicProcedure
+        }),    deleteMod: publicProcedure
         .input(
             z.object({
                 modId: z.number().int().positive(),
@@ -373,4 +410,107 @@ export const adminRouter = router({
 
             return deletedMod;
         }),
+
+        // Game Management Procedures
+        getGames: publicProcedure.query(async ({ ctx }) => {
+            await requireAdmin();
+
+            const gamesList = await ctx.db
+                .select({
+                    id: games.id,
+                    name: games.name,
+                    slug: games.slug,
+                    description: games.description,
+                    imageUrl: games.imageUrl,
+                    isActive: games.isActive,
+                    visibleToUsers: games.visibleToUsers,
+                    visibleToSupporters: games.visibleToSupporters,
+                    formSchema: games.formSchema,
+                    createdAt: games.createdAt,
+                    updatedAt: games.updatedAt,
+                })
+                .from(games)
+                .orderBy(desc(games.name));
+
+            return gamesList;
+        }),
+
+        createGame: publicProcedure
+            .input(createGameInput)
+            .mutation(async ({ ctx, input }) => {
+                await requireAdmin();
+
+                const [newGame] = await ctx.db
+                    .insert(games)
+                    .values({
+                        name: input.name,
+                        slug: input.slug,
+                        description: input.description,
+                        imageUrl: input.imageUrl,
+                        visibleToUsers: input.visibleToUsers,
+                        visibleToSupporters: input.visibleToSupporters,
+                        formSchema: input.formSchema,
+                    })
+                    .returning();
+
+                return newGame;
+            }),
+
+        updateGame: publicProcedure
+            .input(updateGameInput)
+            .mutation(async ({ ctx, input }) => {
+                await requireAdmin();
+
+                const { id, ...updateData } = input;
+                const [updatedGame] = await ctx.db
+                    .update(games)
+                    .set({
+                        ...updateData,
+                        updatedAt: new Date(),
+                    })
+                    .where(eq(games.id, id))
+                    .returning();
+
+                if (!updatedGame) {
+                    throw new TRPCError({
+                        code: "NOT_FOUND",
+                        message: "Game not found",
+                    });
+                }
+
+                return updatedGame;
+            }),
+
+        deleteGame: publicProcedure
+            .input(deleteGameInput)
+            .mutation(async ({ ctx, input }) => {
+                await requireAdmin();
+
+                // Check if any mods are using this game
+                const [modCount] = await ctx.db
+                    .select({ count: count() })
+                    .from(mods)
+                    .where(eq(mods.gameId, input.gameId));
+
+                if (modCount.count > 0) {
+                    throw new TRPCError({
+                        code: "CONFLICT",
+                        message: `Cannot delete game. ${modCount.count} mod(s) are using this game.`,
+                    });
+                }
+
+                const [deletedGame] = await ctx.db
+                    .delete(games)
+                    .where(eq(games.id, input.gameId))
+                    .returning({ id: games.id, name: games.name });
+
+                if (!deletedGame) {
+                    throw new TRPCError({
+                        code: "NOT_FOUND",
+                        message: "Game not found",
+                    });
+                }
+
+                return deletedGame;
+            }),
 });

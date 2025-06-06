@@ -149,6 +149,11 @@ The ModHub application uses:
 - **Output**: Created mod
 - **Note**: Creates mod, mod stats, and mod tags in transaction
 
+#### `game.getPublicGames`
+- **Input**: None
+- **Output**: List of active games, each with `id`, `name`, `slug`, `description`, `imageUrl`, and `modCount`.
+- **Sorting**: Game name (ascending)
+
 ## Setup Instructions
 
 ### 1. Install Dependencies

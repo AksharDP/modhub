@@ -8,7 +8,21 @@ import {
     boolean,
     timestamp,
     pgEnum,
+    json,
 } from "drizzle-orm/pg-core";
+
+// Form field interface for game form schemas
+export interface FormField {
+    id: string;
+    type: 'text' | 'textarea' | 'select' | 'checkbox' | 'file' | 'static-text';
+    label: string;
+    placeholder?: string;
+    required: boolean;
+    options?: string[];
+    content?: string;
+    color?: string;
+    order: number;
+}
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "user", "supporter"]);
 export const userTable = pgTable(
@@ -50,6 +64,9 @@ export const games = pgTable(
         description: text("description"),
         imageUrl: text("image_url"),
         isActive: boolean("is_active").default(true),
+        visibleToUsers: boolean("visible_to_users").default(true),
+        visibleToSupporters: boolean("visible_to_supporters").default(true),
+        formSchema: json("form_schema").$type<FormField[]>().default([]),
         createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
         updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
     },

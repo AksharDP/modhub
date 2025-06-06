@@ -4,9 +4,10 @@ import { useState } from "react";
 import StatsOverview from "./StatsOverview";
 import UserManagement from "./UserManagement";
 import ModManagement from "./ModManagement";
+import GamesManagement from "./GamesManagement";
 
 export default function AdminDashboard() {
-    const [activeTab, setActiveTab] = useState<"overview" | "users" | "mods">(
+    const [activeTab, setActiveTab] = useState<"overview" | "users" | "mods" | "games">(
         "overview"
     );
 
@@ -14,6 +15,7 @@ export default function AdminDashboard() {
         { id: "overview" as const, label: "Overview", icon: "📊" },
         { id: "users" as const, label: "User Management", icon: "👥" },
         { id: "mods" as const, label: "Mod Management", icon: "🎮" },
+        { id: "games" as const, label: "Game Management", icon: "🎯" },
     ];
 
     return (
@@ -38,12 +40,11 @@ export default function AdminDashboard() {
                         </button>
                     ))}
                 </nav>
-            </div>
-
-            <div className="mt-6">
+            </div>            <div className="mt-6">
                 {activeTab === "overview" && <StatsOverview />}
                 {activeTab === "users" && <UserManagement />}
                 {activeTab === "mods" && <ModManagement />}
+                {activeTab === "games" && <GamesManagement />}
             </div>
         </div>
     );
