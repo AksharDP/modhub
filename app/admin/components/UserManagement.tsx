@@ -225,7 +225,7 @@ export default function UserManagement() {
                                                     user.role.slice(1)}
                                             </span>
                                         )}
-                                    </td>{" "}
+                                    </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                                         {user.createdAt
                                             ? new Date(
