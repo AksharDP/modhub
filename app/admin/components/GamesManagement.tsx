@@ -137,13 +137,13 @@ export default function GamesManagement() {
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => handleEditGame(game)}
-                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition-colors duration-200"
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition-colors duration-200 cursor-pointer"
                                 >
                                     Edit
                                 </button>
                                 <button
                                     onClick={() => handleDeleteGame(game.id)}
-                                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded transition-colors duration-200"
+                                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded transition-colors duration-200 cursor-pointer"
                                     disabled={deleteGameMutation.isPending}
                                 >
                                     {deleteGameMutation.isPending ? "..." : "Delete"}

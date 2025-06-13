@@ -38,7 +38,7 @@ const FieldEditor: React.FC<{
                         type="button"
                         onClick={onMoveUp}
                         disabled={!canMoveUp}
-                        className="text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs p-1"
+                        className="text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs p-1 cursor-pointer"
                         title="Move up"
                     >
                         ↑
@@ -47,7 +47,7 @@ const FieldEditor: React.FC<{
                         type="button"
                         onClick={onMoveDown}
                         disabled={!canMoveDown}
-                        className="text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs p-1"
+                        className="text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-xs p-1 cursor-pointer"
                         title="Move down"
                     >
                         ↓
@@ -55,7 +55,7 @@ const FieldEditor: React.FC<{
                     <button
                         type="button"
                         onClick={onRemove}
-                        className="text-red-400 hover:text-red-300 text-xs px-2 py-1 bg-red-900/20 rounded"
+                        className="text-red-400 hover:text-red-300 text-xs px-2 py-1 bg-red-900/20 rounded cursor-pointer"
                     >
                         Remove
                     </button>
@@ -192,42 +192,42 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                 <button
                     type="button"
                     onClick={() => addField('text')}
-                    className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                    className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors cursor-pointer"
                 >
                     + Text Input
                 </button>
                 <button
                     type="button"
                     onClick={() => addField('textarea')}
-                    className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+                    className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors cursor-pointer"
                 >
                     + Text Area
                 </button>
                 <button
                     type="button"
                     onClick={() => addField('select')}
-                    className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors"
+                    className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors cursor-pointer"
                 >
                     + Dropdown
                 </button>
                 <button
                     type="button"
                     onClick={() => addField('checkbox')}
-                    className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors"
+                    className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors cursor-pointer"
                 >
                     + Checkbox
                 </button>
                 <button
                     type="button"
                     onClick={() => addField('file')}
-                    className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors"
+                    className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors cursor-pointer"
                 >
                     + File Upload
                 </button>
                 <button
                     type="button"
                     onClick={() => addField('static-text')}
-                    className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+                    className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors cursor-pointer"
                 >
                     + Static Text
                 </button>
