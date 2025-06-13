@@ -132,11 +132,9 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
         { id: 'basic' as const, label: 'Basic Info', icon: '📝' },
         { id: 'visibility' as const, label: 'Visibility', icon: '👁️' },
         { id: 'form' as const, label: 'Upload Form', icon: '📋' },
-    ];
-
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 text-white rounded-lg shadow-xl w-full max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+    ];    return (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-start justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-gray-800 text-white rounded-lg shadow-xl w-full max-w-6xl my-4 flex flex-col">
                 {/* Header */}
                 <div className="flex justify-between items-center p-6 border-b border-gray-700">
                     <h2 className="text-2xl font-bold text-white">
@@ -169,11 +167,9 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                             </button>
                         ))}
                     </nav>
-                </div>
-
-                <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+                </div>                <form onSubmit={handleSubmit} className="flex flex-col">
                     {/* Tab Content */}
-                    <div className="flex-1 overflow-y-auto p-6">
+                    <div className="p-6">
                         {activeTab === 'basic' && (
                             <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

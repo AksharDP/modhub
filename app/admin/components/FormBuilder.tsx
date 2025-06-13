@@ -138,6 +138,17 @@ const FieldEditor: React.FC<{
 };
 
 export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
+    // State for preview form values
+    const [previewValues, setPreviewValues] = React.useState<Record<string, string | boolean | File | null>>({});
+    
+    // Handler for updating preview form values
+    const updatePreviewValue = (fieldId: string, value: string | boolean | File | null) => {
+        setPreviewValues(prev => ({ ...prev, [fieldId]: value }));
+    };    // Handler for preview form submission
+    const handlePreviewSubmit = () => {
+        console.log('Preview form submitted with values:', previewValues);
+        alert('This is just a preview! Form submission is not connected to anything.');
+    };
     
     const addField = (type: FormField['type']) => {
         const newField: FormField = {
@@ -234,12 +245,11 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {/* Form Builder UI */}
-                <div className="space-y-4">
+                {/* Form Builder UI */}                <div className="space-y-4">
                     <h4 className="font-semibold text-white text-lg border-b border-gray-700 pb-2">
                         Form Fields Configuration
                     </h4>
-                    <div className="max-h-96 overflow-y-auto pr-2 space-y-3">
+                    <div className="space-y-3">
                         {schema.length === 0 && (
                             <div className="text-center py-8 text-gray-500">
                                 <p className="mb-2">No fields added yet.</p>
@@ -259,14 +269,12 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                             />
                         ))}
                     </div>
-                </div>
-
-                {/* Live Preview */}
+                </div>                {/* Live Preview */}
                 <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
                     <h4 className="font-semibold mb-4 text-white text-lg border-b border-gray-700 pb-2">
                         Live Preview - Upload Form
                     </h4>
-                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                    <div className="space-y-4">
                         {schema.map(field => (
                             <div key={field.id} className="space-y-2">
                                 {field.type === 'text' && (
@@ -277,8 +285,10 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                         <input
                                             type="text"
                                             placeholder={field.placeholder}
-                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white"
-                                            disabled
+                                            value={previewValues[field.id] as string || ''}
+                                            onChange={e => updatePreviewValue(field.id, e.target.value)}
+                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:border-orange-500 focus:outline-none"
+                                            required={field.required}
                                         />
                                     </>
                                 )}
@@ -289,8 +299,10 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                         </label>
                                         <textarea
                                             placeholder={field.placeholder}
-                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 h-24 text-white resize-none"
-                                            disabled
+                                            value={previewValues[field.id] as string || ''}
+                                            onChange={e => updatePreviewValue(field.id, e.target.value)}
+                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 h-24 text-white resize-none focus:border-orange-500 focus:outline-none"
+                                            required={field.required}
                                         />
                                     </>
                                 )}
@@ -299,8 +311,13 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                         <label className="text-sm font-medium text-gray-300 block">
                                             {field.label} {field.required && <span className="text-red-400">*</span>}
                                         </label>
-                                        <select className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white" disabled>
-                                            <option>Select an option...</option>
+                                        <select 
+                                            value={previewValues[field.id] as string || ''}
+                                            onChange={e => updatePreviewValue(field.id, e.target.value)}
+                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:border-orange-500 focus:outline-none"
+                                            required={field.required}
+                                        >
+                                            <option value="">Select an option...</option>
                                             {field.options?.map((option, idx) => (
                                                 <option key={idx} value={option}>{option}</option>
                                             ))}
@@ -311,8 +328,9 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                     <label className="flex items-center space-x-3 cursor-pointer">
                                         <input
                                             type="checkbox"
-                                            className="rounded text-orange-500 bg-gray-700 border-gray-600"
-                                            disabled
+                                            checked={previewValues[field.id] as boolean || false}
+                                            onChange={e => updatePreviewValue(field.id, e.target.checked)}
+                                            className="rounded text-orange-500 bg-gray-700 border-gray-600 focus:ring-orange-500"
                                         />
                                         <span className="text-sm text-gray-300">
                                             {field.label} {field.required && <span className="text-red-400">*</span>}
@@ -324,9 +342,12 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                         <label className="text-sm font-medium text-gray-300 block">
                                             {field.label} {field.required && <span className="text-red-400">*</span>}
                                         </label>
-                                        <div className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-gray-400">
-                                            Choose file...
-                                        </div>
+                                        <input
+                                            type="file"
+                                            onChange={e => updatePreviewValue(field.id, e.target.files?.[0] || null)}
+                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-orange-600 file:text-white hover:file:bg-orange-700 file:cursor-pointer"
+                                            required={field.required}
+                                        />
                                     </>
                                 )}
                                 {field.type === 'static-text' && (
@@ -338,9 +359,24 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                 )}
                             </div>
                         ))}
+                        
                         {schema.length === 0 && (
                             <div className="text-center py-8 text-gray-500">
                                 <p>Add fields to see a preview</p>
+                            </div>
+                        )}
+                          {schema.length > 0 && (
+                            <div className="pt-4 border-t border-gray-700">
+                                <button
+                                    type="button"
+                                    onClick={handlePreviewSubmit}
+                                    className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                                >
+                                    Upload Mod
+                                </button>
+                                <p className="text-xs text-gray-400 mt-2 text-center">
+                                    This is a preview - the upload button is not connected to anything
+                                </p>
                             </div>
                         )}
                     </div>
