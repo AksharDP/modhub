@@ -155,10 +155,9 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                         {tabs.map((tab) => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 cursor-pointer ${
+                                onClick={() => setActiveTab(tab.id)}                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 cursor-pointer ${
                                     activeTab === tab.id
-                                        ? "border-orange-400 text-orange-400"
+                                        ? "border-purple-400 text-purple-400"
                                         : "border-transparent text-gray-400 hover:text-gray-300"
                                 }`}
                             >
@@ -173,28 +172,26 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                         {activeTab === 'basic' && (
                             <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    <div>                                        <label className="block text-sm font-medium text-gray-300 mb-2">
                                             Game Name *
                                         </label>
                                         <input
                                             type="text"
                                             value={name}
                                             onChange={e => handleNameChange(e.target.value)}
-                                            className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:border-orange-500 focus:outline-none"
+                                            className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:border-purple-500 focus:outline-none"
                                             required
                                             placeholder="Enter game name"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    <div>                                        <label className="block text-sm font-medium text-gray-300 mb-2">
                                             URL Slug *
                                         </label>
                                         <input
                                             type="text"
                                             value={slug}
                                             onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                                            className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:border-orange-500 focus:outline-none"
+                                            className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:border-purple-500 focus:outline-none"
                                             required
                                             placeholder="game-slug"
                                         />
@@ -204,29 +201,27 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                                <div>                                    <label className="block text-sm font-medium text-gray-300 mb-2">
                                         Description
                                     </label>
                                     <textarea
                                         value={description}
                                         onChange={e => setDescription(e.target.value)}
-                                        className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:border-orange-500 focus:outline-none h-24 resize-none"
+                                        className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:border-purple-500 focus:outline-none h-24 resize-none"
                                         placeholder="Brief description of the game"
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                                <div>                                    <label className="block text-sm font-medium text-gray-300 mb-2">
                                         Game Image URL
                                     </label>
                                     <input
                                         type="url"
                                         value={imageUrl}
                                         onChange={e => setImageUrl(e.target.value)}
-                                        className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:border-orange-500 focus:outline-none"
+                                        className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:border-purple-500 focus:outline-none"
                                         placeholder="https://example.com/game-image.jpg"
-                                    />                                    {imageUrl && (
+                                    />{imageUrl && (
                                         <div className="mt-3">
                                             <Image
                                                 src={imageUrl}
@@ -243,16 +238,15 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                                 </div>
 
                                 {game && (
-                                    <div>
-                                        <label className="flex items-center space-x-3 cursor-pointer">
+                                    <div>                                        <label className="flex items-center space-x-3 cursor-pointer">
                                             <input
                                                 type="checkbox"
                                                 checked={isActive}
                                                 onChange={e => setIsActive(e.target.checked)}
-                                                className="rounded text-orange-500 bg-gray-700 border-gray-600 focus:ring-orange-500"
+                                                className="rounded text-purple-500 bg-gray-700 border-gray-600 focus:ring-purple-500"
                                             />
                                             <span className="text-gray-300">Game is active</span>
-                                        </label>                                        <p className="text-xs text-gray-400 mt-1">
+                                        </label><p className="text-xs text-gray-400 mt-1">
                                             Inactive games won&apos;t appear in lists or be accessible
                                         </p>
                                     </div>
@@ -265,13 +259,12 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                                 <div className="bg-gray-900 border border-gray-700 rounded-lg p-6">
                                     <h3 className="text-lg font-semibold text-white mb-4">Visibility Settings</h3>
                                     <div className="space-y-4">
-                                        <div>
-                                            <label className="flex items-center space-x-3 cursor-pointer">
+                                        <div>                                            <label className="flex items-center space-x-3 cursor-pointer">
                                                 <input
                                                     type="checkbox"
                                                     checked={visibleToUsers}
                                                     onChange={e => setVisibleToUsers(e.target.checked)}
-                                                    className="rounded text-orange-500 bg-gray-700 border-gray-600 focus:ring-orange-500"
+                                                    className="rounded text-purple-500 bg-gray-700 border-gray-600 focus:ring-purple-500"
                                                 />
                                                 <span className="text-gray-300">Visible to regular users</span>
                                             </label>
@@ -280,13 +273,12 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                                             </p>
                                         </div>
 
-                                        <div>
-                                            <label className="flex items-center space-x-3 cursor-pointer">
+                                        <div>                                            <label className="flex items-center space-x-3 cursor-pointer">
                                                 <input
                                                     type="checkbox"
                                                     checked={visibleToSupporters}
                                                     onChange={e => setVisibleToSupporters(e.target.checked)}
-                                                    className="rounded text-orange-500 bg-gray-700 border-gray-600 focus:ring-orange-500"
+                                                    className="rounded text-purple-500 bg-gray-700 border-gray-600 focus:ring-purple-500"
                                                 />
                                                 <span className="text-gray-300">Visible to supporters</span>
                                             </label>
@@ -320,13 +312,12 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                             <button
                                 type="button"
                                 onClick={onClose}
-                                className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                                className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors cursor-pointer"
                             >
                                 Cancel
-                            </button>
-                            <button
+                            </button>                            <button
                                 type="submit"
-                                className="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors flex items-center"
+                                className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center cursor-pointer"
                                 disabled={createGameMutation.isPending || updateGameMutation.isPending}
                             >
                                 {(createGameMutation.isPending || updateGameMutation.isPending) && (

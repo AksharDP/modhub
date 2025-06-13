@@ -37,10 +37,45 @@ const FieldEditor: React.FC<{
     canMoveUp,
     canMoveDown,
 }) => {
+    // Determine colors based on field type
+    const getFieldColors = (type: FormField['type']) => {
+        switch (type) {
+            case 'text':
+            case 'textarea':
+                return {
+                    border: 'border-blue-500',
+                    text: 'text-blue-400'
+                };
+            case 'checkbox':
+            case 'file':
+                return {
+                    border: 'border-green-500',
+                    text: 'text-green-400'
+                };
+            case 'select':
+                return {
+                    border: 'border-purple-500',
+                    text: 'text-purple-400'
+                };
+            case 'static-text':
+                return {
+                    border: 'border-orange-500',
+                    text: 'text-orange-400'
+                };
+            default:
+                return {
+                    border: 'border-gray-500',
+                    text: 'text-gray-400'
+                };
+        }
+    };
+
+    const colors = getFieldColors(field.type);
+
     return (
-        <div className="bg-gray-700 p-4 rounded-md space-y-3 border-l-4 border-orange-500">
+        <div className={`bg-gray-700 p-4 rounded-md space-y-3 border-l-4 ${colors.border}`}>
             <div className="flex justify-between items-center">
-                <span className="text-sm font-bold uppercase text-orange-400">
+                <span className={`text-sm font-bold uppercase ${colors.text}`}>
                     {field.type}
                 </span>
                 <div className="flex items-center gap-2">
@@ -77,14 +112,13 @@ const FieldEditor: React.FC<{
                     <div>
                         <label className="text-xs text-gray-400 block mb-1">
                             Label / Title
-                        </label>
-                        <input
+                        </label>                        <input
                             type="text"
                             value={field.label}
                             onChange={(e) =>
                                 onChange({ ...field, label: e.target.value })
                             }
-                            className="w-full bg-gray-800 text-sm p-2 rounded border border-gray-600 focus:border-orange-500 focus:outline-none"
+                            className="w-full bg-gray-800 text-sm p-2 rounded border border-gray-600 focus:border-purple-500 focus:outline-none"
                             placeholder="Field label"
                         />
                     </div>
@@ -93,8 +127,7 @@ const FieldEditor: React.FC<{
                         <div>
                             <label className="text-xs text-gray-400 block mb-1">
                                 Placeholder
-                            </label>
-                            <input
+                            </label>                            <input
                                 type="text"
                                 value={field.placeholder || ""}
                                 onChange={(e) =>
@@ -103,7 +136,7 @@ const FieldEditor: React.FC<{
                                         placeholder: e.target.value,
                                     })
                                 }
-                                className="w-full bg-gray-800 text-sm p-2 rounded border border-gray-600 focus:border-orange-500 focus:outline-none"
+                                className="w-full bg-gray-800 text-sm p-2 rounded border border-gray-600 focus:border-purple-500 focus:outline-none"
                                 placeholder="Field placeholder"
                             />
                         </div>
@@ -113,8 +146,7 @@ const FieldEditor: React.FC<{
                         <div>
                             <label className="text-xs text-gray-400 block mb-1">
                                 Options (one per line)
-                            </label>
-                            <textarea
+                            </label>                            <textarea
                                 value={field.options?.join("\n") || ""}
                                 onChange={(e) =>
                                     onChange({
@@ -124,13 +156,11 @@ const FieldEditor: React.FC<{
                                             .filter((opt) => opt.trim()),
                                     })
                                 }
-                                className="w-full bg-gray-800 text-sm p-2 rounded border border-gray-600 focus:border-orange-500 focus:outline-none h-20"
+                                className="w-full bg-gray-800 text-sm p-2 rounded border border-gray-600 focus:border-purple-500 focus:outline-none h-20"
                                 placeholder="Option 1&#10;Option 2&#10;Option 3"
                             />
                         </div>
-                    )}
-
-                    <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                    )}                    <label className="flex items-center space-x-2 text-sm cursor-pointer">
                         <input
                             type="checkbox"
                             checked={field.required}
@@ -140,7 +170,7 @@ const FieldEditor: React.FC<{
                                     required: e.target.checked,
                                 })
                             }
-                            className="rounded text-orange-500 bg-gray-700 border-gray-600 focus:ring-orange-500"
+                            className="rounded text-purple-500 bg-gray-700 border-gray-600 focus:ring-purple-500"
                         />
                         <span className="text-gray-300">Required field</span>
                     </label>
@@ -150,8 +180,7 @@ const FieldEditor: React.FC<{
                     <div>
                         <label className="text-xs text-gray-400 block mb-1">
                             Text Content
-                        </label>
-                        <textarea
+                        </label>                        <textarea
                             value={field.content || field.label}
                             onChange={(e) =>
                                 onChange({
@@ -160,7 +189,7 @@ const FieldEditor: React.FC<{
                                     label: e.target.value,
                                 })
                             }
-                            className="w-full bg-gray-800 text-sm p-2 rounded border border-gray-600 focus:border-orange-500 focus:outline-none h-20"
+                            className="w-full bg-gray-800 text-sm p-2 rounded border border-gray-600 focus:border-purple-500 focus:outline-none h-20"
                             placeholder="Enter text content (supports basic HTML)"
                         />
                     </div>
@@ -263,8 +292,7 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
     };
 
     return (
-        <div className="bg-gray-900 border border-gray-700 p-6 rounded-lg space-y-6">
-            <div className="flex flex-wrap gap-2">
+        <div className="bg-gray-900 border border-gray-700 p-6 rounded-lg space-y-6">            <div className="flex flex-wrap gap-2">
                 <button
                     type="button"
                     onClick={() => addField("text")}
@@ -289,21 +317,21 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                 <button
                     type="button"
                     onClick={() => addField("checkbox")}
-                    className="px-4 py-2 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors cursor-pointer"
+                    className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors cursor-pointer"
                 >
                     + Checkbox
                 </button>
                 <button
                     type="button"
                     onClick={() => addField("file")}
-                    className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors cursor-pointer"
+                    className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors cursor-pointer"
                 >
                     + File Upload
                 </button>
                 <button
                     type="button"
                     onClick={() => addField("static-text")}
-                    className="px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded transition-colors cursor-pointer"
+                    className="px-4 py-2 text-sm bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors cursor-pointer"
                 >
                     + Static Text
                 </button>
@@ -356,8 +384,7 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     *
                                                 </span>
                                             )}
-                                        </label>
-                                        <input
+                                        </label>                                        <input
                                             type="text"
                                             placeholder={field.placeholder}
                                             value={
@@ -371,7 +398,7 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     e.target.value
                                                 )
                                             }
-                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:border-orange-500 focus:outline-none"
+                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:border-purple-500 focus:outline-none"
                                             required={field.required}
                                         />
                                     </>
@@ -385,8 +412,7 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     *
                                                 </span>
                                             )}
-                                        </label>
-                                        <textarea
+                                        </label>                                        <textarea
                                             placeholder={field.placeholder}
                                             value={
                                                 (previewValues[
@@ -399,7 +425,7 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     e.target.value
                                                 )
                                             }
-                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 h-24 text-white resize-none focus:border-orange-500 focus:outline-none"
+                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 h-24 text-white resize-none focus:border-purple-500 focus:outline-none"
                                             required={field.required}
                                         />
                                     </>
@@ -413,8 +439,7 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     *
                                                 </span>
                                             )}
-                                        </label>
-                                        <select
+                                        </label>                                        <select
                                             value={
                                                 (previewValues[
                                                     field.id
@@ -426,7 +451,7 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     e.target.value
                                                 )
                                             }
-                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:border-orange-500 focus:outline-none"
+                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:border-purple-500 focus:outline-none"
                                             required={field.required}
                                         >
                                             <option value="">
@@ -446,8 +471,7 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                     </>
                                 )}
                                 {field.type === "checkbox" && (
-                                    <label className="flex items-center space-x-3 cursor-pointer">
-                                        <input
+                                    <label className="flex items-center space-x-3 cursor-pointer">                                        <input
                                             type="checkbox"
                                             checked={
                                                 (previewValues[
@@ -460,7 +484,7 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     e.target.checked
                                                 )
                                             }
-                                            className="rounded text-orange-500 bg-gray-700 border-gray-600 focus:ring-orange-500"
+                                            className="rounded text-purple-500 bg-gray-700 border-gray-600 focus:ring-purple-500"
                                         />
                                         <span className="text-sm text-gray-300">
                                             {field.label}{" "}
@@ -481,8 +505,7 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     *
                                                 </span>
                                             )}
-                                        </label>
-                                        <input
+                                        </label>                                        <input
                                             type="file"
                                             onChange={(e) =>
                                                 updatePreviewValue(
@@ -490,7 +513,7 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     e.target.files?.[0] || null
                                                 )
                                             }
-                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-orange-600 file:text-white hover:file:bg-orange-700 file:cursor-pointer"
+                                            className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 file:cursor-pointer"
                                             required={field.required}
                                         />
                                     </>
@@ -516,11 +539,10 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                             </div>
                         )}
                         {schema.length > 0 && (
-                            <div className="pt-4 border-t border-gray-700">
-                                <button
+                            <div className="pt-4 border-t border-gray-700">                                <button
                                     type="button"
                                     onClick={handlePreviewSubmit}
-                                    className="w-full bg-orange-600 hover:bg-orange-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 cursor-pointer"
                                 >
                                     Upload Mod
                                 </button>
