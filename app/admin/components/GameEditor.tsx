@@ -309,13 +309,6 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
 
                         {activeTab === 'form' && (
                             <div className="space-y-4">
-                                <div className="bg-gray-900 border border-gray-700 rounded-lg p-4">
-                                    <h3 className="text-lg font-semibold text-white mb-2">Mod Upload Form Builder</h3>
-                                    <p className="text-sm text-gray-400 mb-4">
-                                        Customize the form that users see when uploading mods for this game. 
-                                        Changes are saved when you save the game.
-                                    </p>
-                                </div>
                                 <FormBuilder schema={formSchema} onChange={setFormSchema} />
                             </div>
                         )}
