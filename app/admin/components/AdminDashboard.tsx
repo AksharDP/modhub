@@ -27,7 +27,7 @@ export default function AdminDashboard() {
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`
-                py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200
+                py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 cursor-pointer
                 ${
                     activeTab === tab.id
                         ? "border-orange-400 text-orange-400"
