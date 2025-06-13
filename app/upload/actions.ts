@@ -7,6 +7,7 @@ const ModSchema = z.object({
     version: z.string().optional(),
     tags: z.string().optional(),
     description: z.string().min(1, "Description is required."),
+    game: z.string().min(1, "Game selection is required."),
 });
 
 export interface UploadState {
@@ -15,6 +16,7 @@ export interface UploadState {
         title?: string[];
         description?: string[];
         images?: string[];
+        game?: string[];
         general?: string[];
     };
     success: boolean;
@@ -25,12 +27,12 @@ export async function uploadModAction(
     formData: FormData
 ): Promise<UploadState> {
     console.log("uploadModAction invoked on server.");
-    try {
-        const validatedFields = ModSchema.safeParse({
+    try {        const validatedFields = ModSchema.safeParse({
             title: formData.get("title"),
             version: formData.get("version"),
             tags: formData.get("tags"),
             description: formData.get("description"),
+            game: formData.get("game"),
         });
 
         if (!validatedFields.success) {

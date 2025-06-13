@@ -15,59 +15,58 @@ import * as schema from "./schema";
  * underlying PostgreSQL connection pool, so no connection leaks occur.
  */
 
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-    console.error("❌ DATABASE_URL environment variable is not set.");
-    console.log("📝 Please set up your database connection:");
-    console.log("1. Copy .env.example to .env");
-    console.log(
-        "2. Update DATABASE_URL with your PostgreSQL connection string"
-    );
-    console.log("3. Run: bun run db:setup");
-    throw new Error(
-        "DATABASE_URL environment variable is not set. Please check environment variable."
-    );
-}
-
-if (
-    !databaseUrl.startsWith("postgresql://") &&
-    !databaseUrl.startsWith("postgres://")
-) {
-    console.error("❌ DATABASE_URL must be a PostgreSQL connection string");
-    console.log(
-        "✅ Example: postgresql://username:password@localhost:5432/modhub"
-    );
-    throw new Error(
-        "Invalid DATABASE_URL: must be a PostgreSQL connection string"
-    );
-}
-
 const globalForDb = globalThis as unknown as {
     client: postgres.Sql | undefined;
     db: ReturnType<typeof drizzle> | undefined;
     initialized: boolean;
 };
 
-let client: postgres.Sql;
-let db: ReturnType<typeof drizzle>;
+function initializeDatabase() {
+    const databaseUrl = process.env.DATABASE_URL;
 
-if (globalForDb.client && globalForDb.db) {
-    client = globalForDb.client;
-    db = globalForDb.db;
-} else {
+    if (!databaseUrl) {
+        console.error("❌ DATABASE_URL environment variable is not set.");
+        console.log("📝 Please set up your database connection:");
+        console.log("1. Copy .env.example to .env");
+        console.log(
+            "2. Update DATABASE_URL with your PostgreSQL connection string"
+        );
+        console.log("3. Run: bun run db:setup");
+        throw new Error(
+            "DATABASE_URL environment variable is not set. Please check environment variable."
+        );
+    }
+
+    if (
+        !databaseUrl.startsWith("postgresql://") &&
+        !databaseUrl.startsWith("postgres://")
+    ) {
+        console.error("❌ DATABASE_URL must be a PostgreSQL connection string");
+        console.log(
+            "✅ Example: postgresql://username:password@localhost:5432/modhub"
+        );
+        throw new Error(
+            "Invalid DATABASE_URL: must be a PostgreSQL connection string"
+        );
+    }
+
+    if (globalForDb.client && globalForDb.db) {
+        return { client: globalForDb.client, db: globalForDb.db };
+    }
+
     try {
-        client = postgres(databaseUrl, {
+        const client = postgres(databaseUrl, {
             max: 10,
             idle_timeout: 20,
             connect_timeout: 10,
         });
 
-        db = drizzle(client, { schema });
+        const db = drizzle(client, { schema });
 
         globalForDb.client = client;
         globalForDb.db = db;
         globalForDb.initialized = true;
+        
         const environment =
             typeof window !== "undefined"
                 ? "client"
@@ -80,11 +79,39 @@ if (globalForDb.client && globalForDb.db) {
                 `✅ Database connection pool initialized (${environment} bundle)`
             );
         }
+
+        return { client, db };
     } catch (error) {
         console.error("❌ Failed to initialize database connection:", error);
         throw error;
     }
 }
+
+// Lazy initialization - only initialize when accessed
+let _db: ReturnType<typeof drizzle> | undefined;
+let _client: postgres.Sql | undefined;
+
+const db = new Proxy({} as ReturnType<typeof drizzle>, {
+    get(target, prop, receiver) {
+        if (!_db || !_client) {
+            const initialized = initializeDatabase();
+            _db = initialized.db;
+            _client = initialized.client;
+        }
+        return Reflect.get(_db, prop, receiver);
+    }
+});
+
+const client = new Proxy({} as postgres.Sql, {
+    get(target, prop, receiver) {
+        if (!_db || !_client) {
+            const initialized = initializeDatabase();
+            _db = initialized.db;
+            _client = initialized.client;
+        }
+        return Reflect.get(_client, prop, receiver);
+    }
+});
 
 export { db, client };
 

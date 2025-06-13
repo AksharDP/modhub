@@ -13,6 +13,8 @@ import { useFormStatus } from "react-dom";
 import { useActionState } from "react";
 import Form from "next/form";
 import { uploadModAction, UploadState } from "./actions";
+import { trpc } from "../lib/trpc";
+import { useSearchParams } from "next/navigation";
 
 const MAX_IMAGES = 10;
 
@@ -21,6 +23,128 @@ interface ImagePreview {
     file: File;
     url: string;
 }
+
+// FormField interface to match the FormBuilder
+interface FormField {
+    id: string;
+    type: "text" | "textarea" | "select" | "checkbox" | "file" | "static-text";
+    label: string;
+    placeholder?: string;
+    required: boolean;
+    options?: string[];
+    content?: string;
+    color?: string;
+    order: number;
+}
+
+// Dynamic form field renderer component
+const DynamicFormField: React.FC<{
+    field: FormField;
+    value: string | boolean | File | null;
+    onChange: (value: string | boolean | File | null) => void;
+    error?: string;
+}> = ({ field, value, onChange, error }) => {
+    const fieldId = `custom-${field.id}`;
+    
+    return (
+        <div className="mb-4">
+            {field.type === "text" && (
+                <>
+                    <label htmlFor={fieldId} className="block text-sm font-medium text-foreground mb-1">
+                        {field.label} {field.required && <span className="text-red-500">*</span>}
+                    </label>
+                    <input
+                        type="text"
+                        id={fieldId}
+                        name={fieldId}
+                        value={(value as string) || ""}
+                        onChange={(e) => onChange(e.target.value)}
+                        placeholder={field.placeholder}
+                        required={field.required}
+                        className="shadow-sm block w-full sm:text-sm border border-transparent focus:ring-purple-500 focus:border-purple-500 rounded-global p-2 bg-gray-700 text-input-foreground"
+                    />
+                </>
+            )}
+            {field.type === "textarea" && (
+                <>
+                    <label htmlFor={fieldId} className="block text-sm font-medium text-foreground mb-1">
+                        {field.label} {field.required && <span className="text-red-500">*</span>}
+                    </label>
+                    <textarea
+                        id={fieldId}
+                        name={fieldId}
+                        value={(value as string) || ""}
+                        onChange={(e) => onChange(e.target.value)}
+                        placeholder={field.placeholder}
+                        required={field.required}
+                        rows={4}
+                        className="shadow-sm block w-full sm:text-sm border border-transparent focus:ring-purple-500 focus:border-purple-500 rounded-global p-2 bg-gray-700 text-input-foreground"
+                    />
+                </>
+            )}
+            {field.type === "select" && (
+                <>
+                    <label htmlFor={fieldId} className="block text-sm font-medium text-foreground mb-1">
+                        {field.label} {field.required && <span className="text-red-500">*</span>}
+                    </label>
+                    <select
+                        id={fieldId}
+                        name={fieldId}
+                        value={(value as string) || ""}
+                        onChange={(e) => onChange(e.target.value)}
+                        required={field.required}
+                        className="shadow-sm block w-full sm:text-sm border border-transparent focus:ring-purple-500 focus:border-purple-500 rounded-global p-2 bg-gray-700 text-input-foreground"
+                    >
+                        <option value="">Select an option...</option>
+                        {field.options?.map((option, idx) => (
+                            <option key={idx} value={option}>{option}</option>
+                        ))}
+                    </select>
+                </>
+            )}
+            {field.type === "checkbox" && (
+                <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        id={fieldId}
+                        name={fieldId}
+                        checked={(value as boolean) || false}
+                        onChange={(e) => onChange(e.target.checked)}
+                        className="rounded text-purple-500 bg-gray-700 border-gray-600 focus:ring-purple-500"
+                    />
+                    <span className="text-sm text-foreground">
+                        {field.label} {field.required && <span className="text-red-500">*</span>}
+                    </span>
+                </label>
+            )}
+            {field.type === "file" && (
+                <>
+                    <label htmlFor={fieldId} className="block text-sm font-medium text-foreground mb-1">
+                        {field.label} {field.required && <span className="text-red-500">*</span>}
+                    </label>
+                    <input
+                        type="file"
+                        id={fieldId}
+                        name={fieldId}
+                        onChange={(e) => onChange(e.target.files?.[0] || null)}
+                        required={field.required}
+                        className="block w-full text-sm text-gray-500 rounded-global file:mr-4 file:py-2 file:px-4 file:rounded-global file:border-0 file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 file:cursor-pointer"
+                    />
+                </>
+            )}
+            {field.type === "static-text" && (
+                <div 
+                    className="py-2"
+                    style={{ color: field.color || "#FFFFFF" }}
+                    dangerouslySetInnerHTML={{ __html: field.content || field.label }}
+                />
+            )}
+            {error && (
+                <p className="text-red-500 text-sm mt-1">{error}</p>
+            )}
+        </div>
+    );
+};
 
 interface ImagePreviewItemProps {
     image: ImagePreview;
@@ -138,6 +262,12 @@ function SubmitButton() {
 }
 
 const UploadPage = () => {
+    const searchParams = useSearchParams();
+    const gameSlug = searchParams.get('game');
+    
+    const [selectedGameSlug, setSelectedGameSlug] = useState<string>(gameSlug || "");
+    const [customFieldValues, setCustomFieldValues] = useState<Record<string, string | boolean | File | null>>({});
+    
     const [title, setTitle] = useState<string>("");
     const [version, setVersion] = useState<string>("");
     const [tags, setTags] = useState<string>("");
@@ -150,11 +280,28 @@ const UploadPage = () => {
 
     const [state, formAction] = useActionState(uploadModAction, initialState);
 
-    useEffect(() => {
-        selectedImagesRef.current = selectedImages;
-    }, [selectedImages]);
+    // Fetch available games
+    const { data: games } = trpc.game.getPublicGames.useQuery();
+    
+    // Fetch selected game details including form schema
+    const { data: selectedGame } = trpc.game.getGameBySlug.useQuery(
+        { slug: selectedGameSlug },        { enabled: !!selectedGameSlug }
+    );
+
+    // Handle game selection change
+    const handleGameChange = (gameSlug: string) => {
+        setSelectedGameSlug(gameSlug);
+        setCustomFieldValues({}); // Reset custom field values when game changes
+    };
+
+    // Handle custom field value changes
+    const updateCustomFieldValue = (fieldId: string, value: string | boolean | File | null) => {
+        setCustomFieldValues(prev => ({ ...prev, [fieldId]: value }));
+    };
 
     useEffect(() => {
+        selectedImagesRef.current = selectedImages;
+    }, [selectedImages]);    useEffect(() => {
         if (state.success && state.message) {
             alert(state.message);
             setTitle("");
@@ -163,6 +310,7 @@ const UploadPage = () => {
             setDescription("");
             setSelectedImages([]);
             setImageError("");
+            setCustomFieldValues({});
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
@@ -271,8 +419,7 @@ const UploadPage = () => {
                 {" "}
                 <h1 className="text-2xl font-bold mb-6 text-center text-foreground">
                     Upload Mod
-                </h1>
-                <Form
+                </h1>                <Form
                     action={formAction}
                     onSubmit={() => {
                         console.log(
@@ -281,7 +428,37 @@ const UploadPage = () => {
                         handleFormSubmitAttempt();
                     }}
                     className="space-y-6 bg-card-bg p-6 shadow-md rounded-card max-w-3xl mx-auto"
-                >
+                >                    {/* Game Selection */}
+                    <div>
+                        <label
+                            htmlFor="game"
+                            className="block text-sm font-medium text-foreground mb-1"
+                        >
+                            Game <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                            name="game"
+                            id="game"
+                            value={selectedGameSlug}
+                            onChange={(e) => handleGameChange(e.target.value)}
+                            className="shadow-sm block w-full sm:text-sm border border-transparent focus:ring-purple-500 focus:border-purple-500 rounded-global p-2 bg-gray-700 text-input-foreground"
+                            required
+                        >
+                            <option value="">Select a game...</option>
+                            {games?.map((game) => (
+                                <option key={game.id} value={game.slug}>
+                                    {game.name}
+                                </option>
+                            ))}
+                        </select>
+                        {state.errors?.game && (
+                            <p className="text-red-500 text-sm mt-1">
+                                {state.errors.game.join(", ")}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Standard Fields */}
                     <div>
                         <label
                             htmlFor="title"
@@ -394,9 +571,30 @@ const UploadPage = () => {
                         {state.errors?.description && (
                             <p className="text-red-500 text-sm mt-1">
                                 {state.errors.description.join(", ")}
-                            </p>
-                        )}
+                            </p>                        )}
                     </div>
+
+                    {/* Dynamic Custom Fields */}
+                    {selectedGame?.formSchema && Array.isArray(selectedGame.formSchema) && selectedGame.formSchema.length > 0 && (
+                        <div className="mb-6">
+                            <h3 className="text-lg font-medium text-foreground mb-4 border-b border-gray-600 pb-2">
+                                {selectedGame.name} Specific Fields
+                            </h3>
+                            <div className="space-y-4">
+                                {(selectedGame.formSchema as FormField[])
+                                    .sort((a, b) => a.order - b.order)
+                                    .map((field) => (
+                                        <DynamicFormField
+                                            key={field.id}
+                                            field={field}
+                                            value={customFieldValues[field.id] || (field.type === 'checkbox' ? false : '')}
+                                            onChange={(value) => updateCustomFieldValue(field.id, value)}
+                                        />
+                                    ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="mb-4">
                         <label
                             htmlFor="image-upload"
