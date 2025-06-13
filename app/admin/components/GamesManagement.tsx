@@ -70,7 +70,7 @@ export default function GamesManagement() {
                 <h2 className="text-2xl font-bold text-white">Game Management</h2>
                 <button
                     onClick={handleCreateGame}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer"
                 >
                     + Add New Game
                 </button>
