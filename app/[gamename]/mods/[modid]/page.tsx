@@ -57,7 +57,7 @@ export default function ModPage({
     // Show error state
     if (error) {
         const isDatabaseError =
-            error.message.includes("DATABASE_URI") ||
+            error.message.includes("DATABASE_URL") ||
             error.message.includes("Failed query") ||
             error.message.includes("connection") ||
             error.message.includes("does not exist");

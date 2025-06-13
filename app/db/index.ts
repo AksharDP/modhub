@@ -15,18 +15,18 @@ import * as schema from "./schema";
  * underlying PostgreSQL connection pool, so no connection leaks occur.
  */
 
-const databaseUrl = process.env.DATABASE_URI;
+const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-    console.error("❌ DATABASE_URI environment variable is not set.");
+    console.error("❌ DATABASE_URL environment variable is not set.");
     console.log("📝 Please set up your database connection:");
     console.log("1. Copy .env.example to .env");
     console.log(
-        "2. Update DATABASE_URI with your PostgreSQL connection string"
+        "2. Update DATABASE_URL with your PostgreSQL connection string"
     );
     console.log("3. Run: bun run db:setup");
     throw new Error(
-        "DATABASE_URI environment variable is not set. Please check your .env file."
+        "DATABASE_URL environment variable is not set. Please check your .env file."
     );
 }
 
@@ -34,12 +34,12 @@ if (
     !databaseUrl.startsWith("postgresql://") &&
     !databaseUrl.startsWith("postgres://")
 ) {
-    console.error("❌ DATABASE_URI must be a PostgreSQL connection string");
+    console.error("❌ DATABASE_URL must be a PostgreSQL connection string");
     console.log(
         "✅ Example: postgresql://username:password@localhost:5432/modhub"
     );
     throw new Error(
-        "Invalid DATABASE_URI: must be a PostgreSQL connection string"
+        "Invalid DATABASE_URL: must be a PostgreSQL connection string"
     );
 }
 

@@ -56,9 +56,9 @@ export default function DatabaseError({ error }: DatabaseErrorProps) {
                 Update your .env file
               </h2>
               <div className="pl-9 space-y-3 text-gray-300">
-                <p className="text-sm">Update the DATABASE_URI in your .env file:</p>
+                <p className="text-sm">Update the DATABASE_URL in your environment variables:</p>
                 <code className="text-xs bg-gray-900 p-2 rounded block">
-                  DATABASE_URI=postgresql://postgres:password@localhost:5432/modhub
+                  DATABASE_URL=postgresql://postgres:password@localhost:5432/modhub
                 </code>
               </div>
             </div>
