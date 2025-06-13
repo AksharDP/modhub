@@ -1,18 +1,8 @@
 import React from "react";
-
-interface FileVersion {
-    id: string;
-    version: string;
-    fileName: string;
-    fileSize: string;
-    uploadDate: string | number | Date;
-    downloadUrl: string;
-    changelog?: string;
-    isLatest: boolean;
-}
+import { FileVersionInterface } from "@/app/types/common";
 
 interface ModWithFileVersions {
-    fileVersions: FileVersion[];
+    fileVersions: FileVersionInterface[];
 }
 
 interface FilesSectionProps {
@@ -45,11 +35,11 @@ const FilesSection: React.FC<FilesSectionProps> = ({ mod, formatDate }) => {
             <div className="space-y-6">
                 {mod.fileVersions
                     .sort(
-                        (a: FileVersion, b: FileVersion) =>
+                        (a: FileVersionInterface, b: FileVersionInterface) =>
                             new Date(b.uploadDate).getTime() -
                             new Date(a.uploadDate).getTime()
                     )
-                    .map((file: FileVersion) => (
+                    .map((file: FileVersionInterface) => (
                         <div
                             key={file.id}
                             className={`rounded-[5px] shadow-sm hover:shadow-md transition-shadow duration-150 ease-in-out p-5 ${

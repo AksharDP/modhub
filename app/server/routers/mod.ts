@@ -35,7 +35,6 @@ const getModBySlugInput = z.object({
 const createModInput = z.object({
     title: z.string().min(1).max(255),
     description: z.string().min(1),
-    longDescription: z.string().optional(),
     version: z.string().min(1).default("1.0.0"),
     imageUrl: z.string().url().optional(),
     downloadUrl: z.string().url().optional(),
@@ -167,7 +166,6 @@ export const modRouter = router({
                     title: mods.title,
                     slug: mods.slug,
                     description: mods.description,
-                    longDescription: mods.longDescription,
                     version: mods.version,
                     imageUrl: mods.imageUrl,
                     downloadUrl: mods.downloadUrl,
@@ -260,7 +258,6 @@ export const modRouter = router({
                     title: mods.title,
                     slug: mods.slug,
                     description: mods.description,
-                    longDescription: mods.longDescription,
                     version: mods.version,
                     imageUrl: mods.imageUrl,
                     downloadUrl: mods.downloadUrl,

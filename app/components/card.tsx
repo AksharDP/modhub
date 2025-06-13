@@ -3,22 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { memo, useMemo } from "react";
-
-export interface CardProps {
-    modId: number;
-    gameName: string;
-    title: string;
-    description: string;
-    imageUrl: string;
-    author: string;
-    authorPFP: string;
-    category: string | string[];
-    likes: number;
-    downloads: number;
-    size: string;
-    uploaded: string | number | Date;
-    lastUpdated: string | number | Date;
-}
+import { CardProps } from "@/app/types/common";
 
 const Card = memo(function Card({
     modId,

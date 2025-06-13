@@ -7,108 +7,9 @@ import ModDetailsSidebar from "@/app/components/modpage/ModDetailsSidebar";
 import TabNavigation from "@/app/components/modpage/TabNavigation";
 import DescriptionSection from "@/app/components/modpage/DescriptionSection";
 import FilesSection from "@/app/components/modpage/FilesSection";
-
-interface FileVersion {
-    id: string;
-    version: string;
-    fileName: string;
-    fileSize: string;
-    uploadDate: string | number | Date;
-    downloadUrl: string;
-    changelog?: string;
-    isLatest: boolean;
-}
-
-interface ModPageProps {
-    title: string;
-    imageUrl: string;
-    author: string;
-    authorPFP: string;
-    category: string;
-    likes: number;
-    downloads: number;
-    size: string;
-    uploaded: string | number | Date;
-    lastUpdated: string | number | Date;
-    allImageUrls: string[];
-    fullDescription: string;
-    fileVersions: FileVersion[];
-    tags?: string[];
-}
-
-const mockModData: ModPageProps = {
-    title: "Awesome Mod Title",
-    imageUrl: "/next.svg",
-    author: "Modder Extraordinaire",
-    authorPFP: "/vercel.svg",
-    category: "Gameplay",
-    likes: 1234,
-    downloads: 56789,
-    size: "100 MB",
-    uploaded: new Date("2024-01-15T10:00:00Z"),
-    lastUpdated: new Date("2025-05-20T14:30:00Z"),
-    allImageUrls: [
-        "/next.svg",
-        "/globe.svg",
-        "/file.svg",
-        "/window.svg",
-        "/placeholder1.svg",
-        "/placeholder2.svg",
-        "/placeholder3.svg",
-        "/placeholder4.svg",
-        "/placeholder5.svg",
-        "/placeholder6.svg",
-        "/placeholder7.svg",
-        "/placeholder8.svg",
-    ],
-    fullDescription: `
-        <p>This is the <strong>full description</strong> of the awesome mod. It can contain <em>rich text</em> and multiple paragraphs.</p>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-        <h2>Features</h2>
-        <ul>
-            <li>Feature A</li>
-            <li>Feature B</li>
-            <li>Feature C</li>
-        </ul>
-        <h2>Requirements</h2>
-        <p>Requires ModFramework v2.0 or higher.</p>
-        <h2>Installation</h2>
-        <p>Follow these steps to install...</p>
-    `,
-    fileVersions: [
-        {
-            id: "3",
-            version: "1.1.0",
-            fileName: "AwesomeMod_v1.1.0.zip",
-            fileSize: "105 MB",
-            uploadDate: new Date("2025-05-20T14:30:00Z"),
-            downloadUrl: "#",
-            changelog: "Fixed bugs, added new feature X.",
-            isLatest: true,
-        },
-        {
-            id: "2",
-            version: "1.0.1",
-            fileName: "AwesomeMod_v1.0.1.zip",
-            fileSize: "102 MB",
-            uploadDate: new Date("2025-03-10T12:00:00Z"),
-            downloadUrl: "#",
-            changelog: "Minor bug fixes.",
-            isLatest: false,
-        },
-        {
-            id: "1",
-            version: "1.0.0",
-            fileName: "AwesomeMod_v1.0.0.zip",
-            fileSize: "100 MB",
-            uploadDate: new Date("2025-01-15T10:00:00Z"),
-            downloadUrl: "#",
-            changelog: "Initial release.",
-            isLatest: false,
-        },
-    ],
-    tags: ["Overhaul", "Graphics", "New Mechanics"],
-};
+import { ModInterface } from "@/app/types/common";
+import { trpc } from "@/app/lib/trpc";
+import DatabaseError from "@/app/components/DatabaseError";
 
 export default function ModPage({
     params,
@@ -116,25 +17,114 @@ export default function ModPage({
     params: Promise<{ gamename: string; modid: string }>;
 }) {
     const { gamename, modid } = use(params);
-    const mod = {
-        ...mockModData,
-        title: `${mockModData.title} for ${gamename}`,
-    };
-
+    
     const [activeTab, setActiveTab] = useState<"description" | "files">(
         "description"
     );
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    
+    // Validate that modid is a valid number
+    const modIdNumber = parseInt(modid);
+    if (isNaN(modIdNumber)) {
+        return (
+            <div className="container px-32 py-8 bg-gray-900 text-white min-h-screen">
+                <div className="text-center text-red-400">
+                    <p>Invalid mod ID</p>
+                </div>
+            </div>
+        );
+    }
+    
+    // Query the database for the mod
+    const {
+        data: modData,
+        isLoading,
+        error,
+    } = trpc.mod.getModById.useQuery({ id: modIdNumber });
+
+    // Show loading state
+    if (isLoading) {
+        return (
+            <div className="container px-32 py-8 bg-gray-900 text-white min-h-screen">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                    <p className="mt-2 text-gray-400">Loading mod...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Show error state
+    if (error) {
+        const isDatabaseError =
+            error.message.includes("DATABASE_URI") ||
+            error.message.includes("Failed query") ||
+            error.message.includes("connection") ||
+            error.message.includes("does not exist");
+
+        if (isDatabaseError) {
+            return <DatabaseError error={error.message} />;
+        }
+        return (
+            <div className="container px-32 py-8 bg-gray-900 text-white min-h-screen">
+                <div className="text-center text-red-400">
+                    <p>Error loading mod: {error.message}</p>
+                </div>
+            </div>
+        );
+    }
+
+    // No mod found
+    if (!modData) {
+        return (
+            <div className="container px-32 py-8 bg-gray-900 text-white min-h-screen">
+                <div className="text-center text-red-400">
+                    <p>Mod not found</p>
+                </div>
+            </div>
+        );
+    }    // Transform database data to ModInterface format
+    const mod: ModInterface = {
+        modId: modData.id,
+        title: modData.title,
+        description: modData.description || "",
+        imageUrl: modData.imageUrl || "https://placehold.co/300x200/4F46E5/FFFFFF/png?text=Mod",
+        author: modData.author?.username || "Unknown",
+        authorPFP: modData.author?.profilePicture || "https://placehold.co/30x30/7C3AED/FFFFFF/png?text=U",
+        category: modData.category?.name || "Uncategorized",
+        likes: modData.stats?.likes || 0,
+        downloads: modData.stats?.totalDownloads || 0,
+        size: modData.size || "N/A",
+        uploaded: modData.createdAt || new Date(),
+        lastUpdated: modData.updatedAt || new Date(),
+        slug: modData.slug,
+        version: modData.version,
+        downloadUrl: modData.downloadUrl || "#",
+        stats: modData.stats,
+        allImageUrls: modData.images?.map(img => img.imageUrl) || [modData.imageUrl || "https://placehold.co/300x200/4F46E5/FFFFFF/png?text=Mod"],
+        tags: modData.tags || [],
+        game: modData.game || { id: 0, name: gamename, slug: gamename },
+        fileVersions: modData.files?.map(file => ({
+            id: file.id.toString(),
+            version: file.version || "1.0.0",
+            fileName: file.fileName,
+            fileSize: file.fileSize || "N/A",
+            uploadDate: file.createdAt || new Date(),
+            downloadUrl: file.fileUrl || "#",
+            changelog: "",
+            isLatest: file.isMainFile || false,
+        })) || [],
+    };
 
     const nextImage = () => {
         setSelectedImageIndex((prevIndex) =>
-            prevIndex === mod.allImageUrls.length - 1 ? 0 : prevIndex + 1
+            prevIndex === (mod.allImageUrls?.length || 0) - 1 ? 0 : prevIndex + 1
         );
     };
 
     const prevImage = () => {
         setSelectedImageIndex((prevIndex) =>
-            prevIndex === 0 ? mod.allImageUrls.length - 1 : prevIndex - 1
+            prevIndex === 0 ? (mod.allImageUrls?.length || 0) - 1 : prevIndex - 1
         );
     };
 
@@ -153,7 +143,7 @@ export default function ModPage({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-2 flex flex-col gap-6">
                     <ImageGallery
-                        mod={mod}
+                        modImages={{ title: mod.title, ImageUrls: mod.allImageUrls || [] }}
                         currentImageIndex={selectedImageIndex}
                         prevImage={prevImage}
                         nextImage={nextImage}
@@ -163,15 +153,15 @@ export default function ModPage({
                         <TabNavigation
                             activeTab={activeTab}
                             setActiveTab={setActiveTab}
-                            fileCount={mod.fileVersions.length}
+                            fileCount={mod.fileVersions?.length || 0}
                         />
                         <div>
                             {activeTab === "description" && (
-                                <DescriptionSection mod={mod} />
+                                <DescriptionSection mod={{ ...mod, Description: mod.description || "" }} />
                             )}
                             {activeTab === "files" && (
                                 <FilesSection
-                                    mod={mod}
+                                    mod={{ ...mod, fileVersions: mod.fileVersions || [] }}
                                     gamename={gamename}
                                     modid={modid}
                                     formatDate={formatDate}
@@ -182,7 +172,7 @@ export default function ModPage({
                 </div>
 
                 <div className="md:col-span-1">
-                    <ModDetailsSidebar mod={mod} formatDate={formatDate} />
+                    <ModDetailsSidebar mod={{...mod, fileVersions: mod.fileVersions || []}} formatDate={formatDate} />
                 </div>
             </div>
         </div>

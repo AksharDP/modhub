@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { trpc } from "../../lib/trpc";
 import Image from "next/image";
+import ModEditModal from "./ModEditModal";
 
 export default function ModManagement() {
     const [page, setPage] = useState(0);
@@ -13,6 +14,8 @@ export default function ModManagement() {
         boolean | undefined
     >(undefined);
     const [searchTerm, setSearchTerm] = useState("");
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [editingModId, setEditingModId] = useState<number | null>(null);
 
     const limit = 20;
     const offset = page * limit;
@@ -65,6 +68,21 @@ export default function ModManagement() {
                 alert("Failed to delete mod: " + (error as Error).message);
             }
         }
+    };
+
+    const openEditModal = (modId: number) => {
+        setEditingModId(modId);
+        setEditModalOpen(true);
+    };
+
+    const closeEditModal = () => {
+        setEditModalOpen(false);
+        setEditingModId(null);
+    };
+
+    const handleEditSuccess = () => {
+        refetch();
+        closeEditModal();
     };
 
     if (isLoading) {
@@ -280,7 +298,7 @@ export default function ModManagement() {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex flex-col space-y-2">
                                             <a
-                                                href={`/${mod.game?.name}/${mod.slug}`}
+                                                href={`/${mod.game?.name}/mods/${mod.id}`}
                                                 className="text-blue-400 hover:text-blue-300 transition-colors"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
@@ -294,12 +312,18 @@ export default function ModManagement() {
                                                         mod.title
                                                     )
                                                 }
-                                                className="text-red-400 hover:text-red-300 transition-colors"
+                                                className="text-red-400 hover:text-red-300 transition-colors cursor-pointer"
                                                 disabled={
                                                     deleteModMutation.isPending
                                                 }
                                             >
                                                 Delete
+                                            </button>
+                                            <button
+                                                onClick={() => openEditModal(mod.id)}
+                                                className="text-green-400 hover:text-green-300 transition-colors cursor-pointer"
+                                            >
+                                                Edit
                                             </button>
                                         </div>
                                     </td>
@@ -334,6 +358,13 @@ export default function ModManagement() {
                         </button>
                     </div>
                 </div>
+            )}            {editModalOpen && editingModId !== null && (
+                <ModEditModal
+                    modId={editingModId}
+                    isOpen={editModalOpen}
+                    onClose={closeEditModal}
+                    onSuccess={handleEditSuccess}
+                />
             )}
         </div>
     );

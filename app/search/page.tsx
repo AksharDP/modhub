@@ -2,27 +2,12 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Card from "@/app/components/card";
+import { ModInterface } from "@/app/types/common";
 
-interface Mod {
-    modId: number;
-    gameName: string;
-    title: string;
-    description: string;
-    imageUrl: string;
-    author: string;
-    authorPFP: string;
-    category: string;
-    likes: number;
-    downloads: number;
-    size: string;
-    uploaded: Date;
-    lastUpdated: Date;
-}
-
-const allModsDatabase: Mod[] = [
+const allModsDatabase: ModInterface[] = [
     {
         modId: 1,
-        gameName: "Skyrim",
+        game: { id: 1, name: "Skyrim", slug: "skyrim" },
         title: "Enhanced Skyrim Weather",
         description:
             "Makes Skyrim weather more dynamic and immersive. Realistic storms.",
@@ -39,7 +24,7 @@ const allModsDatabase: Mod[] = [
     },
     {
         modId: 2,
-        gameName: "Skyrim",
+        game: { id: 1, name: "Skyrim", slug: "skyrim" },
         title: "Legendary Creatures",
         description:
             "Adds new challenging creatures to the world of Skyrim. Beware the dragons!",
@@ -56,7 +41,7 @@ const allModsDatabase: Mod[] = [
     },
     {
         modId: 3,
-        gameName: "Fallout 4",
+        game: { id: 2, name: "Fallout 4", slug: "fallout4" },
         title: "Wasteland Overhaul",
         description:
             "A complete overhaul of Fallout 4's wasteland environment. More realistic and gritty.",
@@ -73,7 +58,7 @@ const allModsDatabase: Mod[] = [
     },
     {
         modId: 4,
-        gameName: "Stardew Valley",
+        game: { id: 3, name: "Stardew Valley", slug: "stardewvalley" },
         title: "Expanded Farm Deluxe",
         description:
             "Increases the size of your farm and adds new areas for cultivation. Deluxe version.",
@@ -90,7 +75,7 @@ const allModsDatabase: Mod[] = [
     },
     {
         modId: 5,
-        gameName: "Cyberpunk 2077",
+        game: { id: 4, name: "Cyberpunk 2077", slug: "cyberpunk2077" },
         title: "Night City Realism",
         description:
             "Enhances NPC behavior and city dynamics for a more immersive Cyberpunk experience.",
@@ -107,7 +92,7 @@ const allModsDatabase: Mod[] = [
     },
     {
         modId: 6,
-        gameName: "Minecraft",
+        game: { id: 5, name: "Minecraft", slug: "minecraft" },
         title: "Ultimate Shaders Pack",
         description:
             "Brings stunning visual fidelity to Minecraft with realistic lighting and water.",
@@ -124,7 +109,7 @@ const allModsDatabase: Mod[] = [
     },
     {
         modId: 7,
-        gameName: "Skyrim",
+        game: { id: 1, name: "Skyrim", slug: "skyrim" },
         title: "Immersive Weapons",
         description:
             "Adds hundreds of new lore-friendly weapons to Skyrim. For a true warrior.",
@@ -160,15 +145,19 @@ export default function SearchPage() {
     const [selectedGame, setSelectedGame] = useState("All");
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [sortBy, setSortBy] = useState("relevance");
-    const [displayedMods, setDisplayedMods] = useState<Mod[]>([]);
+    const [displayedMods, setDisplayedMods] = useState<ModInterface[]>([]);
 
     const availableGames = useMemo(() => {
-        const games = new Set(allModsDatabase.map((mod) => mod.gameName));
+        const games = new Set(allModsDatabase.map((mod) => mod.game?.name || "Unknown Game"));
         return ["All", ...Array.from(games).sort()];
     }, []);
 
     const availableCategories = useMemo(() => {
-        const categories = new Set(allModsDatabase.map((mod) => mod.category));
+        const categories = new Set(
+            allModsDatabase.flatMap((mod) =>
+                Array.isArray(mod.category) ? mod.category : [mod.category]
+            )
+        );
         return ["All", ...Array.from(categories).sort()];
     }, []);
 
@@ -186,7 +175,7 @@ export default function SearchPage() {
         }
 
         if (selectedGame !== "All") {
-            filtered = filtered.filter((mod) => mod.gameName === selectedGame);
+            filtered = filtered.filter((mod) => mod.game?.name === selectedGame);
         }
 
         if (selectedCategory !== "All") {
@@ -204,12 +193,14 @@ export default function SearchPage() {
                 break;
             case "newest":
                 filtered.sort(
-                    (a, b) => b.uploaded.getTime() - a.uploaded.getTime()
+                    (a, b) =>
+                        new Date(b.uploaded).getTime() - new Date(a.uploaded).getTime()
                 );
                 break;
             case "lastUpdated":
                 filtered.sort(
-                    (a, b) => b.lastUpdated.getTime() - a.lastUpdated.getTime()
+                    (a, b) =>
+                        new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
                 );
                 break;
             case "relevance":
@@ -304,13 +295,11 @@ export default function SearchPage() {
                             <select
                                 id="categoryFilter"
                                 value={selectedCategory}
-                                onChange={(e) =>
-                                    setSelectedCategory(e.target.value)
-                                }
+                                onChange={(e) => setSelectedCategory(e.target.value)}
                                 className="w-full bg-gray-700 text-white border-gray-600 rounded-[5px] py-2.5 px-3 focus:ring-purple-500 focus:border-purple-500 transition-colors shadow-sm"
                             >
                                 {availableCategories.map((category) => (
-                                    <option key={category} value={category}>
+                                    <option key={String(category)} value={category}>
                                         {category}
                                     </option>
                                 ))}
@@ -348,7 +337,7 @@ export default function SearchPage() {
                             <Card
                                 key={mod.modId}
                                 modId={mod.modId}
-                                gameName={mod.gameName}
+                                gameName={mod.game?.name || "Unknown Game"} // Updated to use game object
                                 title={mod.title}
                                 description={mod.description}
                                 imageUrl={mod.imageUrl}

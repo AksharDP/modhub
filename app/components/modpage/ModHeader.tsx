@@ -1,15 +1,9 @@
 import React from "react";
 import Image from "next/image";
-
-interface Mod {
-    title: string;
-    authorPFP: string;
-    author: string;
-    category: string;
-}
+import { ModInterface } from "@/app/types/common";
 
 interface ModHeaderProps {
-    mod: Mod;
+    mod: ModInterface;
     gamename: string;
 }
 
@@ -39,12 +33,26 @@ const ModHeader: React.FC<ModHeaderProps> = ({ mod, gamename }) => {
                 <span className="mx-2">|</span>
                 <span>
                     Category:{" "}
-                    <a
-                        href={`/categories/${mod.category.toLowerCase()}`}
-                        className="text-purple-300 hover:underline font-semibold"
-                    >
-                        {mod.category}
-                    </a>
+                    {Array.isArray(mod.category) ? (
+                        mod.category.map((cat, idx) => (
+                            <span key={cat}>
+                                <a
+                                    href={`/categories/${cat.toLowerCase()}`}
+                                    className="text-purple-300 hover:underline font-semibold"
+                                >
+                                    {cat}
+                                </a>
+                                {idx < (mod.category as string[]).length - 1 ? ', ' : ''}
+                            </span>
+                        ))
+                    ) : (
+                        <a
+                            href={`/categories/${(mod.category as string).toLowerCase()}`}
+                            className="text-purple-300 hover:underline font-semibold"
+                        >
+                            {mod.category}
+                        </a>
+                    )}
                 </span>
             </div>
         </header>

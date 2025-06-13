@@ -38,10 +38,28 @@ const updateModStatusInput = z.object({
     isFeatured: z.boolean().optional(),
 });
 
-// Game management schemas
+const updateModInput = z.object({
+    modId: z.number().int().positive(),
+    title: z.string().min(1, "Title is required").optional(),
+    description: z.string().min(1, "Description is required").optional(),
+    version: z.string().min(1, "Version is required").optional(),
+    imageUrl: z.string().url("Must be a valid URL").optional().nullable(),
+    downloadUrl: z.string().url("Must be a valid URL").optional().nullable(),
+    size: z.string().optional(),
+    gameId: z.number().int().positive().optional(),
+    categoryId: z.number().int().positive().optional(),
+});
+
 const formFieldSchema = z.object({
     id: z.string(),
-    type: z.enum(['text', 'textarea', 'select', 'checkbox', 'file', 'static-text']),
+    type: z.enum([
+        "text",
+        "textarea",
+        "select",
+        "checkbox",
+        "file",
+        "static-text",
+    ]),
     label: z.string(),
     placeholder: z.string().optional(),
     required: z.boolean(),
@@ -75,6 +93,7 @@ const updateGameInput = z.object({
 
 const deleteGameInput = z.object({
     gameId: z.number().int().positive(),
+    deleteMods: z.boolean().default(true),
 });
 
 export const adminRouter = router({
@@ -387,7 +406,8 @@ export const adminRouter = router({
             }
 
             return updatedMod;
-        }),    deleteMod: publicProcedure
+        }),
+    deleteMod: publicProcedure
         .input(
             z.object({
                 modId: z.number().int().positive(),
@@ -411,106 +431,267 @@ export const adminRouter = router({
             return deletedMod;
         }),
 
-        // Game Management Procedures
-        getGames: publicProcedure.query(async ({ ctx }) => {
+    getGames: publicProcedure.query(async ({ ctx }) => {
+        await requireAdmin();
+
+        const gamesList = await ctx.db
+            .select({
+                id: games.id,
+                name: games.name,
+                slug: games.slug,
+                description: games.description,
+                imageUrl: games.imageUrl,
+                isActive: games.isActive,
+                visibleToUsers: games.visibleToUsers,
+                visibleToSupporters: games.visibleToSupporters,
+                formSchema: games.formSchema,
+                createdAt: games.createdAt,
+                updatedAt: games.updatedAt,
+            })
+            .from(games)
+            .orderBy(desc(games.name));
+
+        return gamesList;
+    }),    getCategories: publicProcedure.query(async ({ ctx }) => {
+        await requireAdmin();
+
+        const categoriesList = await ctx.db
+            .select({
+                id: categories.id,
+                name: categories.name,
+                slug: categories.slug,
+                description: categories.description,
+            })
+            .from(categories)
+            .orderBy(categories.name);
+
+        return categoriesList;
+    }),
+
+    createGame: publicProcedure
+        .input(createGameInput)
+        .mutation(async ({ ctx, input }) => {
             await requireAdmin();
 
-            const gamesList = await ctx.db
-                .select({
-                    id: games.id,
-                    name: games.name,
-                    slug: games.slug,
-                    description: games.description,
-                    imageUrl: games.imageUrl,
-                    isActive: games.isActive,
-                    visibleToUsers: games.visibleToUsers,
-                    visibleToSupporters: games.visibleToSupporters,
-                    formSchema: games.formSchema,
-                    createdAt: games.createdAt,
-                    updatedAt: games.updatedAt,
+            const [newGame] = await ctx.db
+                .insert(games)
+                .values({
+                    name: input.name,
+                    slug: input.slug,
+                    description: input.description,
+                    imageUrl: input.imageUrl,
+                    visibleToUsers: input.visibleToUsers,
+                    visibleToSupporters: input.visibleToSupporters,
+                    formSchema: input.formSchema,
                 })
-                .from(games)
-                .orderBy(desc(games.name));
+                .returning();
 
-            return gamesList;
+            return newGame;
         }),
 
-        createGame: publicProcedure
-            .input(createGameInput)
-            .mutation(async ({ ctx, input }) => {
-                await requireAdmin();
+    updateGame: publicProcedure
+        .input(updateGameInput)
+        .mutation(async ({ ctx, input }) => {
+            await requireAdmin();
 
-                const [newGame] = await ctx.db
-                    .insert(games)
-                    .values({
-                        name: input.name,
-                        slug: input.slug,
-                        description: input.description,
-                        imageUrl: input.imageUrl,
-                        visibleToUsers: input.visibleToUsers,
-                        visibleToSupporters: input.visibleToSupporters,
-                        formSchema: input.formSchema,
-                    })
-                    .returning();
+            const { id, ...updateData } = input;
+            const [updatedGame] = await ctx.db
+                .update(games)
+                .set({
+                    ...updateData,
+                    updatedAt: new Date(),
+                })
+                .where(eq(games.id, id))
+                .returning();
 
-                return newGame;
-            }),
+            if (!updatedGame) {
+                throw new TRPCError({
+                    code: "NOT_FOUND",
+                    message: "Game not found",
+                });
+            }
 
-        updateGame: publicProcedure
-            .input(updateGameInput)
-            .mutation(async ({ ctx, input }) => {
-                await requireAdmin();
+            return updatedGame;
+        }),
 
-                const { id, ...updateData } = input;
-                const [updatedGame] = await ctx.db
-                    .update(games)
-                    .set({
-                        ...updateData,
-                        updatedAt: new Date(),
-                    })
-                    .where(eq(games.id, id))
-                    .returning();
+    deleteGame: publicProcedure
+        .input(deleteGameInput)
+        .mutation(async ({ ctx, input }) => {
+            await requireAdmin();
 
-                if (!updatedGame) {
-                    throw new TRPCError({
-                        code: "NOT_FOUND",
-                        message: "Game not found",
-                    });
+            const [modIds] = await ctx.db
+                .select({ id: mods.id })
+                .from(mods)
+                .where(eq(mods.gameId, input.gameId));
+
+            if (input.deleteMods) {
+                await ctx.db.delete(mods).where(eq(mods.gameId, input.gameId));
+            }
+
+            if (!input.deleteMods && modIds) {
+                const archiveTableName = `archive_${mods._.name}`;
+
+                const tableExistsResult = await ctx.db.execute(
+                    sql`SELECT to_regclass(${`public.${archiveTableName}`}) AS "tableOid"`
+                );
+                const archiveTableExists =
+                    tableExistsResult?.[0]?.tableOid !== null;
+
+                if (!archiveTableExists) {
+                    try {
+                        await ctx.db.execute(
+                            sql`CREATE TABLE ${sql.identifier(
+                                archiveTableName
+                            )} (LIKE ${sql.identifier(
+                                mods._.name
+                            )} INCLUDING ALL)`
+                        );
+                    } catch (createError) {
+                        throw new TRPCError({
+                            code: "INTERNAL_SERVER_ERROR",
+                            message: `Failed to create archive table ${archiveTableName}: ${
+                                createError instanceof Error
+                                    ? createError.message
+                                    : String(createError)
+                            }`,
+                        });
+                    }
                 }
 
-                return updatedGame;
-            }),
+                try {
+                    await ctx.db.transaction(async (tx) => {
+                        await tx.execute(sql`
+                                INSERT INTO ${sql.identifier(archiveTableName)}
+                                SELECT * FROM ${sql.identifier(mods._.name)}
+                                WHERE ${sql.identifier(mods.gameId.name)} = ${
+                            input.gameId
+                        }
+                            `);
 
-        deleteGame: publicProcedure
-            .input(deleteGameInput)
-            .mutation(async ({ ctx, input }) => {
-                await requireAdmin();
-
-                // Check if any mods are using this game
-                const [modCount] = await ctx.db
-                    .select({ count: count() })
-                    .from(mods)
-                    .where(eq(mods.gameId, input.gameId));
-
-                if (modCount.count > 0) {
+                        await tx
+                            .delete(mods)
+                            .where(eq(mods.gameId, input.gameId));
+                    });
+                } catch (moveError) {
                     throw new TRPCError({
-                        code: "CONFLICT",
-                        message: `Cannot delete game. ${modCount.count} mod(s) are using this game.`,
+                        code: "INTERNAL_SERVER_ERROR",
+                        message: `Failed to move mods for game ${
+                            input.gameId
+                        } to ${archiveTableName}: ${
+                            moveError instanceof Error
+                                ? moveError.message
+                                : String(moveError)
+                        }`,
                     });
                 }
+            }
 
-                const [deletedGame] = await ctx.db
-                    .delete(games)
-                    .where(eq(games.id, input.gameId))
-                    .returning({ id: games.id, name: games.name });
+            const [deletedGame] = await ctx.db
+                .delete(games)
+                .where(eq(games.id, input.gameId))
+                .returning({ id: games.id, name: games.name });
 
-                if (!deletedGame) {
-                    throw new TRPCError({
-                        code: "NOT_FOUND",
-                        message: "Game not found",
-                    });
-                }
+            if (!deletedGame) {
+                throw new TRPCError({
+                    code: "NOT_FOUND",
+                    message: "Game not found",
+                });
+            }
 
-                return deletedGame;
-            }),
+            return deletedGame;
+        }),
+
+    updateMod: publicProcedure
+        .input(updateModInput)
+        .mutation(async ({ ctx, input }) => {
+            await requireAdmin();            // Build the update data object, only including fields that were provided
+            const updateData: Partial<typeof mods.$inferInsert> & { updatedAt: Date } = {
+                updatedAt: new Date(),
+            };
+
+            if (input.title !== undefined) updateData.title = input.title;
+            if (input.description !== undefined)
+                updateData.description = input.description;
+            if (input.version !== undefined) updateData.version = input.version;
+            if (input.imageUrl !== undefined) updateData.imageUrl = input.imageUrl;
+            if (input.downloadUrl !== undefined)
+                updateData.downloadUrl = input.downloadUrl;
+            if (input.size !== undefined) updateData.size = input.size;
+            if (input.gameId !== undefined) updateData.gameId = input.gameId;
+            if (input.categoryId !== undefined)
+                updateData.categoryId = input.categoryId;
+
+            // If title is being updated, generate a new slug
+            if (input.title) {
+                updateData.slug = input.title
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/^-|-$/g, "");
+            }
+
+            const [updatedMod] = await ctx.db
+                .update(mods)
+                .set(updateData)
+                .where(eq(mods.id, input.modId))
+                .returning();
+
+            if (!updatedMod) {
+                throw new TRPCError({
+                    code: "NOT_FOUND",
+                    message: "Mod not found",
+                });
+            }
+
+            return updatedMod;
+        }),
+
+    getMod: publicProcedure
+        .input(z.object({ modId: z.number().int().positive() }))
+        .query(async ({ ctx, input }) => {
+            await requireAdmin();
+
+            const mod = await ctx.db
+                .select({
+                    id: mods.id,
+                    title: mods.title,
+                    description: mods.description,
+                    version: mods.version,
+                    imageUrl: mods.imageUrl,
+                    downloadUrl: mods.downloadUrl,
+                    size: mods.size,
+                    gameId: mods.gameId,
+                    categoryId: mods.categoryId,
+                    isActive: mods.isActive,
+                    isFeatured: mods.isFeatured,
+                    createdAt: mods.createdAt,
+                    updatedAt: mods.updatedAt,
+                    game: {
+                        id: games.id,
+                        name: games.name,
+                    },
+                    category: {
+                        id: categories.id,
+                        name: categories.name,
+                    },
+                    author: {
+                        id: userTable.id,
+                        username: userTable.username,
+                    },
+                })
+                .from(mods)
+                .leftJoin(games, eq(mods.gameId, games.id))
+                .leftJoin(categories, eq(mods.categoryId, categories.id))
+                .leftJoin(userTable, eq(mods.authorId, userTable.id))
+                .where(eq(mods.id, input.modId))
+                .limit(1);
+
+            if (!mod[0]) {
+                throw new TRPCError({
+                    code: "NOT_FOUND",
+                    message: "Mod not found",
+                });
+            }
+
+            return mod[0];
+        }),
 });

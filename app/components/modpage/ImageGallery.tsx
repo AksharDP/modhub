@@ -1,25 +1,15 @@
 import Image from "next/image";
 import React from "react";
-
-interface ImageGalleryProps {
-    mod: {
-        allImageUrls: string[];
-        title: string;
-    };
-    currentImageIndex: number;
-    setCurrentImageIndex: (index: number) => void;
-    prevImage: () => void;
-    nextImage: () => void;
-}
+import { ImageGalleryProps } from "@/app/types/common";
 
 const ImageGallery: React.FC<ImageGalleryProps> = ({
-    mod,
+    modImages,
     currentImageIndex,
     setCurrentImageIndex,
     prevImage,
     nextImage,
 }) => {
-    if (!mod.allImageUrls || mod.allImageUrls.length === 0) {
+    if (!modImages.ImageUrls || modImages.ImageUrls.length === 0) {
         return (
             <div className="relative w-full h-96 mb-6 bg-gray-800 rounded-[5px] shadow-lg flex items-center justify-center text-gray-500">
                 No images available.
@@ -31,15 +21,15 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
         <>
             <div className="relative w-full h-96 bg-gray-800 rounded-[5px] shadow-lg group">
                 <Image
-                    key={mod.allImageUrls[currentImageIndex]}
-                    src={mod.allImageUrls[currentImageIndex]}
-                    alt={`${mod.title} - image ${currentImageIndex + 1}`}
+                    key={modImages.ImageUrls[currentImageIndex]}
+                    src={modImages.ImageUrls[currentImageIndex]}
+                    alt={`${modImages.title} - image ${currentImageIndex + 1}`}
                     layout="fill"
                     objectFit="contain"
                     className="rounded-[5px]"
                     loading="lazy"
                 />
-                {mod.allImageUrls.length > 1 && (
+                {modImages.ImageUrls.length > 1 && (
                     <>
                         <button
                             onClick={prevImage}
@@ -83,9 +73,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                         </button>
                     </>
                 )}
-                {mod.allImageUrls.length > 1 && (
+                {modImages.ImageUrls.length > 1 && (
                     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                        {mod.allImageUrls.map((_, index) => (
+                        {modImages.ImageUrls.map((_, index) => (
                             <button
                                 key={index}
                                 onClick={() => setCurrentImageIndex(index)}

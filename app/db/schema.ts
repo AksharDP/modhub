@@ -98,7 +98,6 @@ export const mods = pgTable(
         title: text("title").notNull(),
         slug: text("slug").notNull().unique(),
         description: text("description").notNull(),
-        longDescription: text("long_description"),
         version: text("version").notNull().default("1.0.0"),
         imageUrl: text("image_url"),
         downloadUrl: text("download_url"),

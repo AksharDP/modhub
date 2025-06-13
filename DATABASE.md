@@ -43,8 +43,7 @@ The ModHub application uses:
 - `id` - Primary key
 - `title` - Mod title
 - `slug` - URL-friendly identifier (unique)
-- `description` - Short description
-- `longDescription` - Detailed description
+- `description` - Mod description
 - `version` - Mod version
 - `imageUrl` - Main mod image
 - `downloadUrl` - Direct download link

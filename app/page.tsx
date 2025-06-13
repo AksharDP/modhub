@@ -5,32 +5,6 @@ import PerformanceMonitor from "./components/PerformanceMonitor";
 import DatabaseError from "./components/DatabaseError";
 import { trpc } from "./lib/trpc";
 
-type ModData = {
-    id: number;
-    title: string;
-    slug: string;
-    description: string;
-    imageUrl: string | null;
-    author: {
-        id: number;
-        username: string;
-        profilePicture: string | null;
-    } | null;
-    game: {
-        name: string;
-        slug: string;
-    } | null;
-    category: {
-        name: string;
-        color: string | null;
-    } | null;
-    stats: {
-        totalDownloads: number | null;
-        likes: number | null;
-        rating: number | null;
-    } | null;
-};
-
 const Card = dynamic(() => import("./components/card"), {
     loading: () => (
         <div className="bg-gray-800 rounded-[var(--border-radius-custom)] shadow-lg m-2 w-80 h-[400px] flex items-center justify-center">
@@ -89,7 +63,7 @@ export default function Home() {
                         Featured Mods
                     </h1>{" "}
                     <div className="flex flex-wrap justify-center">
-                        {featuredMods?.map((mod: ModData) => (
+                        {featuredMods?.map((mod) => (
                             <Card
                                 key={mod.id}
                                 modId={mod.id}

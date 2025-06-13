@@ -1,9 +1,9 @@
 import Card from "@/app/components/card";
-import { Mod } from "@/app/author/[author]/mods/page"; // Assuming Mod interface is exported from page.tsx
+import { ModInterface } from "@/app/types/common"; // Importing Mod interface from common.ts
 
 
 interface ModListProps {
-    mods: Mod[];
+    mods: ModInterface[];
 }
 
 const ModList: React.FC<ModListProps> = ({ mods }) => {
@@ -11,9 +11,9 @@ const ModList: React.FC<ModListProps> = ({ mods }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {mods.map((mod) => (
                 <Card
-                    key={`${mod.gameName}-${mod.modId}`}
+                    key={`${mod.game?.slug}-${mod.modId}`} // Updated to use game.slug
                     modId={mod.modId}
-                    gameName={mod.gameName}
+                    gameName={mod.game?.name || "Unknown Game"} // Updated to use game.name
                     title={mod.title}
                     description={mod.description}
                     imageUrl={mod.imageUrl}

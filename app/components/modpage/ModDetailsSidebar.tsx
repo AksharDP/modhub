@@ -1,4 +1,5 @@
 import React from "react";
+import { FileVersionInterface } from "@/app/types/common";
 
 const UploadIcon = () => (
     <svg
@@ -101,12 +102,7 @@ interface ModDetailsSidebarProps {
         downloads: number;
         size: string;
         tags?: string[];
-        fileVersions: Array<{
-            id: string;
-            version: string;
-            downloadUrl: string;
-            isLatest: boolean;
-        }>;
+        fileVersions: FileVersionInterface[];
     };
     formatDate: (date: string | number | Date) => string;
 }

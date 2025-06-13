@@ -1,7 +1,7 @@
 import React from "react";
 
 interface Mod {
-    fullDescription: string;
+    Description: string;
 }
 
 interface DescriptionSectionProps {
@@ -13,7 +13,7 @@ const DescriptionSection: React.FC<DescriptionSectionProps> = ({ mod }) => {
         <article className="prose prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-xl max-w-none bg-gray-800 p-6 rounded-[5px] shadow">
             <div
                 dangerouslySetInnerHTML={{
-                    __html: mod.fullDescription,
+                    __html: mod.Description,
                 }}
             />
         </article>
