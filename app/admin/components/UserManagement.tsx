@@ -243,7 +243,7 @@ export default function UserManagement() {
                                                             : user.id
                                                     )
                                                 }
-                                                className="text-orange-400 hover:text-orange-300 transition-colors"
+                                                className="text-orange-400 hover:text-orange-300 transition-colors cursor-pointer"
                                             >
                                                 {editingUser === user.id
                                                     ? "Cancel"
@@ -256,7 +256,7 @@ export default function UserManagement() {
                                                         user.username
                                                     )
                                                 }
-                                                className="text-red-400 hover:text-red-300 transition-colors"
+                                                className="text-red-400 hover:text-red-300 transition-colors cursor-pointer"
                                                 disabled={
                                                     deleteUserMutation.isPending
                                                 }
