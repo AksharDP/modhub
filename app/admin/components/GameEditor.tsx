@@ -156,7 +156,7 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 ${
+                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 cursor-pointer ${
                                     activeTab === tab.id
                                         ? "border-orange-400 text-orange-400"
                                         : "border-transparent text-gray-400 hover:text-gray-300"
