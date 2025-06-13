@@ -26,7 +26,7 @@ if (!databaseUrl) {
     );
     console.log("3. Run: bun run db:setup");
     throw new Error(
-        "DATABASE_URL environment variable is not set. Please check your .env file."
+        "DATABASE_URL environment variable is not set. Please check environment variable."
     );
 }
 
