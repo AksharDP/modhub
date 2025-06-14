@@ -3,7 +3,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { trpc } from "../../lib/trpc";
 import Image from "next/image";
-import ModEditModal from "./ModEditModal";
+import dynamic from "next/dynamic";
+
+const ModEditModal = dynamic(() => import("./ModEditModal"), { ssr: false });
 
 export interface ModWithRelations {
     id: number;

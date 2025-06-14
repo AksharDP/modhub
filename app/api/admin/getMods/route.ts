@@ -72,5 +72,8 @@ export async function POST(req: NextRequest) {
         offset,
         hasMore: offset + limit < total,
     };
-    return NextResponse.json({ mods: modsResult, pagination });
+    const res = NextResponse.json({ mods: modsResult, pagination });
+    // Add cache headers to reduce edge requests for identical queries
+    res.headers.set("Cache-Control", "public, max-age=60, stale-while-revalidate=120");
+    return res;
 }
