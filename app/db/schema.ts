@@ -24,7 +24,7 @@ export interface FormField {
     order: number;
 }
 
-export const userRoleEnum = pgEnum("user_role", ["admin", "user", "supporter"]);
+export const userRoleEnum = pgEnum("user_role", ["admin", "user", "supporter", "banned", "suspended"]);
 export const userTable = pgTable(
     "users",
     {
@@ -39,6 +39,7 @@ export const userTable = pgTable(
         bio: text("bio"),
         createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
         updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+        suspendedUntil: timestamp("suspended_until", { withTimezone: true }),
     },
     (table) => ({
         usernameIdx: index("username_idx").on(table.username),

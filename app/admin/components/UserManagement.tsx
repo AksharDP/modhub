@@ -146,6 +146,9 @@ export default function UserManagement() {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
                                     Actions
                                 </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                    Status
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="bg-gray-800 divide-y divide-gray-700">
@@ -233,8 +236,8 @@ export default function UserManagement() {
                                               ).toLocaleDateString()
                                             : "Unknown"}
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div className="flex space-x-2">
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium align-middle">
+                                        <div className="flex flex-col items-center justify-center gap-2 h-full">
                                             <button
                                                 onClick={() =>
                                                     setEditingUser(
@@ -263,7 +266,40 @@ export default function UserManagement() {
                                             >
                                                 Delete
                                             </button>
+                                            <a
+                                                href={`/author/${encodeURIComponent(
+                                                    user.username
+                                                )}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                                            >
+                                                View Profile
+                                            </a>
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium align-middle">
+                                        {user.role === "banned" && (
+                                            <span className="px-1 py-0.5 rounded text-[10px] font-bold bg-red-800 text-red-200">
+                                                Banned
+                                            </span>
+                                        )}
+                                        {user.role === "suspended" && (
+                                            <span className="flex flex-col items-center justify-center min-w-[56px] min-h-[28px] px-1 py-0.5 rounded text-[10px] font-bold bg-yellow-800 text-yellow-200 text-center">
+                                                <span className="w-full text-center leading-tight">Suspended</span>
+                                                {user.suspendedUntil ? (
+                                                    <span className="block break-words text-yellow-100 font-normal w-full text-center leading-tight">
+                                                        (until {new Date(user.suspendedUntil).toLocaleDateString()})
+                                                    </span>
+                                                ) : null}
+                                            </span>
+                                        )}
+                                        {user.role !== "banned" &&
+                                            user.role !== "suspended" && (
+                                                <span className="px-1 py-0.5 rounded text-[10px] font-medium bg-gray-700 text-gray-200">
+                                                    Active
+                                                </span>
+                                            )}
                                     </td>
                                 </tr>
                             ))}

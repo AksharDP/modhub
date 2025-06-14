@@ -96,6 +96,14 @@ const deleteGameInput = z.object({
     deleteMods: z.boolean().default(true),
 });
 
+const banUserInput = z.object({
+    userId: z.number().int().positive(),
+});
+const suspendUserInput = z.object({
+    userId: z.number().int().positive(),
+    duration: z.number().int().positive().optional(), // days
+});
+
 export const adminRouter = router({
     getDashboardStats: publicProcedure.query(async ({ ctx }) => {
         await requireAdmin();
@@ -171,6 +179,7 @@ export const adminRouter = router({
                     bio: userTable.bio,
                     createdAt: userTable.createdAt,
                     updatedAt: userTable.updatedAt,
+                    suspendedUntil: userTable.suspendedUntil,
                 })
                 .from(userTable)
                 .where(conditions.length > 0 ? and(...conditions) : undefined)
@@ -693,5 +702,25 @@ export const adminRouter = router({
             }
 
             return mod[0];
+        }),
+    banUser: publicProcedure
+        .input(banUserInput)
+        .mutation(async ({ ctx, input }) => {
+            await requireAdmin();
+            await ctx.db.update(userTable).set({ role: "banned" }).where(eq(userTable.id, input.userId));
+            return { success: true };
+        }),
+    suspendUser: publicProcedure
+        .input(suspendUserInput)
+        .mutation(async ({ ctx, input }) => {
+            await requireAdmin();
+            let suspendedUntil: Date | null = null;
+            if (input.duration) {
+                suspendedUntil = new Date(Date.now() + input.duration * 24 * 60 * 60 * 1000);
+            }
+            await ctx.db.update(userTable)
+                .set({ role: "suspended", suspendedUntil })
+                .where(eq(userTable.id, input.userId));
+            return { success: true };
         }),
 });
