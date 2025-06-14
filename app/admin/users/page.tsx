@@ -8,7 +8,7 @@ import UserCount from "../components/UserCount";
 export default async function AdminUsersPage({
     searchParams,
 }: {
-    searchParams: { [key: string]: string | string[] | undefined };
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
     const { user } = await getCurrentSession();
     if (!user || user.role !== "admin") {
