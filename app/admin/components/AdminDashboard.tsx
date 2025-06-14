@@ -5,7 +5,6 @@ import StatsOverview from "./StatsOverview";
 import UserManagement from "./UserManagement";
 import ModManagement from "./ModManagement";
 import GamesManagement from "./GamesManagement";
-import type { User } from "@/app/db/schema";
 import type { ModWithRelations, ModPagination } from "./ModManagement";
 import type { GameWithSerializedDates } from "./GamesManagement";
 
@@ -19,7 +18,6 @@ interface AdminDashboardProps {
         categories: number;
         totalDownloads: number;
     };
-    initialUsers: User[];
     initialUserPagination: {
         total: number;
         limit: number;
@@ -35,7 +33,6 @@ interface AdminDashboardProps {
 
 export default function AdminDashboard({
     initialStats,
-    initialUsers,
     initialUserPagination,
     initialMods,
     initialModPagination,
@@ -82,7 +79,10 @@ export default function AdminDashboard({
                     <StatsOverview initialStats={initialStats} />
                 )}
                 {activeTab === "users" && (
-                    <UserManagement users={initialUsers} pagination={initialUserPagination} />
+                    <UserManagement
+                        pagination={initialUserPagination}
+                        // Optionally pass search, role, status, joinDate as empty or from state if needed
+                    />
                 )}
                 {activeTab === "mods" && (
                     <ModManagement
