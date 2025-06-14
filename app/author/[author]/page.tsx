@@ -4,9 +4,11 @@ import { mods, userTable, User } from "@/app/db/schema";
 import { eq } from "drizzle-orm";
 import AuthorProfileClient from "./AuthorProfileClient";
 
-export default async function AuthorProfilePage({ params }: { params: { author: string } }) {
+export default async function AuthorProfilePage({ params }: { params: Promise<{ author: string }> }) {
+    const { author } = await params;
+    if (!author) return <div className="text-white p-8">User not found.</div>;
     const { user: currentUser } = await getCurrentSession();
-    const username = decodeURIComponent(params.author);
+    const username = decodeURIComponent(author);
     const [profileUser] = await db.select().from(userTable).where(eq(userTable.username, username));
     if (!profileUser) return <div className="text-white p-8">User not found.</div>;
 
