@@ -1,6 +1,6 @@
 "use client";
 
-import { trpc } from "../../lib/trpc";
+import { useState } from "react";
 
 interface StatCard {
     title: string;
@@ -9,38 +9,20 @@ interface StatCard {
     color: string;
 }
 
-export default function StatsOverview() {
-    const {
-        data: stats,
-        isLoading,
-        error,
-    } = trpc.admin.getDashboardStats.useQuery();
+interface StatsOverviewProps {
+    initialStats: {
+        users: number;
+        mods: number;
+        activeMods: number;
+        featuredMods: number;
+        games: number;
+        categories: number;
+        totalDownloads: number;
+    };
+}
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="bg-red-900/50 border border-red-500 rounded-lg p-4">
-                <p className="text-red-200">
-                    Error loading stats: {error.message}
-                </p>
-            </div>
-        );
-    }
-
-    if (!stats) {
-        return (
-            <div className="bg-gray-800 rounded-lg p-4">
-                <p className="text-gray-400">No data available</p>
-            </div>
-        );
-    }
+export default function StatsOverview({ initialStats }: StatsOverviewProps) {
+    const [stats] = useState(initialStats);
 
     const statCards: StatCard[] = [
         {

@@ -1,25 +1,28 @@
-import { redirect } from "next/navigation";
-import { getCurrentSession } from "../../lib/auth";
-import { userTable, games, categories, modStats } from "../../db/schema";
-import ModManagement from "../components/ModManagement";
-import AdminNavigation from "../components/AdminNavigation";
-import { db } from "../../db";
-import { mods } from "../../db/schema";
-import { eq, desc, and, count, SQLWrapper } from "drizzle-orm";
+import { NextRequest, NextResponse } from "next/server";
+import { getCurrentSession } from "../../../lib/auth";
+import { db } from "../../../db";
+import { mods, userTable, games, categories, modStats } from "../../../db/schema";
+import { eq, desc, and, count, SQLWrapper, sql } from "drizzle-orm";
 
-export default async function AdminModsPage() {
+export async function POST(req: NextRequest) {
     const { user } = await getCurrentSession();
-
     if (!user || user.role !== "admin") {
-        redirect("/login");
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    // SSR: Fetch initial mods (first page, no filters)
-    const limit = 20;
-    const offset = 0;
+    const body = await req.json();
+    const { limit = 20, offset = 0, isActive, isFeatured, search } = body;
     const conditions: SQLWrapper[] = [];
-    // No filters for initial load
-
+    if (isActive !== undefined) {
+        conditions.push(eq(mods.isActive, isActive));
+    }
+    if (isFeatured !== undefined) {
+        conditions.push(eq(mods.isFeatured, isFeatured));
+    }
+    if (search) {
+        conditions.push(
+            sql`(${mods.title} ILIKE ${`%${search}%`} OR ${mods.description} ILIKE ${`%${search}%`})`
+        );
+    }
     const modsResult = await db
         .select({
             id: mods.id,
@@ -59,34 +62,15 @@ export default async function AdminModsPage() {
         .orderBy(desc(mods.createdAt))
         .limit(limit)
         .offset(offset);
-
     const [{ count: total }] = await db
         .select({ count: count() })
         .from(mods)
         .where(conditions.length > 0 ? and(...conditions) : undefined);
-
     const pagination = {
         total,
         limit,
         offset,
         hasMore: offset + limit < total,
     };
-
-    // SSR: Fetch games and categories for ModEditModal
-    const gamesList = await db
-        .select({ id: games.id, name: games.name })
-        .from(games);
-    const categoriesList = await db
-        .select({ id: categories.id, name: categories.name })
-        .from(categories);
-
-    return (
-        <div className="min-h-screen bg-gray-900 text-white">
-            <div className="container mx-auto px-4 py-8">
-                <h1 className="text-3xl font-bold mb-8">Admin Panel</h1>
-                <AdminNavigation />
-                <ModManagement initialMods={modsResult} initialPagination={pagination} games={gamesList} categories={categoriesList} />
-            </div>
-        </div>
-    );
+    return NextResponse.json({ mods: modsResult, pagination });
 }

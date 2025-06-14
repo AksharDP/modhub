@@ -18,6 +18,10 @@ export default function AuthorModActions({ mod, onModUpdated, onModDeleted }: Au
     const updateModStatus = trpc.admin.updateModStatus.useMutation();
     const deleteMod = trpc.admin.deleteMod.useMutation();
 
+    // Fetch games and categories client-side when modal opens
+    const { data: games } = trpc.admin.getGames.useQuery(undefined, { enabled: isEditOpen });
+    const { data: categories } = trpc.admin.getCategories.useQuery(undefined, { enabled: isEditOpen });
+
     const handleToggleVisibility = async () => {
         setIsVisibilityPending(true);
         await updateModStatus.mutateAsync({
@@ -53,6 +57,8 @@ export default function AuthorModActions({ mod, onModUpdated, onModDeleted }: Au
                     isOpen={isEditOpen}
                     onClose={() => setIsEditOpen(false)}
                     onSuccess={onModUpdated}
+                    games={games || []}
+                    categories={categories || []}
                 />
             )}
             {isDeleteConfirm && (

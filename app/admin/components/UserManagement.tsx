@@ -1,37 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "../../lib/trpc";
 import Image from "next/image";
+import type { User } from "@/app/db/schema";
 
-export default function UserManagement() {
+interface UserManagementProps {
+    initialUsers: User[];
+    initialPagination: {
+        total: number;
+        limit: number;
+        offset: number;
+        hasMore: boolean;
+    };
+}
+
+export default function UserManagement({
+    initialUsers,
+    initialPagination,
+}: UserManagementProps) {
     const [page, setPage] = useState(0);
     const [roleFilter, setRoleFilter] = useState<
         "admin" | "user" | "supporter" | undefined
     >(undefined);
     const [searchTerm, setSearchTerm] = useState("");
-    const [editingUser, setEditingUser] = useState<number | null>(null);
+    const [editingUser, setEditingUser] = useState<number | null>(null);    const [users, setUsers] = useState(initialUsers);
+    const [pagination, setPagination] = useState(initialPagination);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isFirstLoad, setIsFirstLoad] = useState(true);
 
     const limit = 20;
     const offset = page * limit;
 
-    const { data, isLoading, refetch } = trpc.admin.getUsers.useQuery({
-        limit,
-        offset,
-        role: roleFilter,
-        search: searchTerm || undefined,
-    });
-
-    const updateUserRoleMutation = trpc.admin.updateUserRole.useMutation({
+    // SSR optimization: Only fetch via API after first load or when filters/page/search change
+    const fetchUsers = async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch("/api/admin/getUsers", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    limit,
+                    offset,
+                    role: roleFilter,
+                    search: searchTerm || undefined,
+                }),
+            });
+            const data = await res.json();
+            setUsers(data.users);
+            setPagination(data.pagination);
+        } finally {
+            setIsLoading(false);
+        }
+    };    // Only fetch after first load and when filters/pagination change
+    useEffect(() => {
+        if (!isFirstLoad) {
+            fetchUsers();
+        } else {
+            setIsFirstLoad(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page, roleFilter, searchTerm]);    const updateUserRoleMutation = trpc.admin.updateUserRole.useMutation({
         onSuccess: () => {
-            refetch();
+            fetchUsers();
             setEditingUser(null);
         },
     });
 
     const deleteUserMutation = trpc.admin.deleteUser.useMutation({
         onSuccess: () => {
-            refetch();
+            fetchUsers();
         },
     });
 
@@ -106,22 +144,23 @@ export default function UserManagement() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-orange-400"
                     />
+                    {/* Fix: Only allow valid role values for filter, never pass a raw string */}
                     <select
-                        value={roleFilter || ""}
-                        onChange={(e) =>
-                            setRoleFilter(
-                                (e.target.value as
-                                    | "admin"
-                                    | "user"
-                                    | "supporter") || undefined
-                            )
-                        }
+                        value={roleFilter ?? ""} // roleFilter state is of type "admin" | "user" | "supporter" | undefined
+                        onChange={(e) => {
+                            const selectedValue = e.target.value;
+                            if (selectedValue === "admin" || selectedValue === "user" || selectedValue === "supporter") {
+                                setRoleFilter(selectedValue); // selectedValue is now one of the enum literals
+                            } else {
+                                setRoleFilter(undefined); // Handle cases like empty string for "All Roles"
+                            }
+                        }}
                         className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-400"
                     >
                         <option value="">All Roles</option>
                         <option value="admin">Admin</option>
-                        <option value="supporter">Supporter</option>
                         <option value="user">User</option>
+                        <option value="supporter">Supporter</option>
                     </select>
                 </div>
             </div>
@@ -152,7 +191,7 @@ export default function UserManagement() {
                             </tr>
                         </thead>
                         <tbody className="bg-gray-800 divide-y divide-gray-700">
-                            {data?.users.map((user) => (
+                            {users.map((user) => (
                                 <tr key={user.id} className="hover:bg-gray-750">
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex items-center">
@@ -286,10 +325,15 @@ export default function UserManagement() {
                                         )}
                                         {user.role === "suspended" && (
                                             <span className="flex flex-col items-center justify-center min-w-[56px] min-h-[28px] px-1 py-0.5 rounded text-[10px] font-bold bg-yellow-800 text-yellow-200 text-center">
-                                                <span className="w-full text-center leading-tight">Suspended</span>
+                                                <span className="w-full text-center leading-tight">
+                                                    Suspended
+                                                </span>
                                                 {user.suspendedUntil ? (
                                                     <span className="block break-words text-yellow-100 font-normal w-full text-center leading-tight">
-                                                        (until {new Date(user.suspendedUntil).toLocaleDateString()})
+                                                        (until{" "}
+                                                        {new Date(
+                                                            user.suspendedUntil
+                                                        ).toLocaleDateString()})
                                                     </span>
                                                 ) : null}
                                             </span>
@@ -308,12 +352,12 @@ export default function UserManagement() {
                 </div>
             </div>
 
-            {data && (
+            {pagination && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-400">
                         Showing {offset + 1} to{" "}
-                        {Math.min(offset + limit, data.pagination.total)} of{" "}
-                        {data.pagination.total} users
+                        {Math.min(offset + limit, pagination.total)} of{" "}
+                        {pagination.total} users
                     </div>
                     <div className="flex space-x-2">
                         <button
@@ -325,7 +369,7 @@ export default function UserManagement() {
                         </button>
                         <button
                             onClick={() => setPage(page + 1)}
-                            disabled={!data.pagination.hasMore}
+                            disabled={!pagination.hasMore}
                             className="px-3 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
                         >
                             Next

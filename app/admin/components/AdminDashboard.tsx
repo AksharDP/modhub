@@ -5,8 +5,44 @@ import StatsOverview from "./StatsOverview";
 import UserManagement from "./UserManagement";
 import ModManagement from "./ModManagement";
 import GamesManagement from "./GamesManagement";
+import type { User } from "@/app/db/schema";
+import type { ModWithRelations, ModPagination } from "./ModManagement";
+import type { GameWithSerializedDates } from "./GamesManagement";
 
-export default function AdminDashboard() {
+interface AdminDashboardProps {
+    initialStats: {
+        users: number;
+        mods: number;
+        activeMods: number;
+        featuredMods: number;
+        games: number;
+        categories: number;
+        totalDownloads: number;
+    };
+    initialUsers: User[];
+    initialUserPagination: {
+        total: number;
+        limit: number;
+        offset: number;
+        hasMore: boolean;
+    };
+    initialMods: ModWithRelations[];
+    initialModPagination: ModPagination;
+    initialGames: GameWithSerializedDates[];
+    games: { id: number; name: string }[];
+    categories: { id: number; name: string }[];
+}
+
+export default function AdminDashboard({
+    initialStats,
+    initialUsers,
+    initialUserPagination,
+    initialMods,
+    initialModPagination,
+    initialGames,
+    games,
+    categories,
+}: AdminDashboardProps) {
     const [activeTab, setActiveTab] = useState<"overview" | "users" | "mods" | "games">(
         "overview"
     );
@@ -40,11 +76,12 @@ export default function AdminDashboard() {
                         </button>
                     ))}
                 </nav>
-            </div>            <div className="mt-6">
-                {activeTab === "overview" && <StatsOverview />}
-                {activeTab === "users" && <UserManagement />}
-                {activeTab === "mods" && <ModManagement />}
-                {activeTab === "games" && <GamesManagement />}
+            </div>
+            <div className="mt-6">
+                {activeTab === "overview" && <StatsOverview initialStats={initialStats} />}
+                {activeTab === "users" && <UserManagement initialUsers={initialUsers} initialPagination={initialUserPagination} />}
+                {activeTab === "mods" && <ModManagement initialMods={initialMods} initialPagination={initialModPagination} games={games} categories={categories} />}
+                {activeTab === "games" && <GamesManagement initialGames={initialGames} />}
             </div>
         </div>
     );

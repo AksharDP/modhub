@@ -8,9 +8,11 @@ interface ModEditModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    games: { id: number; name: string }[];
+    categories: { id: number; name: string }[];
 }
 
-export default function ModEditModal({ modId, isOpen, onClose, onSuccess }: ModEditModalProps) {
+export default function ModEditModal({ modId, isOpen, onClose, onSuccess, games, categories }: ModEditModalProps) {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -26,9 +28,7 @@ export default function ModEditModal({ modId, isOpen, onClose, onSuccess }: ModE
     const { data: mod, isLoading } = trpc.admin.getMod.useQuery(
         { modId },
         { enabled: isOpen && modId > 0 }
-    );    // Fetch games and categories for dropdowns
-    const { data: games } = trpc.admin.getGames.useQuery();
-    const { data: categories } = trpc.admin.getCategories.useQuery();
+    );
 
     const updateModMutation = trpc.admin.updateMod.useMutation({
         onSuccess: () => {

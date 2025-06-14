@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { trpc } from "../../lib/trpc";
 import Image from "next/image";
 import type { FormField } from "../../db/schema";
 import GameEditor from "./GameEditor";
 
 // Define the type that matches what tRPC returns (with serialized dates)
-type GameWithSerializedDates = {
+export interface GameWithSerializedDates {
     id: number;
     name: string;
     slug: string;
@@ -19,30 +18,46 @@ type GameWithSerializedDates = {
     formSchema: FormField[] | null;
     createdAt: string | null;
     updatedAt: string | null;
-};
+}
 
-export default function GamesManagement() {
+export default function GamesManagement({
+    initialGames,
+}: {
+    initialGames: GameWithSerializedDates[];
+}) {
+    const [games, setGames] = useState(initialGames);
     const [selectedGame, setSelectedGame] = useState<GameWithSerializedDates | null>(null);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const { data: games, isLoading, refetch } = trpc.admin.getGames.useQuery();
-    console.log(games);
-    const deleteGameMutation = trpc.admin.deleteGame.useMutation({
-        onSuccess: () => {
-            refetch();
-        },
-    });
+    const fetchGames = async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch("/api/admin/getGames", { method: "GET" });
+            const data = await res.json();
+            setGames(data.games);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const handleCreateGame = () => {
         setSelectedGame(null);
         setIsEditorOpen(true);
-    };    const handleEditGame = (game: GameWithSerializedDates) => {
+    };
+    const handleEditGame = (game: GameWithSerializedDates) => {
         setSelectedGame(game);
         setIsEditorOpen(true);
-    };const handleDeleteGame = async (gameId: number) => {
+    };
+    const handleDeleteGame = async (gameId: number) => {
         if (confirm("Are you sure you want to delete this game? This action cannot be undone.")) {
             try {
-                await deleteGameMutation.mutateAsync({ gameId });
+                await fetch(`/api/admin/deleteGame`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ gameId }),
+                });
+                fetchGames();
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : "Failed to delete game";
                 alert(errorMessage);
@@ -53,7 +68,7 @@ export default function GamesManagement() {
     const handleCloseEditor = () => {
         setIsEditorOpen(false);
         setSelectedGame(null);
-        refetch();
+        fetchGames();
     };
 
     if (isLoading) {
@@ -77,7 +92,7 @@ export default function GamesManagement() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {games?.map((game) => (
+                {games.map((game) => (
                     <div
                         key={game.id}
                         className="bg-gray-800 rounded-lg overflow-hidden shadow-lg"
@@ -144,9 +159,8 @@ export default function GamesManagement() {
                                 <button
                                     onClick={() => handleDeleteGame(game.id)}
                                     className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded transition-colors duration-200 cursor-pointer"
-                                    disabled={deleteGameMutation.isPending}
                                 >
-                                    {deleteGameMutation.isPending ? "..." : "Delete"}
+                                    Delete
                                 </button>
                             </div>
                         </div>
@@ -154,7 +168,7 @@ export default function GamesManagement() {
                 ))}
             </div>
 
-            {games && games.length === 0 && (
+            {games.length === 0 && (
                 <div className="text-center py-12">
                     <h3 className="text-lg font-medium text-gray-400 mb-2">
                         No games found

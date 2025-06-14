@@ -1,11 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "../../lib/trpc";
 import Image from "next/image";
 import ModEditModal from "./ModEditModal";
 
-export default function ModManagement() {
+export interface ModWithRelations {
+    id: number;
+    title: string;
+    slug: string;
+    description: string | null;
+    version: string;
+    imageUrl: string | null;
+    isActive: boolean | null;
+    isFeatured: boolean | null;
+    createdAt: Date | null;
+    author: { id: number; username: string } | null;
+    game: { id: number; name: string } | null;
+    category: { id: number; name: string } | null;
+    stats: {
+        totalDownloads: number | null;
+        likes: number | null;
+        views: number | null;
+        rating: number | null;
+    } | null;
+}
+
+export interface ModPagination {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+}
+
+export default function ModManagement({
+    initialMods,
+    initialPagination,
+    games,
+    categories,
+}: {
+    initialMods: ModWithRelations[];
+    initialPagination: ModPagination;
+    games: { id: number; name: string }[];
+    categories: { id: number; name: string }[];
+}) {
     const [page, setPage] = useState(0);
     const [isActiveFilter, setIsActiveFilter] = useState<boolean | undefined>(
         undefined
@@ -20,23 +58,53 @@ export default function ModManagement() {
     const limit = 20;
     const offset = page * limit;
 
-    const { data, isLoading, refetch } = trpc.admin.getMods.useQuery({
-        limit,
-        offset,
-        isActive: isActiveFilter,
-        isFeatured: isFeaturedFilter,
-        search: searchTerm || undefined,
-    });
+    // SSR: Use initial data for first render, then tRPC for subsequent fetches
+    const [mods, setMods] = useState(initialMods);
+    const [pagination, setPagination] = useState(initialPagination);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isFirstLoad, setIsFirstLoad] = useState(true);
+
+    // Only fetch via tRPC after first load or when filters/page/search change
+    const fetchMods = async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch("/api/admin/getMods", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    limit,
+                    offset,
+                    isActive: isActiveFilter,
+                    isFeatured: isFeaturedFilter,
+                    search: searchTerm || undefined,
+                }),
+            });
+            const data = await res.json();
+            setMods(data.mods);
+            setPagination(data.pagination);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!isFirstLoad) {
+            fetchMods();
+        } else {
+            setIsFirstLoad(false);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [page, isActiveFilter, isFeaturedFilter, searchTerm]);
 
     const updateModStatusMutation = trpc.admin.updateModStatus.useMutation({
         onSuccess: () => {
-            refetch();
+            fetchMods();
         },
     });
 
     const deleteModMutation = trpc.admin.deleteMod.useMutation({
         onSuccess: () => {
-            refetch();
+            fetchMods();
         },
     });
 
@@ -81,7 +149,7 @@ export default function ModManagement() {
     };
 
     const handleEditSuccess = () => {
-        refetch();
+        fetchMods();
         closeEditModal();
     };
 
@@ -174,7 +242,7 @@ export default function ModManagement() {
                             </tr>
                         </thead>
                         <tbody className="bg-gray-800 divide-y divide-gray-700">
-                            {data?.mods.map((mod) => (
+                            {mods.map((mod) => (
                                 <tr key={mod.id} className="hover:bg-gray-750">
                                     <td className="px-6 py-4">
                                         <div className="flex items-center">
@@ -334,12 +402,10 @@ export default function ModManagement() {
                 </div>
             </div>
 
-            {data && (
+            {pagination && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-400">
-                        Showing {offset + 1} to{" "}
-                        {Math.min(offset + limit, data.pagination.total)} of{" "}
-                        {data.pagination.total} mods
+                        Showing {pagination.offset + 1} to {Math.min(pagination.offset + pagination.limit, pagination.total)} of {pagination.total} mods
                     </div>
                     <div className="flex space-x-2">
                         <button
@@ -351,19 +417,22 @@ export default function ModManagement() {
                         </button>
                         <button
                             onClick={() => setPage(page + 1)}
-                            disabled={!data.pagination.hasMore}
+                            disabled={!pagination.hasMore}
                             className="px-3 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
                         >
                             Next
                         </button>
                     </div>
                 </div>
-            )}            {editModalOpen && editingModId !== null && (
+            )}
+            {editModalOpen && editingModId !== null && (
                 <ModEditModal
                     modId={editingModId}
                     isOpen={editModalOpen}
                     onClose={closeEditModal}
                     onSuccess={handleEditSuccess}
+                    games={games}
+                    categories={categories}
                 />
             )}
         </div>
