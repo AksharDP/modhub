@@ -30,7 +30,7 @@ export default async function AdminGamesPage() {
         })
         .from(games)
         .orderBy(desc(games.name));
-    const gamesListSerialized = gamesList.map(g => ({
+    const gamesListSerialized = gamesList.map((g) => ({
         ...g,
         createdAt: g.createdAt ? g.createdAt.toISOString() : null,
         updatedAt: g.updatedAt ? g.updatedAt.toISOString() : null,

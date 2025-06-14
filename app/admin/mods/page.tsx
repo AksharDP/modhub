@@ -14,11 +14,9 @@ export default async function AdminModsPage() {
         redirect("/login");
     }
 
-    // SSR: Fetch initial mods (first page, no filters)
     const limit = 20;
     const offset = 0;
     const conditions: SQLWrapper[] = [];
-    // No filters for initial load
 
     const modsResult = await db
         .select({
@@ -72,7 +70,6 @@ export default async function AdminModsPage() {
         hasMore: offset + limit < total,
     };
 
-    // SSR: Fetch games and categories for ModEditModal
     const gamesList = await db
         .select({ id: games.id, name: games.name })
         .from(games);
@@ -85,7 +82,12 @@ export default async function AdminModsPage() {
             <div className="container mx-auto px-4 py-8">
                 <h1 className="text-3xl font-bold mb-8">Admin Panel</h1>
                 <AdminNavigation />
-                <ModManagement initialMods={modsResult} initialPagination={pagination} games={gamesList} categories={categoriesList} />
+                <ModManagement
+                    initialMods={modsResult}
+                    initialPagination={pagination}
+                    games={gamesList}
+                    categories={categoriesList}
+                />
             </div>
         </div>
     );

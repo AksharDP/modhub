@@ -1,170 +1,83 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { trpc } from "../../lib/trpc";
 import Image from "next/image";
-import type { User } from "@/app/db/schema";
+import React from "react";
 
 interface UserManagementProps {
-    initialUsers: User[];
-    initialPagination: {
+    users: Array<{
+        id: number;
+        username: string;
+        email: string;
+        role: string;
+        profilePicture: string | null;
+        bio: string | null;
+        createdAt: Date | string | null;
+        updatedAt: Date | string | null;
+        suspendedUntil: Date | string | null;
+    }>;
+    pagination: {
         total: number;
         limit: number;
         offset: number;
         hasMore: boolean;
     };
+    search?: string;
+    role?: string;
+    status?: string;
+    joinDate?: string;
 }
 
 export default function UserManagement({
-    initialUsers,
-    initialPagination,
+    users,
+    pagination,
+    search = "",
+    role = "",
+    status = "",
+    joinDate = "",
 }: UserManagementProps) {
-    const [page, setPage] = useState(0);
-    const [roleFilter, setRoleFilter] = useState<
-        "admin" | "user" | "supporter" | undefined
-    >(undefined);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [editingUser, setEditingUser] = useState<number | null>(null);    const [users, setUsers] = useState(initialUsers);
-    const [pagination, setPagination] = useState(initialPagination);
-    const [isLoading, setIsLoading] = useState(false);
-    const [isFirstLoad, setIsFirstLoad] = useState(true);
-
-    const limit = 20;
-    const offset = page * limit;
-
-    // SSR optimization: Only fetch via API after first load or when filters/page/search change
-    const fetchUsers = async () => {
-        setIsLoading(true);
-        try {
-            const res = await fetch("/api/admin/getUsers", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    limit,
-                    offset,
-                    role: roleFilter,
-                    search: searchTerm || undefined,
-                }),
-            });
-            const data = await res.json();
-            setUsers(data.users);
-            setPagination(data.pagination);
-        } finally {
-            setIsLoading(false);
-        }
-    };    // Only fetch after first load and when filters/pagination change
-    useEffect(() => {
-        if (!isFirstLoad) {
-            fetchUsers();
-        } else {
-            setIsFirstLoad(false);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, roleFilter, searchTerm]);    const updateUserRoleMutation = trpc.admin.updateUserRole.useMutation({
-        onSuccess: () => {
-            fetchUsers();
-            setEditingUser(null);
-        },
-    });
-
-    const deleteUserMutation = trpc.admin.deleteUser.useMutation({
-        onSuccess: () => {
-            fetchUsers();
-        },
-    });
-
-    const handleRoleChange = async (
-        userId: number,
-        newRole: "admin" | "user" | "supporter"
-    ) => {
-        if (
-            confirm(
-                `Are you sure you want to change this user's role to ${newRole}?`
-            )
-        ) {
-            try {
-                await updateUserRoleMutation.mutateAsync({
-                    userId,
-                    role: newRole,
-                });
-            } catch (error) {
-                alert(
-                    "Failed to update user role: " + (error as Error).message
-                );
-            }
-        }
-    };
-
-    const handleDeleteUser = async (userId: number, username: string) => {
-        if (
-            confirm(
-                `Are you sure you want to delete user "${username}"? This action cannot be undone.`
-            )
-        ) {
-            try {
-                await deleteUserMutation.mutateAsync({ userId });
-            } catch (error) {
-                alert("Failed to delete user: " + (error as Error).message);
-            }
-        }
-    };
-
-    const getRoleBadgeColor = (role: string) => {
-        switch (role) {
-            case "admin":
-                return "bg-red-600 text-red-100";
-            case "supporter":
-                return "bg-yellow-600 text-yellow-100";
-            case "user":
-                return "bg-gray-600 text-gray-100";
-            default:
-                return "bg-gray-600 text-gray-100";
-        }
-    };
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
-            </div>
-        );
-    }
-
+    const limit = pagination.limit;
+    const offset = pagination.offset;
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <h2 className="text-2xl font-bold text-white">
-                    User Management
-                </h2>
-                <div className="flex gap-3">
+                <h2 className="text-2xl font-bold text-white">User Management</h2>
+                <form className="flex flex-wrap gap-2 items-center" method="GET">
                     <input
                         type="text"
                         placeholder="Search users..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        defaultValue={search}
                         className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-orange-400"
+                        name="search"
                     />
-                    {/* Fix: Only allow valid role values for filter, never pass a raw string */}
-                    <select
-                        value={roleFilter ?? ""} // roleFilter state is of type "admin" | "user" | "supporter" | undefined
-                        onChange={(e) => {
-                            const selectedValue = e.target.value;
-                            if (selectedValue === "admin" || selectedValue === "user" || selectedValue === "supporter") {
-                                setRoleFilter(selectedValue); // selectedValue is now one of the enum literals
-                            } else {
-                                setRoleFilter(undefined); // Handle cases like empty string for "All Roles"
-                            }
-                        }}
+                    <input
+                        type="date"
+                        defaultValue={joinDate}
                         className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-400"
+                        placeholder="Join date"
+                        name="joinDate"
+                    />
+                    <select
+                        defaultValue={role}
+                        className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-400"
+                        name="role"
                     >
                         <option value="">All Roles</option>
                         <option value="admin">Admin</option>
                         <option value="user">User</option>
                         <option value="supporter">Supporter</option>
+                        <option value="banned">Banned</option>
+                        <option value="suspended">Suspended</option>
                     </select>
-                </div>
+                    <select
+                        defaultValue={status}
+                        className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-400"
+                        name="status"
+                    >
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="banned">Banned</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                </form>
             </div>
-
             <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full">
@@ -183,10 +96,10 @@ export default function UserManagement({
                                     Joined
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                                    Actions
+                                    Status
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
-                                    Status
+                                    Actions
                                 </th>
                             </tr>
                         </thead>
@@ -217,11 +130,6 @@ export default function UserManagement({
                                                 <div className="text-sm font-medium text-white">
                                                     {user.username}
                                                 </div>
-                                                {user.bio && (
-                                                    <div className="text-sm text-gray-400 truncate max-w-xs">
-                                                        {user.bio}
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     </td>
@@ -231,42 +139,20 @@ export default function UserManagement({
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        {editingUser === user.id ? (
-                                            <select
-                                                defaultValue={user.role}
-                                                onChange={(e) =>
-                                                    handleRoleChange(
-                                                        user.id,
-                                                        e.target.value as
-                                                            | "admin"
-                                                            | "user"
-                                                            | "supporter"
-                                                    )
-                                                }
-                                                className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-orange-400"
-                                            >
-                                                <option value="user">
-                                                    User
-                                                </option>
-                                                <option value="supporter">
-                                                    Supporter
-                                                </option>
-                                                <option value="admin">
-                                                    Admin
-                                                </option>
-                                            </select>
-                                        ) : (
-                                            <span
-                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeColor(
-                                                    user.role
-                                                )}`}
-                                            >
-                                                {user.role
-                                                    .charAt(0)
-                                                    .toUpperCase() +
-                                                    user.role.slice(1)}
-                                            </span>
-                                        )}
+                                        <span
+                                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                user.role === "admin"
+                                                    ? "bg-red-600 text-red-100"
+                                                    : user.role === "supporter"
+                                                    ? "bg-yellow-600 text-yellow-100"
+                                                    : "bg-gray-600 text-gray-100"
+                                            }`}
+                                        >
+                                            {user.role
+                                                .charAt(0)
+                                                .toUpperCase() +
+                                                user.role.slice(1)}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                                         {user.createdAt
@@ -274,48 +160,6 @@ export default function UserManagement({
                                                   user.createdAt
                                               ).toLocaleDateString()
                                             : "Unknown"}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium align-middle">
-                                        <div className="flex flex-col items-center justify-center gap-2 h-full">
-                                            <button
-                                                onClick={() =>
-                                                    setEditingUser(
-                                                        editingUser === user.id
-                                                            ? null
-                                                            : user.id
-                                                    )
-                                                }
-                                                className="text-orange-400 hover:text-orange-300 transition-colors cursor-pointer"
-                                            >
-                                                {editingUser === user.id
-                                                    ? "Cancel"
-                                                    : "Edit Role"}
-                                            </button>
-                                            <button
-                                                onClick={() =>
-                                                    handleDeleteUser(
-                                                        user.id,
-                                                        user.username
-                                                    )
-                                                }
-                                                className="text-red-400 hover:text-red-300 transition-colors cursor-pointer"
-                                                disabled={
-                                                    deleteUserMutation.isPending
-                                                }
-                                            >
-                                                Delete
-                                            </button>
-                                            <a
-                                                href={`/author/${encodeURIComponent(
-                                                    user.username
-                                                )}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
-                                            >
-                                                View Profile
-                                            </a>
-                                        </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium align-middle">
                                         {user.role === "banned" && (
@@ -333,7 +177,8 @@ export default function UserManagement({
                                                         (until{" "}
                                                         {new Date(
                                                             user.suspendedUntil
-                                                        ).toLocaleDateString()})
+                                                        ).toLocaleDateString()}
+                                                        )
                                                     </span>
                                                 ) : null}
                                             </span>
@@ -345,35 +190,104 @@ export default function UserManagement({
                                                 </span>
                                             )}
                                     </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium align-middle">
+                                        <div className="flex flex-wrap gap-2 min-w-[180px] justify-center items-center">
+                                            <a
+                                                href={`/author/${encodeURIComponent(
+                                                    user.username
+                                                )}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="rounded bg-blue-700 hover:bg-blue-600 text-white py-1 px-2 transition-colors font-semibold shadow-sm text-xs"
+                                                style={{
+                                                    minWidth: 80,
+                                                    textAlign: "center",
+                                                }}
+                                            >
+                                                View
+                                            </a>
+                                            <form
+                                                method="POST"
+                                                action={`/admin/users/${user.id}/ban`}
+                                                className="inline"
+                                            >
+                                                <button
+                                                    type="submit"
+                                                    className="rounded bg-red-700 hover:bg-red-600 text-white py-1 px-2 transition-colors font-semibold shadow-sm text-xs"
+                                                    style={{ minWidth: 60 }}
+                                                >
+                                                    Ban
+                                                </button>
+                                            </form>
+                                            <form
+                                                method="POST"
+                                                action={`/admin/users/${user.id}/suspend`}
+                                                className="inline-flex gap-1 items-center"
+                                            >
+                                                <input
+                                                    type="date"
+                                                    name="suspendUntil"
+                                                    className="px-1 py-0.5 rounded bg-gray-700 text-white border border-gray-600 text-xs w-[90px]"
+                                                    required
+                                                />
+                                                <button
+                                                    type="submit"
+                                                    className="rounded bg-yellow-600 hover:bg-yellow-500 text-white py-1 px-2 transition-colors font-semibold shadow-sm text-xs"
+                                                    style={{ minWidth: 60 }}
+                                                >
+                                                    Suspend
+                                                </button>
+                                            </form>
+                                            <form
+                                                method="POST"
+                                                action={`/admin/users/${user.id}/delete`}
+                                                className="inline"
+                                            >
+                                                <button
+                                                    type="submit"
+                                                    className="rounded bg-orange-700 hover:bg-orange-600 text-white py-1 px-2 transition-colors font-semibold shadow-sm text-xs"
+                                                    style={{ minWidth: 60 }}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
             </div>
-
             {pagination && (
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4" style={{marginBottom: 0, paddingBottom: 0}}>
                     <div className="text-sm text-gray-400">
                         Showing {offset + 1} to{" "}
                         {Math.min(offset + limit, pagination.total)} of{" "}
                         {pagination.total} users
                     </div>
-                    <div className="flex space-x-2">
-                        <button
-                            onClick={() => setPage(page - 1)}
-                            disabled={page === 0}
-                            className="px-3 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
-                        >
-                            Previous
-                        </button>
-                        <button
-                            onClick={() => setPage(page + 1)}
-                            disabled={!pagination.hasMore}
-                            className="px-3 py-2 bg-gray-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 transition-colors"
-                        >
-                            Next
-                        </button>
+                    <div className="flex items-center gap-2">
+                        <form method="GET" className="flex items-center gap-2 mb-0 pb-0" style={{marginBottom: 0, paddingBottom: 0}}>
+                            <label
+                                htmlFor="perPage"
+                                className="text-sm text-gray-300"
+                            >
+                                Users per page:
+                            </label>
+                            <select
+                                id="perPage"
+                                name="limit"
+                                defaultValue={limit}
+                                className="px-2 py-1 rounded bg-gray-800 text-white border border-gray-600 text-sm"
+                                style={{ minWidth: 60 }}
+                            >
+                                {[10, 20, 50, 100].map((n) => (
+                                    <option key={n} value={n}>
+                                        {n}
+                                    </option>
+                                ))}
+                            </select>
+                        </form>
                     </div>
                 </div>
             )}

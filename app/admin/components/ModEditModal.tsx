@@ -12,7 +12,14 @@ interface ModEditModalProps {
     categories: { id: number; name: string }[];
 }
 
-export default function ModEditModal({ modId, isOpen, onClose, onSuccess, games, categories }: ModEditModalProps) {
+export default function ModEditModal({
+    modId,
+    isOpen,
+    onClose,
+    onSuccess,
+    games,
+    categories,
+}: ModEditModalProps) {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -58,7 +65,7 @@ export default function ModEditModal({ modId, isOpen, onClose, onSuccess, games,
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-          // Only include changed fields
+        // Only include changed fields
         const updateData: {
             modId: number;
             title?: string;
@@ -71,22 +78,35 @@ export default function ModEditModal({ modId, isOpen, onClose, onSuccess, games,
             categoryId?: number;
         } = { modId };
         if (formData.title !== mod?.title) updateData.title = formData.title;
-        if (formData.description !== mod?.description) updateData.description = formData.description;
-        if (formData.version !== mod?.version) updateData.version = formData.version;
-        if (formData.imageUrl !== mod?.imageUrl) updateData.imageUrl = formData.imageUrl || null;
-        if (formData.downloadUrl !== mod?.downloadUrl) updateData.downloadUrl = formData.downloadUrl || null;
+        if (formData.description !== mod?.description)
+            updateData.description = formData.description;
+        if (formData.version !== mod?.version)
+            updateData.version = formData.version;
+        if (formData.imageUrl !== mod?.imageUrl)
+            updateData.imageUrl = formData.imageUrl || null;
+        if (formData.downloadUrl !== mod?.downloadUrl)
+            updateData.downloadUrl = formData.downloadUrl || null;
         if (formData.size !== mod?.size) updateData.size = formData.size;
-        if (formData.gameId !== mod?.gameId) updateData.gameId = formData.gameId;
-        if (formData.categoryId !== mod?.categoryId) updateData.categoryId = formData.categoryId;
+        if (formData.gameId !== mod?.gameId)
+            updateData.gameId = formData.gameId;
+        if (formData.categoryId !== mod?.categoryId)
+            updateData.categoryId = formData.categoryId;
 
         await updateModMutation.mutateAsync(updateData);
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const handleInputChange = (
+        e: React.ChangeEvent<
+            HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+        >
+    ) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
+        setFormData((prev) => ({
             ...prev,
-            [name]: name === 'gameId' || name === 'categoryId' ? parseInt(value) || 0 : value
+            [name]:
+                name === "gameId" || name === "categoryId"
+                    ? parseInt(value) || 0
+                    : value,
         }));
     };
 
@@ -97,13 +117,25 @@ export default function ModEditModal({ modId, isOpen, onClose, onSuccess, games,
             <div className="bg-gray-800 rounded-lg border border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-bold text-white">Edit Mod</h2>
+                        <h2 className="text-2xl font-bold text-white">
+                            Edit Mod
+                        </h2>
                         <button
                             onClick={onClose}
                             className="text-gray-400 hover:text-white transition-colors"
                         >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            <svg
+                                className="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M6 18L18 6M6 6l12 12"
+                                />
                             </svg>
                         </button>
                     </div>
@@ -214,7 +246,10 @@ export default function ModEditModal({ modId, isOpen, onClose, onSuccess, games,
                                     >
                                         <option value={0}>Select a game</option>
                                         {games?.map((game) => (
-                                            <option key={game.id} value={game.id}>
+                                            <option
+                                                key={game.id}
+                                                value={game.id}
+                                            >
                                                 {game.name}
                                             </option>
                                         ))}
@@ -232,9 +267,14 @@ export default function ModEditModal({ modId, isOpen, onClose, onSuccess, games,
                                         required
                                         className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-400"
                                     >
-                                        <option value={0}>Select a category</option>
+                                        <option value={0}>
+                                            Select a category
+                                        </option>
                                         {categories?.map((category) => (
-                                            <option key={category.id} value={category.id}>
+                                            <option
+                                                key={category.id}
+                                                value={category.id}
+                                            >
                                                 {category.name}
                                             </option>
                                         ))}
@@ -255,7 +295,9 @@ export default function ModEditModal({ modId, isOpen, onClose, onSuccess, games,
                                     disabled={updateModMutation.isPending}
                                     className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                 >
-                                    {updateModMutation.isPending ? "Saving..." : "Save Changes"}
+                                    {updateModMutation.isPending
+                                        ? "Saving..."
+                                        : "Save Changes"}
                                 </button>
                             </div>
                         </form>

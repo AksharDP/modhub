@@ -26,7 +26,8 @@ export default function GamesManagement({
     initialGames: GameWithSerializedDates[];
 }) {
     const [games, setGames] = useState(initialGames);
-    const [selectedGame, setSelectedGame] = useState<GameWithSerializedDates | null>(null);
+    const [selectedGame, setSelectedGame] =
+        useState<GameWithSerializedDates | null>(null);
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -50,7 +51,11 @@ export default function GamesManagement({
         setIsEditorOpen(true);
     };
     const handleDeleteGame = async (gameId: number) => {
-        if (confirm("Are you sure you want to delete this game? This action cannot be undone.")) {
+        if (
+            confirm(
+                "Are you sure you want to delete this game? This action cannot be undone."
+            )
+        ) {
             try {
                 await fetch(`/api/admin/deleteGame`, {
                     method: "POST",
@@ -59,7 +64,10 @@ export default function GamesManagement({
                 });
                 fetchGames();
             } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : "Failed to delete game";
+                const errorMessage =
+                    error instanceof Error
+                        ? error.message
+                        : "Failed to delete game";
                 alert(errorMessage);
             }
         }
@@ -82,7 +90,9 @@ export default function GamesManagement({
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-white">Game Management</h2>
+                <h2 className="text-2xl font-bold text-white">
+                    Game Management
+                </h2>
                 <button
                     onClick={handleCreateGame}
                     className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer"
@@ -138,13 +148,20 @@ export default function GamesManagement({
                                 </div>
                                 <div className="text-sm text-gray-400">
                                     <p>
-                                        Users: {game.visibleToUsers ? "Visible" : "Hidden"}
+                                        Users:{" "}
+                                        {game.visibleToUsers
+                                            ? "Visible"
+                                            : "Hidden"}
                                     </p>
                                     <p>
-                                        Supporters: {game.visibleToSupporters ? "Visible" : "Hidden"}
+                                        Supporters:{" "}
+                                        {game.visibleToSupporters
+                                            ? "Visible"
+                                            : "Hidden"}
                                     </p>
                                     <p>
-                                        Form Fields: {game.formSchema?.length || 0}
+                                        Form Fields:{" "}
+                                        {game.formSchema?.length || 0}
                                     </p>
                                 </div>
                             </div>
@@ -186,10 +203,7 @@ export default function GamesManagement({
             )}
 
             {isEditorOpen && (
-                <GameEditor
-                    game={selectedGame}
-                    onClose={handleCloseEditor}
-                />
+                <GameEditor game={selectedGame} onClose={handleCloseEditor} />
             )}
         </div>
     );

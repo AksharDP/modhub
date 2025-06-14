@@ -43,9 +43,9 @@ export default function AdminDashboard({
     games,
     categories,
 }: AdminDashboardProps) {
-    const [activeTab, setActiveTab] = useState<"overview" | "users" | "mods" | "games">(
-        "overview"
-    );
+    const [activeTab, setActiveTab] = useState<
+        "overview" | "users" | "mods" | "games"
+    >("overview");
 
     const tabs = [
         { id: "overview" as const, label: "Overview", icon: "📊" },
@@ -78,10 +78,23 @@ export default function AdminDashboard({
                 </nav>
             </div>
             <div className="mt-6">
-                {activeTab === "overview" && <StatsOverview initialStats={initialStats} />}
-                {activeTab === "users" && <UserManagement initialUsers={initialUsers} initialPagination={initialUserPagination} />}
-                {activeTab === "mods" && <ModManagement initialMods={initialMods} initialPagination={initialModPagination} games={games} categories={categories} />}
-                {activeTab === "games" && <GamesManagement initialGames={initialGames} />}
+                {activeTab === "overview" && (
+                    <StatsOverview initialStats={initialStats} />
+                )}
+                {activeTab === "users" && (
+                    <UserManagement users={initialUsers} pagination={initialUserPagination} />
+                )}
+                {activeTab === "mods" && (
+                    <ModManagement
+                        initialMods={initialMods}
+                        initialPagination={initialModPagination}
+                        games={games}
+                        categories={categories}
+                    />
+                )}
+                {activeTab === "games" && (
+                    <GamesManagement initialGames={initialGames} />
+                )}
             </div>
         </div>
     );

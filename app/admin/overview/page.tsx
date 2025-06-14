@@ -13,14 +13,9 @@ export default async function AdminOverviewPage() {
         redirect("/login");
     }
 
-    // SSR: Fetch dashboard stats
-    const [{ users }] = await db
-        .select({ users: count() })
-        .from(userTable);
+    const [{ users }] = await db.select({ users: count() }).from(userTable);
 
-    const [{ mods: totalMods }] = await db
-        .select({ mods: count() })
-        .from(mods);
+    const [{ mods: totalMods }] = await db.select({ mods: count() }).from(mods);
 
     const [{ activeMods }] = await db
         .select({ activeMods: count() })

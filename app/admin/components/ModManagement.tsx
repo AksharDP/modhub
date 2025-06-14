@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { trpc } from "../../lib/trpc";
 import Image from "next/image";
 import ModEditModal from "./ModEditModal";
@@ -58,14 +58,12 @@ export default function ModManagement({
     const limit = 20;
     const offset = page * limit;
 
-    // SSR: Use initial data for first render, then tRPC for subsequent fetches
     const [mods, setMods] = useState(initialMods);
     const [pagination, setPagination] = useState(initialPagination);
     const [isLoading, setIsLoading] = useState(false);
     const [isFirstLoad, setIsFirstLoad] = useState(true);
 
-    // Only fetch via tRPC after first load or when filters/page/search change
-    const fetchMods = async () => {
+    const fetchMods = useCallback(async () => {
         setIsLoading(true);
         try {
             const res = await fetch("/api/admin/getMods", {
@@ -85,7 +83,7 @@ export default function ModManagement({
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [limit, offset, isActiveFilter, isFeaturedFilter, searchTerm]);
 
     useEffect(() => {
         if (!isFirstLoad) {
@@ -93,8 +91,7 @@ export default function ModManagement({
         } else {
             setIsFirstLoad(false);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, isActiveFilter, isFeaturedFilter, searchTerm]);
+    }, [page, isActiveFilter, isFeaturedFilter, searchTerm, fetchMods, isFirstLoad]);
 
     const updateModStatusMutation = trpc.admin.updateModStatus.useMutation({
         onSuccess: () => {
@@ -388,7 +385,9 @@ export default function ModManagement({
                                                 Delete
                                             </button>
                                             <button
-                                                onClick={() => openEditModal(mod.id)}
+                                                onClick={() =>
+                                                    openEditModal(mod.id)
+                                                }
                                                 className="text-green-400 hover:text-green-300 transition-colors cursor-pointer"
                                             >
                                                 Edit
@@ -405,7 +404,12 @@ export default function ModManagement({
             {pagination && (
                 <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-400">
-                        Showing {pagination.offset + 1} to {Math.min(pagination.offset + pagination.limit, pagination.total)} of {pagination.total} mods
+                        Showing {pagination.offset + 1} to{" "}
+                        {Math.min(
+                            pagination.offset + pagination.limit,
+                            pagination.total
+                        )}{" "}
+                        of {pagination.total} mods
                     </div>
                     <div className="flex space-x-2">
                         <button

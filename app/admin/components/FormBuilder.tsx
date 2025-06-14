@@ -37,35 +37,34 @@ const FieldEditor: React.FC<{
     canMoveUp,
     canMoveDown,
 }) => {
-    // Determine colors based on field type
-    const getFieldColors = (type: FormField['type']) => {
+    const getFieldColors = (type: FormField["type"]) => {
         switch (type) {
-            case 'text':
-            case 'textarea':
+            case "text":
+            case "textarea":
                 return {
-                    border: 'border-blue-500',
-                    text: 'text-blue-400'
+                    border: "border-blue-500",
+                    text: "text-blue-400",
                 };
-            case 'checkbox':
-            case 'file':
+            case "checkbox":
+            case "file":
                 return {
-                    border: 'border-green-500',
-                    text: 'text-green-400'
+                    border: "border-green-500",
+                    text: "text-green-400",
                 };
-            case 'select':
+            case "select":
                 return {
-                    border: 'border-purple-500',
-                    text: 'text-purple-400'
+                    border: "border-purple-500",
+                    text: "text-purple-400",
                 };
-            case 'static-text':
+            case "static-text":
                 return {
-                    border: 'border-orange-500',
-                    text: 'text-orange-400'
+                    border: "border-orange-500",
+                    text: "text-orange-400",
                 };
             default:
                 return {
-                    border: 'border-gray-500',
-                    text: 'text-gray-400'
+                    border: "border-gray-500",
+                    text: "text-gray-400",
                 };
         }
     };
@@ -73,7 +72,9 @@ const FieldEditor: React.FC<{
     const colors = getFieldColors(field.type);
 
     return (
-        <div className={`bg-gray-700 p-4 rounded-md space-y-3 border-l-4 ${colors.border}`}>
+        <div
+            className={`bg-gray-700 p-4 rounded-md space-y-3 border-l-4 ${colors.border}`}
+        >
             <div className="flex justify-between items-center">
                 <span className={`text-sm font-bold uppercase ${colors.text}`}>
                     {field.type}
@@ -112,7 +113,8 @@ const FieldEditor: React.FC<{
                     <div>
                         <label className="text-xs text-gray-400 block mb-1">
                             Label / Title
-                        </label>                        <input
+                        </label>{" "}
+                        <input
                             type="text"
                             value={field.label}
                             onChange={(e) =>
@@ -122,12 +124,12 @@ const FieldEditor: React.FC<{
                             placeholder="Field label"
                         />
                     </div>
-
                     {(field.type === "text" || field.type === "textarea") && (
                         <div>
                             <label className="text-xs text-gray-400 block mb-1">
                                 Placeholder
-                            </label>                            <input
+                            </label>{" "}
+                            <input
                                 type="text"
                                 value={field.placeholder || ""}
                                 onChange={(e) =>
@@ -141,12 +143,12 @@ const FieldEditor: React.FC<{
                             />
                         </div>
                     )}
-
                     {field.type === "select" && (
                         <div>
                             <label className="text-xs text-gray-400 block mb-1">
                                 Options (one per line)
-                            </label>                            <textarea
+                            </label>{" "}
+                            <textarea
                                 value={field.options?.join("\n") || ""}
                                 onChange={(e) =>
                                     onChange({
@@ -160,7 +162,8 @@ const FieldEditor: React.FC<{
                                 placeholder="Option 1&#10;Option 2&#10;Option 3"
                             />
                         </div>
-                    )}                    <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                    )}{" "}
+                    <label className="flex items-center space-x-2 text-sm cursor-pointer">
                         <input
                             type="checkbox"
                             checked={field.required}
@@ -180,7 +183,8 @@ const FieldEditor: React.FC<{
                     <div>
                         <label className="text-xs text-gray-400 block mb-1">
                             Text Content
-                        </label>                        <textarea
+                        </label>{" "}
+                        <textarea
                             value={field.content || field.label}
                             onChange={(e) =>
                                 onChange({
@@ -292,7 +296,9 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
     };
 
     return (
-        <div className="bg-gray-900 border border-gray-700 p-6 rounded-lg space-y-6">            <div className="flex flex-wrap gap-2">
+        <div className="bg-gray-900 border border-gray-700 p-6 rounded-lg space-y-6">
+            {" "}
+            <div className="flex flex-wrap gap-2">
                 <button
                     type="button"
                     onClick={() => addField("text")}
@@ -336,7 +342,6 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                     + Static Text
                 </button>
             </div>
-
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 <div className="space-y-4">
                     <h4 className="font-semibold text-white text-lg border-b border-gray-700 pb-2">
@@ -384,7 +389,8 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     *
                                                 </span>
                                             )}
-                                        </label>                                        <input
+                                        </label>{" "}
+                                        <input
                                             type="text"
                                             placeholder={field.placeholder}
                                             value={
@@ -412,7 +418,8 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     *
                                                 </span>
                                             )}
-                                        </label>                                        <textarea
+                                        </label>{" "}
+                                        <textarea
                                             placeholder={field.placeholder}
                                             value={
                                                 (previewValues[
@@ -439,7 +446,8 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     *
                                                 </span>
                                             )}
-                                        </label>                                        <select
+                                        </label>{" "}
+                                        <select
                                             value={
                                                 (previewValues[
                                                     field.id
@@ -471,7 +479,9 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                     </>
                                 )}
                                 {field.type === "checkbox" && (
-                                    <label className="flex items-center space-x-3 cursor-pointer">                                        <input
+                                    <label className="flex items-center space-x-3 cursor-pointer">
+                                        {" "}
+                                        <input
                                             type="checkbox"
                                             checked={
                                                 (previewValues[
@@ -505,7 +515,8 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                                                     *
                                                 </span>
                                             )}
-                                        </label>                                        <input
+                                        </label>{" "}
+                                        <input
                                             type="file"
                                             onChange={(e) =>
                                                 updatePreviewValue(
@@ -539,7 +550,9 @@ export default function FormBuilder({ schema, onChange }: FormBuilderProps) {
                             </div>
                         )}
                         {schema.length > 0 && (
-                            <div className="pt-4 border-t border-gray-700">                                <button
+                            <div className="pt-4 border-t border-gray-700">
+                                {" "}
+                                <button
                                     type="button"
                                     onClick={handlePreviewSubmit}
                                     className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800 cursor-pointer"

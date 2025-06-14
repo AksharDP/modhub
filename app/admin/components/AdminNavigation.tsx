@@ -7,10 +7,30 @@ export default function AdminNavigation() {
     const pathname = usePathname();
 
     const tabs = [
-        { id: "overview", label: "Overview", icon: "📊", href: "/admin/overview" },
-        { id: "users", label: "User Management", icon: "👥", href: "/admin/users" },
-        { id: "mods", label: "Mod Management", icon: "🎮", href: "/admin/mods" },
-        { id: "games", label: "Game Management", icon: "🎯", href: "/admin/games" },
+        {
+            id: "overview",
+            label: "Overview",
+            icon: "📊",
+            href: "/admin/overview",
+        },
+        {
+            id: "users",
+            label: "User Management",
+            icon: "👥",
+            href: "/admin/users",
+        },
+        {
+            id: "mods",
+            label: "Mod Management",
+            icon: "🎮",
+            href: "/admin/mods",
+        },
+        {
+            id: "games",
+            label: "Game Management",
+            icon: "🎯",
+            href: "/admin/games",
+        },
     ];
 
     return (
