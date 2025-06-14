@@ -8,6 +8,5 @@ export default async function AdminPage() {
         redirect("/login");
     }
 
-    // Redirect to overview by default
     redirect("/admin/overview");
 }
