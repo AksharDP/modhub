@@ -400,7 +400,7 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                     {collection.isPublic ? (
                                         <div className="flex items-center gap-1 text-green-400 bg-gray-700 px-2 py-1 rounded text-xs">
                                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 009 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd"/>
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd"/>
                                             </svg>
                                             <span>Public</span>
                                         </div>
@@ -459,9 +459,11 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                                 {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (                                                    <div
                                                         ref={provided.innerRef}
                                                         {...provided.draggableProps}
+                                                        {...provided.dragHandleProps}
                                                         style={{
                                                             ...provided.draggableProps.style,
                                                             opacity: snapshot.isDragging ? 0.7 : 1,
+                                                            cursor: snapshot.isDragging ? 'grabbing' : 'grab',
                                                         }}
                                                     >
                                                         <div className="relative">
@@ -481,20 +483,10 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                                                 lastUpdated={modData.mod.updatedAt}
                                                                 hideDropdown={true}
                                                             />
-                                                            {/* Invisible drag handle overlay */}
-                                                            <div
-                                                                {...provided.dragHandleProps}
-                                                                className="absolute inset-0 z-10 cursor-grab active:cursor-grabbing"
-                                                                style={{
-                                                                    background: 'transparent',
-                                                                    cursor: snapshot.isDragging ? 'grabbing' : 'grab',
-                                                                }}
-                                                                title="Click and drag to reorder"
-                                                            />
                                                             {/* Delete button in edit mode */}
                                                             <button
                                                                 onClick={() => handleDeleteMod(modData.mod.id)}
-                                                                className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 z-20 transition-colors"
+                                                                className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 z-10 transition-colors"
                                                                 title="Remove from collection"
                                                             >
                                                                 <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
