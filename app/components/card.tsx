@@ -139,7 +139,7 @@ const Card = memo(function Card({
                 </div>
                 <div className="flex flex-col">
                     <div className="flex items-center mt-3 mb-2">
-                        <Link href={authorUrl} className="flex items-center group">
+                        <Link href={authorUrl} className="flex items-center hover:underline">
                             <Image
                                 src={authorPFP}
                                 alt={author}
@@ -147,7 +147,7 @@ const Card = memo(function Card({
                                 height={24}
                                 className="rounded-full mr-2 border border-purple-400"
                             />
-                            <span className="text-xs text-gray-200 group-hover:underline">{author}</span>
+                            <span className="text-xs text-gray-200">{author}</span>
                         </Link>
                     </div>
                     {/* Category badges below author, styled as links */}
