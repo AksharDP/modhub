@@ -3,6 +3,29 @@ import { db } from "@/app/db";
 import { collections, userTable, collectionMods, mods } from "@/app/db/schema";
 import { eq, desc, count, sql } from "drizzle-orm";
 
+function parseSize(sizeStr: string): number {
+    if (!sizeStr || sizeStr === 'N/A') return 0;
+    const match = sizeStr.match(/([\d.]+)\s*(B|KB|MB|GB)/i);
+    if (!match) return 0;
+    const value = parseFloat(match[1]);
+    const unit = match[2].toUpperCase();
+    switch (unit) {
+        case 'B': return value;
+        case 'KB': return value * 1024;
+        case 'MB': return value * 1024 * 1024;
+        case 'GB': return value * 1024 * 1024 * 1024;
+        default: return 0;
+    }
+}
+
+function formatSize(bytes: number): string {
+    if (!bytes || isNaN(bytes) || bytes === 0) return 'N/A';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
@@ -17,7 +40,7 @@ export async function GET(request: NextRequest) {
             .where(eq(collections.isPublic, true));
 
         const totalCount = totalCountResult[0]?.count || 0;
-        const totalPages = Math.ceil(totalCount / limit);        // Get paginated public collections with mod count, likes, total file size and user info
+        const totalPages = Math.ceil(totalCount / limit);        // Get paginated public collections with mod count and user info
         const publicCollections = await db
             .select({
                 id: collections.id,
@@ -36,20 +59,7 @@ export async function GET(request: NextRequest) {
                     SELECT COUNT(*)
                     FROM ${collectionMods}
                     WHERE ${collectionMods.collectionId} = ${collections.id}
-                )`.as("mod_count"),                totalFileSize: sql<string>`(
-                    SELECT COALESCE(
-                        CASE
-                            WHEN COUNT(*) = 0 THEN 'N/A'
-                            ELSE 'Multiple files'
-                        END,
-                        'N/A'
-                    )
-                    FROM ${collectionMods}
-                    LEFT JOIN ${mods} ON ${collectionMods.modId} = ${mods.id}
-                    WHERE ${collectionMods.collectionId} = ${collections.id}
-                        AND ${mods}.size IS NOT NULL 
-                        AND ${mods}.size != 'N/A'
-                )`.as("total_file_size"),
+                )`.as("mod_count"),
             })
             .from(collections)
             .leftJoin(userTable, eq(collections.userId, userTable.id))
@@ -58,8 +68,21 @@ export async function GET(request: NextRequest) {
             .limit(limit)
             .offset(offset);
 
+        // For each collection, sum the mod sizes
+        type CollectionWithTotalFileSize = typeof publicCollections[0] & { totalFileSize: string };
+        const collectionsWithSize: CollectionWithTotalFileSize[] = [];
+        for (const collection of publicCollections) {
+            const modSizes = await db
+                .select({ size: mods.size })
+                .from(mods)
+                .innerJoin(collectionMods, eq(mods.id, collectionMods.modId))
+                .where(eq(collectionMods.collectionId, collection.id));
+            const totalBytes = modSizes.reduce((sum, mod) => sum + parseSize(mod.size ?? ""), 0);
+            collectionsWithSize.push({ ...collection, totalFileSize: formatSize(totalBytes) });
+        }
+
         return NextResponse.json({
-            collections: publicCollections,
+            collections: collectionsWithSize,
             pagination: {
                 currentPage: page,
                 totalPages,

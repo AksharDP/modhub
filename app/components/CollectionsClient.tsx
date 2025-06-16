@@ -1,8 +1,7 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 interface CollectionData {
     id: number;
@@ -43,6 +42,7 @@ export default function CollectionsClient() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentPage = parseInt(searchParams.get("page") || "1");
+    const hasFetched = useRef(false);
 
     const fetchCollections = async (
         page: number,
@@ -76,6 +76,8 @@ export default function CollectionsClient() {
     };
 
     useEffect(() => {
+        if (hasFetched.current) return;
+        hasFetched.current = true;
         fetchCollections(currentPage, true);
     }, [currentPage]);
 
@@ -95,6 +97,14 @@ export default function CollectionsClient() {
             ? `/collections?${params.toString()}`
             : "/collections";
         router.push(newUrl, { scroll: false });
+    };
+
+    const formatWeeksAgo = (date: Date) => {
+        const weeksAgo = Math.floor(
+            (new Date().getTime() - new Date(date).getTime()) /
+                (1000 * 60 * 60 * 24 * 7)
+        );
+        return weeksAgo === 0 ? "this week" : `${weeksAgo}w ago`;
     };
 
     if (error) {
@@ -123,21 +133,56 @@ export default function CollectionsClient() {
                         {[...Array(12)].map((_, index) => (
                             <div
                                 key={index}
-                                className="bg-gray-800 rounded-lg overflow-hidden m-2 w-80 animate-pulse"
+                                className="bg-gray-800 rounded-lg overflow-hidden m-2 w-80 h-[400px] flex flex-col animate-pulse"
                             >
-                                <div className="p-5">
-                                    <div className="h-6 bg-gray-700 rounded mb-2"></div>
-                                    <div className="h-4 bg-gray-700 rounded mb-3"></div>
-                                    <div className="h-4 bg-gray-700 rounded mb-3"></div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="h-4 bg-gray-700 rounded w-20"></div>
-                                        <div className="h-4 bg-gray-700 rounded w-16"></div>
+                                {/* Placeholder image */}
+                                <div className="h-44 w-full bg-gray-700"></div>
+
+                                {/* Content skeleton */}
+                                <div className="flex-1 flex flex-col justify-between p-4">
+                                    <div>
+                                        {/* Title skeleton */}
+                                        <div className="h-6 bg-gray-700 rounded mb-2"></div>
+                                        {/* Description skeleton */}
+                                        <div className="h-4 bg-gray-700 rounded mb-1"></div>
+                                        <div className="h-4 bg-gray-700 rounded mb-4 w-3/4"></div>
                                     </div>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="h-4 bg-gray-700 rounded w-16"></div>
-                                        <div className="h-4 bg-gray-700 rounded w-20"></div>
+
+                                    <div className="flex flex-col">
+                                        {/* Author skeleton */}
+                                        <div className="flex items-center mt-3 mb-2">
+                                            <div className="w-6 h-6 bg-gray-700 rounded-full mr-2"></div>
+                                            <div className="h-4 bg-gray-700 rounded w-20"></div>
+                                        </div>
+
+                                        {/* Category badges skeleton - not applicable for collections, but keeping structure for layout consistency */}
+                                        <div className="flex flex-nowrap gap-2 mt-2 mb-2" style={{ minHeight: "24px", maxHeight: "24px" }}>
+                                            <div className="h-6 bg-gray-700 rounded w-16"></div>
+                                            <div className="h-6 bg-gray-700 rounded w-20"></div>
+                                        </div>
                                     </div>
-                                    <div className="h-10 bg-gray-700 rounded"></div>
+
+                                    {/* Stats skeleton */}
+                                    <div className="flex items-center justify-between text-xs mt-2">
+                                        <div className="flex items-center gap-1">
+                                            <div className="w-4 h-4 bg-gray-700 rounded"></div>
+                                            <div className="h-4 bg-gray-700 rounded w-8"></div>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <div className="w-4 h-4 bg-gray-700 rounded"></div>
+                                            <div className="h-4 bg-gray-700 rounded w-12"></div>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <div className="w-4 h-4 bg-gray-700 rounded"></div>
+                                            <div className="h-4 bg-gray-700 rounded w-10"></div>
+                                        </div>
+                                    </div>
+
+                                    {/* Dates skeleton */}
+                                    <div className="flex items-center justify-between text-xs mt-2">
+                                        <div className="h-3 bg-gray-700 rounded w-16"></div>
+                                        <div className="h-3 bg-gray-700 rounded w-16"></div>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -148,33 +193,30 @@ export default function CollectionsClient() {
                             {collections.map((collection) => (
                                 <div
                                     key={collection.id}
-                                    className="bg-gray-800 rounded-lg shadow-xl overflow-hidden transition-all duration-300 ease-in-out flex flex-col m-2 w-80 hover:bg-gray-750"
+                                    className="bg-gray-800 text-white rounded-[var(--border-radius-custom)] shadow-lg m-1 w-72 h-[260px] flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-200 relative group"
                                 >
-                                    {" "}
-                                    <div className="p-5 flex flex-col flex-grow">
-                                        <div className="flex items-start justify-between mb-3">
-                                            <h2 className="text-xl font-semibold text-white truncate flex-grow">
-                                                {collection.name}
-                                            </h2>
-                                        </div>
-
-                                        <p className="text-gray-400 text-sm mb-3 flex-grow">
-                                            {collection.description ||
-                                                "No description available."}
+                                    <div className="flex-1 flex flex-col justify-between p-3">
+                                        <Link
+                                            href={`/collections/${collection.id}`}
+                                            className="text-base font-bold text-purple-300 hover:underline line-clamp-1 mb-0"
+                                        >
+                                            {collection.name}
+                                        </Link>
+                                        <p className="text-gray-300 text-xs line-clamp-2 min-h-[32px] mb-1">
+                                            {collection.description || "No description available."}
                                         </p>
-
-                                        <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
+                                        <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
                                             <Link
                                                 href={`/profile/${collection.user?.username}`}
-                                                className="hover:text-purple-400 transition-colors"
+                                                className="flex items-center hover:underline text-xs text-gray-200"
                                             >
-                                                by{" "}
-                                                {collection.user?.username ||
-                                                    "Unknown"}
-                                            </Link>                                            <div className="flex items-center space-x-1">                                                <svg
+                                                {collection.user?.username || "Unknown"}
+                                            </Link>
+                                            <span title="Likes" className="flex items-center gap-1">
+                                                <svg
                                                     xmlns="http://www.w3.org/2000/svg"
-                                                    width="16"
-                                                    height="16"
+                                                    width="14"
+                                                    height="14"
                                                     viewBox="0 0 24 24"
                                                     fill="none"
                                                     stroke="currentColor"
@@ -185,24 +227,34 @@ export default function CollectionsClient() {
                                                 >
                                                     <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
                                                 </svg>
-                                                <span>{collection.likes}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-                                            <span>
-                                                {collection.modCount} mods
+                                                {collection.likes}
                                             </span>
-                                            <span>
+                                            <span title="Mods" className="flex items-center gap-1">
+                                                <svg
+                                                    className="w-3.5 h-3.5 text-blue-400"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 20 20"
+                                                >
+                                                    <path d="M3 14a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm7-9a1 1 0 00-1 1v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6a1 1 0 00-1-1z" />
+                                                </svg>
+                                                {collection.modCount}
+                                            </span>
+                                            <span title="Total Size" className="flex items-center gap-1">
+                                                <svg
+                                                    className="w-3.5 h-3.5 text-green-400"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 20 20"
+                                                >
+                                                    <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm0 2h12v10H4V5z" />
+                                                </svg>
                                                 {collection.totalFileSize}
                                             </span>
                                         </div>
-
                                         <Link
                                             href={`/collections/${collection.id}`}
-                                            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors text-center"
+                                            className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded-lg transition-colors text-center mt-1 text-xs"
                                         >
-                                            View Collection
+                                            View
                                         </Link>
                                     </div>
                                 </div>
