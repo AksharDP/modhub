@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 
 interface CollectionData {
     id: number;
@@ -97,14 +96,6 @@ export default function CollectionsClient() {
             ? `/collections?${params.toString()}`
             : "/collections";
         router.push(newUrl, { scroll: false });
-    };
-
-    const formatWeeksAgo = (date: Date) => {
-        const weeksAgo = Math.floor(
-            (new Date().getTime() - new Date(date).getTime()) /
-                (1000 * 60 * 60 * 24 * 7)
-        );
-        return weeksAgo === 0 ? "this week" : `${weeksAgo}w ago`;
     };
 
     if (error) {
