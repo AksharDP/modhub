@@ -9,6 +9,7 @@ interface CollectionData {
     name: string;
     description: string | null;
     isPublic: boolean;
+    likes: number;
     createdAt: Date;
     updatedAt: Date;
     user: {
@@ -17,6 +18,7 @@ interface CollectionData {
         profilePicture: string | null;
     };
     modCount: number;
+    totalFileSize: string;
 }
 
 interface PaginationData {
@@ -104,9 +106,7 @@ export default function CollectionsClient() {
                     <p className="text-gray-400 mt-2">
                         Discover curated mod collections from the community.
                     </p>
-                </header>
-
-                {loading ? (
+                </header>                {loading ? (
                     <div className="flex flex-wrap justify-center">
                         {[...Array(12)].map((_, index) => (
                             <div
@@ -117,10 +117,15 @@ export default function CollectionsClient() {
                                     <div className="h-6 bg-gray-700 rounded mb-2"></div>
                                     <div className="h-4 bg-gray-700 rounded mb-3"></div>
                                     <div className="h-4 bg-gray-700 rounded mb-3"></div>
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between mb-2">
                                         <div className="h-4 bg-gray-700 rounded w-20"></div>
                                         <div className="h-4 bg-gray-700 rounded w-16"></div>
                                     </div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="h-4 bg-gray-700 rounded w-16"></div>
+                                        <div className="h-4 bg-gray-700 rounded w-20"></div>
+                                    </div>
+                                    <div className="h-10 bg-gray-700 rounded"></div>
                                 </div>
                             </div>
                         ))}
@@ -132,37 +137,35 @@ export default function CollectionsClient() {
                                 <div
                                     key={collection.id}
                                     className="bg-gray-800 rounded-lg shadow-xl overflow-hidden transition-all duration-300 ease-in-out flex flex-col m-2 w-80 hover:bg-gray-750"
-                                >
-                                    <div className="p-5 flex flex-col flex-grow">
+                                >                                    <div className="p-5 flex flex-col flex-grow">
                                         <div className="flex items-start justify-between mb-3">
-                                            <h2 className="text-xl font-semibold text-white truncate flex-grow mr-2">
+                                            <h2 className="text-xl font-semibold text-white truncate flex-grow">
                                                 {collection.name}
                                             </h2>
-                                            <div className="flex items-center space-x-1 flex-shrink-0">
-                                                {collection.isPublic ? (
-                                                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd"/>
-                                                    </svg>
-                                                ) : (
-                                                    <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                                                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
-                                                    </svg>
-                                                )}
-                                            </div>
                                         </div>
                                         
                                         <p className="text-gray-400 text-sm mb-3 flex-grow">
                                             {collection.description || "No description available."}
                                         </p>
                                         
-                                        <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                                        <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
                                             <Link 
                                                 href={`/profile/${collection.user?.username}`}
                                                 className="hover:text-purple-400 transition-colors"
                                             >
                                                 by {collection.user?.username || "Unknown"}
                                             </Link>
+                                            <div className="flex items-center space-x-1">
+                                                <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd"/>
+                                                </svg>
+                                                <span>{collection.likes}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
                                             <span>{collection.modCount} mods</span>
+                                            <span>{collection.totalFileSize}</span>
                                         </div>
                                         
                                         <Link 

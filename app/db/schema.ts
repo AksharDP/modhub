@@ -254,12 +254,14 @@ export const collections = pgTable(
         name: text("name").notNull(),
         description: text("description"),
         isPublic: boolean("is_public").default(false).notNull(),
+        likes: integer("likes").default(0),
         createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
         updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
     },
     (table) => ({
         userIdIdx: index("idx_collections_user_id").on(table.userId),
         isPublicIdx: index("idx_collections_is_public").on(table.isPublic),
+        likesIdx: index("idx_collections_likes").on(table.likes),
     })
 );
 
@@ -276,6 +278,19 @@ export const collectionMods = pgTable(
         modIdIdx: index("idx_collection_mods_mod_id").on(table.modId),
     })
 );
+
+export const userCollectionLikes = pgTable("user_collection_likes", {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id")
+        .notNull()
+        .references(() => userTable.id, { onDelete: "cascade" }),
+    collectionId: integer("collection_id")
+        .notNull()
+        .references(() => collections.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+}, (table) => ({
+    userCollectionIdx: index("user_collection_likes_idx").on(table.userId, table.collectionId),
+}));
 
 export type User = typeof userTable.$inferSelect;
 export type NewUser = typeof userTable.$inferInsert;
@@ -321,3 +336,6 @@ export type NewCollection = typeof collections.$inferInsert;
 
 export type CollectionMod = typeof collectionMods.$inferSelect;
 export type NewCollectionMod = typeof collectionMods.$inferInsert;
+
+export type UserCollectionLike = typeof userCollectionLikes.$inferSelect;
+export type NewUserCollectionLike = typeof userCollectionLikes.$inferInsert;

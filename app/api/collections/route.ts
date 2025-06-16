@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/db";
-import { collections, userTable, collectionMods } from "@/app/db/schema";
+import { collections, userTable, collectionMods, mods, modFiles } from "@/app/db/schema";
 import { eq, desc, count, sql } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -17,15 +17,14 @@ export async function GET(request: NextRequest) {
             .where(eq(collections.isPublic, true));
 
         const totalCount = totalCountResult[0]?.count || 0;
-        const totalPages = Math.ceil(totalCount / limit);
-
-        // Get paginated public collections with mod count and user info
+        const totalPages = Math.ceil(totalCount / limit);        // Get paginated public collections with mod count, likes, total file size and user info
         const publicCollections = await db
             .select({
                 id: collections.id,
                 name: collections.name,
                 description: collections.description,
                 isPublic: collections.isPublic,
+                likes: collections.likes,
                 createdAt: collections.createdAt,
                 updatedAt: collections.updatedAt,
                 user: {
@@ -37,7 +36,20 @@ export async function GET(request: NextRequest) {
                     SELECT COUNT(*)
                     FROM ${collectionMods}
                     WHERE ${collectionMods.collectionId} = ${collections.id}
-                )`.as("mod_count"),
+                )`.as("mod_count"),                totalFileSize: sql<string>`(
+                    SELECT COALESCE(
+                        CASE
+                            WHEN COUNT(*) = 0 THEN 'N/A'
+                            ELSE 'Multiple files'
+                        END,
+                        'N/A'
+                    )
+                    FROM ${collectionMods}
+                    LEFT JOIN ${mods} ON ${collectionMods.modId} = ${mods.id}
+                    WHERE ${collectionMods.collectionId} = ${collections.id}
+                        AND ${mods}.size IS NOT NULL 
+                        AND ${mods}.size != 'N/A'
+                )`.as("total_file_size"),
             })
             .from(collections)
             .leftJoin(userTable, eq(collections.userId, userTable.id))
