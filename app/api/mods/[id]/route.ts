@@ -3,12 +3,11 @@ import { db } from "@/app/db";
 import { mods, games, categories, modStats, userTable } from "@/app/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
-    const modId = parseInt(params.id);
+    const url = new URL(request.url);
+    const id = url.pathname.split("/").filter(Boolean).pop();
+    const modId = parseInt(id || "");
     if (isNaN(modId)) {
       return NextResponse.json({ error: "Invalid mod ID" }, { status: 400 });
     }
@@ -58,10 +57,6 @@ export async function GET(
     if (!modData || !modData[0]) {
       return NextResponse.json({ error: "Mod not found" }, { status: 404 });
     }
-
-    // Optionally, fetch images and files if you have those tables
-    // const images = await db.select(...).from(...).where(...)
-    // const files = await db.select(...).from(...).where(...)
 
     return NextResponse.json({ ...modData[0] });
   } catch (error) {
