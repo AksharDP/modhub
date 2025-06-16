@@ -6,6 +6,7 @@ import React, {
     useEffect,
     useRef,
     useCallback,
+    Suspense,
 } from "react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
@@ -684,4 +685,10 @@ const UploadPage = () => {
     );
 };
 
-export default UploadPage;
+const Page = () => (
+    <Suspense>
+        <UploadPage />
+    </Suspense>
+);
+
+export default Page;
