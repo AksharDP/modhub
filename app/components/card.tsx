@@ -14,7 +14,6 @@ const AddToCollectionModal = dynamic(() => import("./AddToCollectionModal"), {
 
 const Card = memo(function Card({
     modId,
-    gameName,
     title,
     description,
     imageUrl,
@@ -72,7 +71,9 @@ const Card = memo(function Card({
         };
     }, [uploaded, lastUpdated]);
 
-    const modUrl = `/${gameName}/mods/${modId}`;
+    // Use slug and gameName if needed for future features or links
+    // For now, modUrl only uses modId as per new routing
+    const modUrl = `/mod/${modId}`;
     const authorUrl = `/author/${encodeURIComponent(author)}/mods`;
 
     // Ensure categories is always an array

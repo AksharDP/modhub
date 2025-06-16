@@ -125,6 +125,7 @@ export default function FeaturedModsClient() {    const [mods, setMods] = useSta
                                 key={mod.id}
                                 modId={mod.id}
                                 gameName={mod.game?.slug || "unknown"}
+                                slug={mod.slug}
                                 title={mod.title}
                                 description={mod.description || ""}
                                 imageUrl={

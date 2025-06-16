@@ -51,6 +51,7 @@ export interface FileVersionInterface {
 export interface CardProps {
     modId: number;
     gameName: string;
+    slug?: string;
     title: string;
     description: string;
     imageUrl: string;
