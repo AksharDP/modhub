@@ -88,9 +88,7 @@ export default function UserCollections({ userId, username, isOwnProfile = false
     if (loading) {
         return (
             <div className="space-y-4">
-                <h2 className="text-2xl font-bold text-white">
-                    {isOwnProfile ? "My Collections" : `${username}&apos;s Collections`}
-                </h2>
+                {/* Heading removed, handled by parent */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {[...Array(3)].map((_, index) => (
                         <div key={index} className="bg-gray-800 rounded-lg p-4 animate-pulse">
@@ -114,14 +112,12 @@ export default function UserCollections({ userId, username, isOwnProfile = false
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-white">
-                    {isOwnProfile ? "My Collections" : `${username}&apos;s Collections`}
-                </h2>
+            <div className="flex items-center justify-between mb-2">
+                <h2 className="text-2xl font-bold text-purple-400">My Collections</h2>
                 {isOwnProfile && (
                     <button
                         onClick={() => setShowCreateForm(true)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors ml-4"
                     >
                         Create Collection
                     </button>
@@ -191,9 +187,10 @@ export default function UserCollections({ userId, username, isOwnProfile = false
             {collections.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {collections.map((collection) => (
-                        <div
+                        <Link
                             key={collection.id}
-                            className="bg-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-colors"
+                            href={`/collections/${collection.id}`}
+                            className="bg-gray-800 rounded-lg p-4 hover:bg-white/10 transition-colors duration-150 hover:shadow-lg block focus:outline-none focus:ring-2 focus:ring-purple-500 group"
                         >
                             <div className="flex items-start justify-between mb-3">
                                 <h3 className="text-lg font-semibold text-white truncate">
@@ -202,7 +199,7 @@ export default function UserCollections({ userId, username, isOwnProfile = false
                                 <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
                                     {collection.isPublic ? (
                                         <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd"/>
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 009 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd"/>
                                         </svg>
                                     ) : (
                                         <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
@@ -211,25 +208,17 @@ export default function UserCollections({ userId, username, isOwnProfile = false
                                     )}
                                 </div>
                             </div>
-                            
                             {collection.description && (
                                 <p className="text-gray-400 text-sm mb-3 line-clamp-2">
                                     {collection.description}
                                 </p>
                             )}
-                            
                             <div className="flex items-center justify-between">
                                 <span className="text-gray-500 text-sm">
                                     {collection.modCount || 0} mods
                                 </span>
-                                <Link
-                                    href={`/collections/${collection.id}`}
-                                    className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm transition-colors"
-                                >
-                                    View
-                                </Link>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             ) : (

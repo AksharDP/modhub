@@ -158,6 +158,7 @@ export async function getSessionToken(): Promise<string | null> {
 }
 
 export async function getCurrentSession(): Promise<SessionValidationResult> {
+    
     const token = await getSessionToken();
     if (!token) {
         return { session: null, user: null };
