@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Card from "@/app/components/card";
-import { DragDropContext, Droppable, Draggable, DropResult, DraggableProvided, DraggableStateSnapshot, DroppableProvided } from "react-beautiful-dnd";
+import { DragDropContext, Draggable, DropResult, DraggableProvided, DraggableStateSnapshot, DroppableProvided } from "react-beautiful-dnd";
 import { useAuth } from "@/app/contexts/AuthContext";
+import { StrictModeDroppable } from "@/app/components/StrictModeDroppable";
 
 interface CollectionData {
     id: number;
@@ -93,7 +94,8 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
             setCollectionId(resolvedParams.id);
         };
         getParams();
-    }, [params]);    const fetchCollection = useCallback(async () => {
+    }, [params]);
+    const fetchCollection = useCallback(async () => {
         if (!collectionId || fetchingRef.current) return;
         
         try {
@@ -118,8 +120,8 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
             setCollection(data.collection);
             setMods(data.mods);
             setLoading(false);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to load collection");
+        } catch {
+            setError("Failed to load collection");
             setLoading(false);
         } finally {
             fetchingRef.current = false;
@@ -130,23 +132,25 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
         if (collectionId) {
             fetchCollection();
         }
-    }, [collectionId, fetchCollection]);    useEffect(() => {
+    }, [collectionId, fetchCollection]);
+    useEffect(() => {
         // Check if current user is owner after collection is loaded
         if (collection && user) {
             setIsOwner(user.id === collection.user?.id);
         } else {
             setIsOwner(false);
         }
-    }, [collection, user]);const onDragEnd = async (result: DropResult) => {
+    }, [collection, user]);
+    const onDragEnd = async (result: DropResult) => {
         if (!result.destination) return;
+        const originalMods = [...mods];
         const reordered = Array.from(mods);
         const [removed] = reordered.splice(result.source.index, 1);
         reordered.splice(result.destination.index, 0, removed);
-        setMods(reordered);
-        // Persist order
+        setMods(reordered); // Optimistic update
         setSavingOrder(true);
         try {
-            await fetch("/api/user/collections/mods", {
+            const resp = await fetch("/api/user/collections/mods", {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -154,12 +158,17 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                     order: reordered.map((m) => m.mod.id),
                 }),
             });
+            if (!resp.ok) throw new Error("Failed to save order");
+        } catch {
+            setMods(originalMods); // Revert on error
         } finally {
             setSavingOrder(false);
         }
     };
 
     const handleDeleteMod = async (modId: number) => {
+        const originalMods = [...mods];
+        setMods(mods.filter(m => m.mod.id !== modId)); // Optimistic update
         try {
             const response = await fetch("/api/user/collections/mods", {
                 method: "DELETE",
@@ -169,12 +178,9 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                     modId: modId,
                 }),
             });
-            
-            if (response.ok) {
-                setMods(mods.filter(m => m.mod.id !== modId));
-            }
-        } catch (error) {
-            console.error("Error deleting mod from collection:", error);
+            if (!response.ok) throw new Error("Failed to delete mod");
+        } catch {
+            setMods(originalMods); // Revert on error
         }
     };
 
@@ -284,14 +290,20 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                         </nav>
                         {isOwner && (
                             <button
-                                onClick={() => setEditMode(!editMode)}
+                                onClick={() => {
+                                    setEditMode(!editMode);
+                                    if (editMode) {
+                                        setEditingTitle(false);
+                                        setEditingPrivacy(false);
+                                    }
+                                }}
                                 className={`px-3 py-1 rounded text-xs transition-colors ${
-                                    editMode 
-                                        ? 'bg-red-600 hover:bg-red-700 text-white' 
+                                    editMode
+                                        ? 'bg-red-600 hover:bg-red-700 text-white'
                                         : 'bg-purple-600 hover:bg-purple-700 text-white'
                                 }`}
                             >
-                                {editMode ? 'Exit Edit' : 'Edit Collection'}
+                                {editMode ? 'Exit' : 'Edit Collection'}
                             </button>
                         )}
                     </div><div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -400,7 +412,7 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                     {collection.isPublic ? (
                                         <div className="flex items-center gap-1 text-green-400 bg-gray-700 px-2 py-1 rounded text-xs">
                                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 019 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd"/>
+                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM4.332 8.027a6.012 6.012 0 011.912-2.706C6.512 5.73 6.974 6 7.5 6A1.5 1.5 0 009 7.5V8a2 2 0 004 0 2 2 0 011.523-1.943A5.977 5.977 0 0116 10c0 .34-.028.675-.083 1H15a2 2 0 00-2 2v2.197A5.973 5.973 0 0110 16v-2a2 2 0 00-2-2 2 2 0 01-2-2 2 2 0 00-1.668-1.973z" clipRule="evenodd"/>
                                             </svg>
                                             <span>Public</span>
                                         </div>
@@ -433,12 +445,13 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                     </div>
                 </div>                {/* Mods Grid */}
                 {mods.length > 0 ? (
-                    isOwner && editMode ? (                        <DragDropContext onDragEnd={onDragEnd}>
-                            <Droppable 
-                                droppableId="mods-grid" 
-                                direction="horizontal" 
-                                isDropDisabled={false} 
-                                isCombineEnabled={false} 
+                    isOwner && editMode ? (
+                        <DragDropContext onDragEnd={onDragEnd}>
+                            <StrictModeDroppable
+                                droppableId="mods-grid"
+                                direction="horizontal"
+                                isDropDisabled={false}
+                                isCombineEnabled={false}
                                 ignoreContainerClipping={false}
                                 renderClone={undefined}
                                 getContainerForClone={undefined}
@@ -448,25 +461,28 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                         className="flex flex-wrap justify-center gap-6 mt-8"
                                         ref={provided.innerRef}
                                         {...provided.droppableProps}
-                                    >                                        {mods.map((modData, idx) => (                                            <Draggable 
-                                                key={modData.mod.id} 
-                                                draggableId={modData.mod.id.toString()} 
+                                    >
+                                        {mods.map((modData, idx) => (
+                                            <Draggable
+                                                key={modData.mod.id}
+                                                draggableId={modData.mod.id.toString()}
                                                 index={idx}
                                                 isDragDisabled={false}
                                                 disableInteractiveElementBlocking={true}
                                                 shouldRespectForcePress={false}
                                             >
-                                                {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (                                                    <div
+                                                {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
+                                                    <div
                                                         ref={provided.innerRef}
                                                         {...provided.draggableProps}
                                                         {...provided.dragHandleProps}
                                                         style={{
                                                             ...provided.draggableProps.style,
                                                             opacity: snapshot.isDragging ? 0.7 : 1,
-                                                            cursor: snapshot.isDragging ? 'grabbing' : 'grab',
+                                                            cursor: editMode ? (snapshot.isDragging ? 'grabbing' : 'grab') : 'default',
                                                         }}
                                                     >
-                                                        <div className="relative">
+                                                        <div className="relative group">
                                                             <Card
                                                                 modId={modData.mod.id}
                                                                 gameName={modData.game?.name || "Unknown"}
@@ -483,16 +499,15 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                                                 lastUpdated={modData.mod.updatedAt}
                                                                 hideDropdown={true}
                                                             />
-                                                            {/* Delete button in edit mode */}
-                                                            <button
-                                                                onClick={() => handleDeleteMod(modData.mod.id)}
-                                                                className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 z-10 transition-colors"
-                                                                title="Remove from collection"
-                                                            >
-                                                                <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
-                                                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd"/>
-                                                                </svg>
-                                                            </button>
+                                                          <button
+                                                              onClick={() => handleDeleteMod(modData.mod.id)}
+                                                              className={`absolute top-3 right-3 w-9 h-9 bg-black bg-opacity-50 text-white rounded-full z-10 transition-all hover:bg-red-600 cursor-pointer flex items-center justify-center ${editMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                                              title="Remove from collection"
+                                                          >
+                                                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                                  <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                              </svg>
+                                                          </button>
                                                         </div>
                                                     </div>
                                                 )}
@@ -501,7 +516,7 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                         {provided.placeholder}
                                     </div>
                                 )}
-                            </Droppable>
+                            </StrictModeDroppable>
                         </DragDropContext>
                     ) : (
                         <div className="flex flex-wrap justify-center gap-6 mt-8">
