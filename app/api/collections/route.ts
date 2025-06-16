@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/db";
-import { collections, userTable, collectionMods, mods, modFiles } from "@/app/db/schema";
+import { collections, userTable, collectionMods, mods } from "@/app/db/schema";
 import { eq, desc, count, sql } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
