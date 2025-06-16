@@ -25,6 +25,7 @@ const Card = memo(function Card({
     size,
     uploaded,
     lastUpdated,
+    hideDropdown = false, // Add the new prop with default value
 }: CardProps) {
     const [showDropdown, setShowDropdown] = useState(false);
     const [showCollectionModal, setShowCollectionModal] = useState(false);
@@ -82,44 +83,46 @@ const Card = memo(function Card({
         : category
         ? [category]
         : [];    return (
-        <>
-            <div className="bg-gray-800 text-white rounded-[var(--border-radius-custom)] shadow-lg m-2 w-80 h-[400px] flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-200 relative group">
-                {/* Dropdown Menu */}
-                <div className="absolute top-2 right-2 z-10">
-                    <div className="relative" ref={dropdownRef}>                        <button
-                            onClick={() => setShowDropdown(!showDropdown)}
-                            className={`p-1 rounded-full bg-gray-700 bg-opacity-80 hover:bg-opacity-100 transition-all ${
-                                showDropdown ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                            }`}
-                        >
-                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"/>
-                            </svg>
-                        </button>
-                        
-                        {showDropdown && (
-                            <div className="absolute right-0 mt-1 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 py-1">
-                                <button
-                                    onClick={() => {
-                                        setShowCollectionModal(true);
-                                        setShowDropdown(false);
-                                    }}
-                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center gap-2"
-                                    style={{ alignItems: "center" }}
-                                >
-                                    <span className="flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-library-big-icon lucide-library-big w-4 h-4">
-                                            <rect width="8" height="18" x="3" y="3" rx="1"/>
-                                            <path d="M7 3v18"/>
-                                            <path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/>
-                                        </svg>
-                                    </span>
-                                    <span className="flex items-center">Add to Collection</span>
-                                </button>
-                            </div>
-                        )}
+        <>            <div className="bg-gray-800 text-white rounded-[var(--border-radius-custom)] shadow-lg m-2 w-80 h-[400px] flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-200 relative group">
+                {/* Dropdown Menu - only show if not hideDropdown */}
+                {!hideDropdown && (
+                    <div className="absolute top-2 right-2 z-10">
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setShowDropdown(!showDropdown)}
+                                className={`p-1 rounded-full bg-gray-700 bg-opacity-80 hover:bg-opacity-100 transition-all ${
+                                    showDropdown ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                                }`}
+                            >
+                                <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"/>
+                                </svg>
+                            </button>
+                            
+                            {showDropdown && (
+                                <div className="absolute right-0 mt-1 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 py-1">
+                                    <button
+                                        onClick={() => {
+                                            setShowCollectionModal(true);
+                                            setShowDropdown(false);
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center gap-2"
+                                        style={{ alignItems: "center" }}
+                                    >
+                                        <span className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-library-big-icon lucide-library-big w-4 h-4">
+                                                <rect width="8" height="18" x="3" y="3" rx="1"/>
+                                                <path d="M7 3v18"/>
+                                                <path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/>
+                                            </svg>
+                                        </span>
+                                        <span className="flex items-center">Add to Collection</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <Link href={modUrl} className="block h-44 w-full relative group">
                     <Image

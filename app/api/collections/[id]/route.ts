@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/db";
-import { collections, collectionMods, mods, userTable } from "@/app/db/schema";
+import { collections, collectionMods, mods, userTable, modStats, categories, games } from "@/app/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { getCurrentSession, isAdmin } from "@/app/lib/auth";
 
 export async function GET(
     request: NextRequest,
@@ -31,6 +32,7 @@ export async function GET(
                     id: userTable.id,
                     username: userTable.username,
                     profilePicture: userTable.profilePicture,
+                    role: userTable.role,
                 },
             })
             .from(collections)
@@ -45,14 +47,15 @@ export async function GET(
             );
         }
 
-        // If collection is private, only allow owner to view
+        // If collection is private, only allow owner or admin to view
         if (!collection.isPublic) {
-            // For now, we'll return 404 for private collections
-            // In a real implementation, you'd check auth here
-            return NextResponse.json(
-                { error: "Collection not found" },
-                { status: 404 }
-            );
+            const { user } = await getCurrentSession();
+            if (!user || !collection.user || (user.id !== collection.user.id && !isAdmin(user))) {
+                return NextResponse.json(
+                    { error: "Collection not found" },
+                    { status: 404 }
+                );
+            }
         }        // Get mods in the collection
         const collectionModsData = await db
             .select({
@@ -67,19 +70,42 @@ export async function GET(
                     updatedAt: mods.updatedAt,
                     gameId: mods.gameId,
                     authorId: mods.authorId,
+                    categoryId: mods.categoryId,
                 },
                 author: {
                     id: userTable.id,
                     username: userTable.username,
                     profilePicture: userTable.profilePicture,
                 },
+                game: {
+                    id: games.id,
+                    name: games.name,
+                    slug: games.slug,
+                },
+                category: {
+                    id: categories.id,
+                    name: categories.name,
+                    slug: categories.slug,
+                    color: categories.color,
+                },
+                stats: {
+                    likes: modStats.likes,
+                    totalDownloads: modStats.totalDownloads,
+                    views: modStats.views,
+                    rating: modStats.rating,
+                    ratingCount: modStats.ratingCount,
+                },
                 addedAt: collectionMods.addedAt,
+                order: collectionMods.order,
             })
             .from(collectionMods)
             .innerJoin(mods, eq(collectionMods.modId, mods.id))
             .leftJoin(userTable, eq(mods.authorId, userTable.id))
+            .leftJoin(games, eq(mods.gameId, games.id))
+            .leftJoin(categories, eq(mods.categoryId, categories.id))
+            .leftJoin(modStats, eq(mods.id, modStats.modId))
             .where(eq(collectionMods.collectionId, collectionId))
-            .orderBy(desc(collectionMods.addedAt));
+            .orderBy(collectionMods.order, desc(collectionMods.addedAt));
 
         return NextResponse.json({
             collection,

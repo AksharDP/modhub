@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "./components/nav";
-import { getCurrentSession } from "./lib/auth";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -32,13 +32,11 @@ export const metadata: Metadata = {
     },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const { user } = await getCurrentSession();
-
     return (
         <html lang="en">
             <head>
@@ -47,10 +45,12 @@ export default async function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
             >
-                <NavBar user={user} />
-                <div className="flex-grow flex flex-col">
-                    {children}
-                </div>
+                <AuthProvider>
+                    <NavBar />
+                    <div className="flex-grow flex flex-col">
+                        {children}
+                    </div>
+                </AuthProvider>
             </body>
         </html>
     );

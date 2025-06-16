@@ -269,6 +269,7 @@ export const collectionMods = pgTable(
         collectionId: integer("collection_id").references(() => collections.id, { onDelete: "cascade" }).notNull(),
         modId: integer("mod_id").references(() => mods.id, { onDelete: "cascade" }).notNull(),
         addedAt: timestamp("added_at", { withTimezone: true }).defaultNow(),
+        order: integer("order"), // New column for custom order
     },
     (table) => ({
         pk: index("collection_mods_pk").on(table.collectionId, table.modId),

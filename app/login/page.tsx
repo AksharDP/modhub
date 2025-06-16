@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
@@ -10,6 +11,7 @@ export default function LoginPage() {
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+    const { login } = useAuth();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,14 +27,13 @@ export default function LoginPage() {
                 body: JSON.stringify({ username, password }),
             });
 
-            const data = await response.json();
-
-            if (response.ok) {
+            const data = await response.json();            if (response.ok) {
+                // Update client-side context with user data
+                login(data.user);
                 router.push("/");
-                router.refresh();
             } else {
                 setError(data.error || "Login failed");
-            }        } catch {
+            }} catch {
             setError("An error occurred. Please try again.");
         } finally {
             setIsLoading(false);

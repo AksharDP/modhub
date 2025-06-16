@@ -44,15 +44,19 @@ export async function POST(request: NextRequest) {
 
         const sessionToken = generateSessionToken();
         const session = await createSession(sessionToken, user.id);
-        await setSessionTokenCookie(sessionToken, session.expiresAt);
-
-        return NextResponse.json(
+        await setSessionTokenCookie(sessionToken, session.expiresAt);        return NextResponse.json(
             {
                 message: "Login successful",
                 user: {
                     id: user.id,
                     username: user.username,
                     email: user.email,
+                    role: user.role,
+                    profilePicture: user.profilePicture,
+                    bio: user.bio,
+                    createdAt: user.createdAt,
+                    updatedAt: user.updatedAt,
+                    suspendedUntil: user.suspendedUntil,
                 },
             },
             { status: 200 }

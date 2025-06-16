@@ -63,6 +63,7 @@ export interface CardProps {
     size: string;
     uploaded: string | number | Date;
     lastUpdated: string | number | Date;
+    hideDropdown?: boolean; // Add prop to hide dropdown in edit mode
 }
 
 export type GameWithSerializedDatesInterface = {
