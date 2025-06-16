@@ -1,5 +1,5 @@
 "use client";
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 
 import ModHeader from "@/app/components/modpage/ModHeader";
 import ImageGallery from "@/app/components/modpage/ImageGallery";
@@ -8,8 +8,41 @@ import TabNavigation from "@/app/components/modpage/TabNavigation";
 import DescriptionSection from "@/app/components/modpage/DescriptionSection";
 import FilesSection from "@/app/components/modpage/FilesSection";
 import { ModInterface } from "@/app/types/common";
-import { trpc } from "@/app/lib/trpc";
 import DatabaseError from "@/app/components/DatabaseError";
+
+interface ModData {
+    id: number;
+    title: string;
+    description?: string;
+    imageUrl?: string;
+    author?: { username?: string; profilePicture?: string };
+    category?: { name?: string };
+    stats?: {
+        likes?: number;
+        totalDownloads?: number;
+        views?: number | null;
+        rating?: number | null;
+        ratingCount?: number | null;
+    };
+    size?: string;
+    createdAt?: string | number | Date;
+    updatedAt?: string | number | Date;
+    slug?: string;
+    version?: string;
+    downloadUrl?: string;
+    tags?: string[];
+    game?: { id: number; name: string; slug: string };
+    images?: { imageUrl: string }[];
+    files?: {
+        id: number | string;
+        version?: string;
+        fileName: string;
+        fileSize?: string;
+        createdAt?: string | number | Date;
+        fileUrl?: string;
+        isMainFile?: boolean;
+    }[];
+}
 
 export default function ModPage({
     params,
@@ -22,10 +55,27 @@ export default function ModPage({
         "description"
     );
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-    
+    const [modData, setModData] = useState<ModData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<Error | null>(null);
+
+    useEffect(() => {
+        const modIdNumber = parseInt(modid);
+        if (isNaN(modIdNumber)) return;
+        setIsLoading(true);
+        setError(null);
+        fetch(`/api/mods/${modIdNumber}`)
+            .then((res) => {
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                return res.json();
+            })
+            .then((data) => setModData(data))
+            .catch((err) => setError(err))
+            .finally(() => setIsLoading(false));
+    }, [modid]);
+
     // Validate that modid is a valid number
-    const modIdNumber = parseInt(modid);
-    if (isNaN(modIdNumber)) {
+    if (isNaN(parseInt(modid))) {
         return (
             <div className="container px-32 py-8 bg-gray-900 text-white min-h-screen">
                 <div className="text-center text-red-400">
@@ -35,13 +85,6 @@ export default function ModPage({
         );
     }
     
-    // Query the database for the mod
-    const {
-        data: modData,
-        isLoading,
-        error,
-    } = trpc.mod.getModById.useQuery({ id: modIdNumber });
-
     // Show loading state
     if (isLoading) {
         return (
@@ -57,10 +100,10 @@ export default function ModPage({
     // Show error state
     if (error) {
         const isDatabaseError =
-            error.message.includes("DATABASE_URL") ||
-            error.message.includes("Failed query") ||
-            error.message.includes("connection") ||
-            error.message.includes("does not exist");
+            error.message?.includes("DATABASE_URL") ||
+            error.message?.includes("Failed query") ||
+            error.message?.includes("connection") ||
+            error.message?.includes("does not exist");
 
         if (isDatabaseError) {
             return <DatabaseError error={error.message} />;
@@ -100,20 +143,32 @@ export default function ModPage({
         slug: modData.slug,
         version: modData.version,
         downloadUrl: modData.downloadUrl || "#",
-        stats: modData.stats,
-        allImageUrls: modData.images?.map(img => img.imageUrl) || [modData.imageUrl || "https://placehold.co/300x200/4F46E5/FFFFFF/png?text=Mod"],
-        tags: modData.tags || [],
+        stats: modData.stats
+            ? {
+                  totalDownloads: modData.stats.totalDownloads ?? null,
+                  likes: modData.stats.likes ?? null,
+                  views: modData.stats.views ?? null,
+                  rating: modData.stats.rating ?? null,
+                  ratingCount: modData.stats.ratingCount ?? null,
+              }
+            : undefined,
+        allImageUrls: Array.isArray(modData.images)
+            ? modData.images.map((img) => img.imageUrl)
+            : [modData.imageUrl || "https://placehold.co/300x200/4F46E5/FFFFFF/png?text=Mod"],
+        tags: Array.isArray(modData.tags) ? modData.tags : [],
         game: modData.game || { id: 0, name: gamename, slug: gamename },
-        fileVersions: modData.files?.map(file => ({
-            id: file.id.toString(),
-            version: file.version || "1.0.0",
-            fileName: file.fileName,
-            fileSize: file.fileSize || "N/A",
-            uploadDate: file.createdAt || new Date(),
-            downloadUrl: file.fileUrl || "#",
-            changelog: "",
-            isLatest: file.isMainFile || false,
-        })) || [],
+        fileVersions: Array.isArray(modData.files)
+            ? modData.files.map((file) => ({
+                id: file.id?.toString() ?? "",
+                version: file.version || "1.0.0",
+                fileName: file.fileName,
+                fileSize: file.fileSize || "N/A",
+                uploadDate: file.createdAt || new Date(),
+                downloadUrl: file.fileUrl || "#",
+                changelog: "",
+                isLatest: file.isMainFile || false,
+            }))
+            : [],
     };
 
     const nextImage = () => {

@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { trpc } from "@/app/lib/trpc";
 import ModEditModal from "@/app/admin/components/ModEditModal";
 import type { Mod } from "@/app/db/schema";
 
@@ -8,25 +7,22 @@ interface AuthorModActionsProps {
     mod: Mod;
     onModUpdated: () => void;
     onModDeleted: () => void;
+    games?: { id: number; name: string }[];
+    categories?: { id: number; name: string }[];
 }
 
-export default function AuthorModActions({ mod, onModUpdated, onModDeleted }: AuthorModActionsProps) {
+export default function AuthorModActions({ mod, onModUpdated, onModDeleted, games = [], categories = [] }: AuthorModActionsProps) {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteConfirm, setIsDeleteConfirm] = useState(false);
     const [isVisibilityPending, setIsVisibilityPending] = useState(false);
     const [isDeletePending, setIsDeletePending] = useState(false);
-    const updateModStatus = trpc.admin.updateModStatus.useMutation();
-    const deleteMod = trpc.admin.deleteMod.useMutation();
-
-    // Fetch games and categories client-side when modal opens
-    const { data: games } = trpc.admin.getGames.useQuery(undefined, { enabled: isEditOpen });
-    const { data: categories } = trpc.admin.getCategories.useQuery(undefined, { enabled: isEditOpen });
 
     const handleToggleVisibility = async () => {
         setIsVisibilityPending(true);
-        await updateModStatus.mutateAsync({
-            modId: mod.id,
-            isActive: !mod.isActive,
+        await fetch(`/api/admin/mods/${mod.id}/status`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isActive: !mod.isActive }),
         });
         setIsVisibilityPending(false);
         onModUpdated();
@@ -34,7 +30,7 @@ export default function AuthorModActions({ mod, onModUpdated, onModDeleted }: Au
 
     const handleDelete = async () => {
         setIsDeletePending(true);
-        await deleteMod.mutateAsync({ modId: mod.id });
+        await fetch(`/api/admin/mods/${mod.id}`, { method: "DELETE" });
         setIsDeletePending(false);
         setIsDeleteConfirm(false);
         onModDeleted();
@@ -57,8 +53,8 @@ export default function AuthorModActions({ mod, onModUpdated, onModDeleted }: Au
                     isOpen={isEditOpen}
                     onClose={() => setIsEditOpen(false)}
                     onSuccess={onModUpdated}
-                    games={games || []}
-                    categories={categories || []}
+                    games={games}
+                    categories={categories}
                 />
             )}
             {isDeleteConfirm && (

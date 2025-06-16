@@ -246,6 +246,36 @@ export const userFollows = pgTable("user_follows", {
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
+export const collections = pgTable(
+    "collections",
+    {
+        id: serial("id").primaryKey(),
+        userId: integer("user_id").references(() => userTable.id, { onDelete: "cascade" }).notNull(),
+        name: text("name").notNull(),
+        description: text("description"),
+        isPublic: boolean("is_public").default(false).notNull(),
+        createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+        updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+    },
+    (table) => ({
+        userIdIdx: index("idx_collections_user_id").on(table.userId),
+        isPublicIdx: index("idx_collections_is_public").on(table.isPublic),
+    })
+);
+
+export const collectionMods = pgTable(
+    "collection_mods",
+    {
+        collectionId: integer("collection_id").references(() => collections.id, { onDelete: "cascade" }).notNull(),
+        modId: integer("mod_id").references(() => mods.id, { onDelete: "cascade" }).notNull(),
+        addedAt: timestamp("added_at", { withTimezone: true }).defaultNow(),
+    },
+    (table) => ({
+        pk: index("collection_mods_pk").on(table.collectionId, table.modId),
+        modIdIdx: index("idx_collection_mods_mod_id").on(table.modId),
+    })
+);
+
 export type User = typeof userTable.$inferSelect;
 export type NewUser = typeof userTable.$inferInsert;
 
@@ -284,3 +314,9 @@ export type NewUserModDownload = typeof userModDownloads.$inferInsert;
 
 export type UserFollow = typeof userFollows.$inferSelect;
 export type NewUserFollow = typeof userFollows.$inferInsert;
+
+export type Collection = typeof collections.$inferSelect;
+export type NewCollection = typeof collections.$inferInsert;
+
+export type CollectionMod = typeof collectionMods.$inferSelect;
+export type NewCollectionMod = typeof collectionMods.$inferInsert;

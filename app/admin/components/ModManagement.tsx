@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { trpc } from "../../lib/trpc";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 
@@ -56,6 +55,7 @@ export default function ModManagement({
     const [searchTerm, setSearchTerm] = useState("");
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [editingModId, setEditingModId] = useState<number | null>(null);
+    const [isDeletePending, setIsDeletePending] = useState(false);
 
     const limit = 20;
     const offset = page * limit;
@@ -95,31 +95,24 @@ export default function ModManagement({
         }
     }, [page, isActiveFilter, isFeaturedFilter, searchTerm, fetchMods, isFirstLoad]);
 
-    const updateModStatusMutation = trpc.admin.updateModStatus.useMutation({
-        onSuccess: () => {
-            fetchMods();
-        },
-    });
-
-    const deleteModMutation = trpc.admin.deleteMod.useMutation({
-        onSuccess: () => {
-            fetchMods();
-        },
-    });
-
     const handleStatusToggle = async (
         modId: number,
         isActive: boolean,
         isFeatured?: boolean
     ) => {
+        setIsLoading(true);
         try {
-            await updateModStatusMutation.mutateAsync({
-                modId,
-                isActive,
-                isFeatured,
+            const res = await fetch(`/api/admin/mods/${modId}/status`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isActive, isFeatured }),
             });
+            if (!res.ok) throw new Error("Failed to update mod status");
+            fetchMods();
         } catch (error) {
             alert("Failed to update mod status: " + (error as Error).message);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -129,10 +122,17 @@ export default function ModManagement({
                 `Are you sure you want to delete mod "${title}"? This action cannot be undone.`
             )
         ) {
+            setIsDeletePending(true);
             try {
-                await deleteModMutation.mutateAsync({ modId });
+                const res = await fetch(`/api/admin/mods/${modId}`, {
+                    method: "DELETE",
+                });
+                if (!res.ok) throw new Error("Failed to delete mod");
+                fetchMods();
             } catch (error) {
                 alert("Failed to delete mod: " + (error as Error).message);
+            } finally {
+                setIsDeletePending(false);
             }
         }
     };
@@ -381,7 +381,7 @@ export default function ModManagement({
                                                 }
                                                 className="text-red-400 hover:text-red-300 transition-colors cursor-pointer"
                                                 disabled={
-                                                    deleteModMutation.isPending
+                                                    isDeletePending
                                                 }
                                             >
                                                 Delete

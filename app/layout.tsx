@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { TRPCProvider } from "./components/TRPCProvider";
 import NavBar from "./components/nav";
 import { getCurrentSession } from "./lib/auth";
 
@@ -49,7 +48,7 @@ export default async function RootLayout({
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
                 <NavBar user={user} />
-                <TRPCProvider>{children}</TRPCProvider>
+                {children}
             </body>
         </html>
     );

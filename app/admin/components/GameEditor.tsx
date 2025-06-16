@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { trpc } from "../../lib/trpc";
 import Image from "next/image";
 import FormBuilder, { FormField } from "./FormBuilder";
 
@@ -36,28 +35,9 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
     const [activeTab, setActiveTab] = useState<"basic" | "visibility" | "form">(
         "basic"
     );
+    const [isPending, setIsPending] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-    const utils = trpc.useUtils();
-
-    const createGameMutation = trpc.admin.createGame.useMutation({
-        onSuccess: () => {
-            utils.admin.getGames.invalidate();
-            onClose();
-        },
-        onError: (error) => {
-            alert(error.message || "Failed to create game");
-        },
-    });
-
-    const updateGameMutation = trpc.admin.updateGame.useMutation({
-        onSuccess: () => {
-            utils.admin.getGames.invalidate();
-            onClose();
-        },
-        onError: (error) => {
-            alert(error.message || "Failed to update game");
-        },
-    });
     useEffect(() => {
         if (game) {
             setName(game.name);
@@ -99,17 +79,18 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
+        setError(null);
+        setIsPending(true);
         if (!name.trim()) {
             alert("Game name is required");
+            setIsPending(false);
             return;
         }
-
         if (!slug.trim()) {
             alert("Game slug is required");
+            setIsPending(false);
             return;
         }
-
         const gameData = {
             name: name.trim(),
             slug: slug.trim(),
@@ -118,18 +99,35 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
             visibleToUsers,
             visibleToSupporters,
             formSchema,
+            isActive,
         };
         try {
+            let response;
             if (game) {
-                await updateGameMutation.mutateAsync({
-                    id: game.id,
-                    ...gameData,
-                    isActive,
+                response = await fetch(`/api/admin/games/${game.id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(gameData),
                 });
             } else {
-                await createGameMutation.mutateAsync(gameData);
+                response = await fetch("/api/admin/games", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(gameData),
+                });
             }
-        } catch {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            onClose();
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message || "Failed to save game");
+            } else {
+                setError("Failed to save game");
+            }
+        } finally {
+            setIsPending(false);
         }
     };
 
@@ -376,7 +374,9 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                             </div>
                         )}
                     </div>
-
+                    {error && (
+                        <div className="text-red-500 text-sm mb-2">{error}</div>
+                    )}
                     <div className="border-t border-gray-700 p-6 bg-gray-900">
                         <div className="flex justify-end space-x-4">
                             <button
@@ -389,13 +389,9 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                             <button
                                 type="submit"
                                 className="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center cursor-pointer"
-                                disabled={
-                                    createGameMutation.isPending ||
-                                    updateGameMutation.isPending
-                                }
+                                disabled={isPending}
                             >
-                                {(createGameMutation.isPending ||
-                                    updateGameMutation.isPending) && (
+                                {isPending && (
                                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                 )}
                                 {game ? "Save Changes" : "Create Game"}

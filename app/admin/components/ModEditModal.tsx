@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { trpc } from "../../lib/trpc";
 
 interface ModEditModalProps {
     modId: number;
@@ -10,6 +9,17 @@ interface ModEditModalProps {
     onSuccess: () => void;
     games: { id: number; name: string }[];
     categories: { id: number; name: string }[];
+}
+
+interface Mod {
+    title?: string;
+    description?: string;
+    version?: string;
+    imageUrl?: string | null;
+    downloadUrl?: string | null;
+    size?: string;
+    gameId?: number;
+    categoryId?: number;
 }
 
 export default function ModEditModal({
@@ -30,53 +40,42 @@ export default function ModEditModal({
         gameId: 0,
         categoryId: 0,
     });
+    const [isLoading, setIsLoading] = useState(false);
+    const [isPending, setIsPending] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [mod, setMod] = useState<Mod | null>(null);
 
-    // Fetch mod data
-    const { data: mod, isLoading } = trpc.admin.getMod.useQuery(
-        { modId },
-        { enabled: isOpen && modId > 0 }
-    );
-
-    const updateModMutation = trpc.admin.updateMod.useMutation({
-        onSuccess: () => {
-            onSuccess();
-            onClose();
-        },
-        onError: (error) => {
-            alert("Failed to update mod: " + error.message);
-        },
-    });
-
-    // Populate form when mod data is loaded
     useEffect(() => {
-        if (mod) {
-            setFormData({
-                title: mod.title || "",
-                description: mod.description || "",
-                version: mod.version || "",
-                imageUrl: mod.imageUrl || "",
-                downloadUrl: mod.downloadUrl || "",
-                size: mod.size || "",
-                gameId: mod.gameId || 0,
-                categoryId: mod.categoryId || 0,
-            });
-        }
-    }, [mod]);
+        if (!isOpen || !modId) return;
+        setIsLoading(true);
+        setError(null);
+        fetch(`/api/admin/mods/${modId}`)
+            .then((res) => {
+                if (!res.ok) throw new Error("Failed to load mod");
+                return res.json();
+            })
+            .then((data) => {
+                setMod(data);
+                setFormData({
+                    title: data.title || "",
+                    description: data.description || "",
+                    version: data.version || "",
+                    imageUrl: data.imageUrl || "",
+                    downloadUrl: data.downloadUrl || "",
+                    size: data.size || "",
+                    gameId: data.gameId || 0,
+                    categoryId: data.categoryId || 0,
+                });
+            })
+            .catch((err) => setError(err.message))
+            .finally(() => setIsLoading(false));
+    }, [isOpen, modId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Only include changed fields
-        const updateData: {
-            modId: number;
-            title?: string;
-            description?: string;
-            version?: string;
-            imageUrl?: string | null;
-            downloadUrl?: string | null;
-            size?: string;
-            gameId?: number;
-            categoryId?: number;
-        } = { modId };
+        setIsPending(true);
+        setError(null);
+        const updateData: Record<string, unknown> = { modId };
         if (formData.title !== mod?.title) updateData.title = formData.title;
         if (formData.description !== mod?.description)
             updateData.description = formData.description;
@@ -91,8 +90,24 @@ export default function ModEditModal({
             updateData.gameId = formData.gameId;
         if (formData.categoryId !== mod?.categoryId)
             updateData.categoryId = formData.categoryId;
-
-        await updateModMutation.mutateAsync(updateData);
+        try {
+            const res = await fetch(`/api/admin/mods/${modId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updateData),
+            });
+            if (!res.ok) throw new Error("Failed to update mod");
+            onSuccess();
+            onClose();
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message || "Failed to update mod");
+            } else {
+                setError("Failed to update mod");
+            }
+        } finally {
+            setIsPending(false);
+        }
     };
 
     const handleInputChange = (
@@ -117,9 +132,7 @@ export default function ModEditModal({
             <div className="bg-gray-800 rounded-lg border border-gray-700 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-bold text-white">
-                            Edit Mod
-                        </h2>
+                        <h2 className="text-2xl font-bold text-white">Edit Mod</h2>
                         <button
                             onClick={onClose}
                             className="text-gray-400 hover:text-white transition-colors"
@@ -139,13 +152,15 @@ export default function ModEditModal({
                             </svg>
                         </button>
                     </div>
-
                     {isLoading ? (
                         <div className="flex items-center justify-center py-12">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400"></div>
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-4">
+                            {error && (
+                                <div className="text-red-500 text-sm mb-2">{error}</div>
+                            )}
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
                                     Title *
@@ -292,12 +307,10 @@ export default function ModEditModal({
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={updateModMutation.isPending}
+                                    disabled={isPending}
                                     className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                 >
-                                    {updateModMutation.isPending
-                                        ? "Saving..."
-                                        : "Save Changes"}
+                                    {isPending ? "Saving..." : "Save Changes"}
                                 </button>
                             </div>
                         </form>

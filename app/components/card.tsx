@@ -2,8 +2,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState, useEffect, useRef, Suspense } from "react";
 import { CardProps } from "@/app/types/common";
+import dynamic from "next/dynamic";
+import CollectionsModalLoading from "./CollectionsModalLoading";
+
+const AddToCollectionModal = dynamic(() => import("./AddToCollectionModal"), {
+    ssr: false,
+    loading: () => <CollectionsModalLoading />
+});
 
 const Card = memo(function Card({
     modId,
@@ -20,6 +27,26 @@ const Card = memo(function Card({
     uploaded,
     lastUpdated,
 }: CardProps) {
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [showCollectionModal, setShowCollectionModal] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowDropdown(false);
+            }
+        };
+
+        if (showDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }
+    }, [showDropdown]);
+
     // Memoize expensive calculations
     const formattedDates = useMemo(() => {
         const uploadedWeeksAgo = Math.floor(
@@ -53,20 +80,56 @@ const Card = memo(function Card({
         ? category
         : category
         ? [category]
-        : [];
+        : [];    return (
+        <>
+            <div className="bg-gray-800 text-white rounded-[var(--border-radius-custom)] shadow-lg m-2 w-80 h-[400px] flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-200 relative group">
+                {/* Dropdown Menu */}
+                <div className="absolute top-2 right-2 z-10">
+                    <div className="relative" ref={dropdownRef}>                        <button
+                            onClick={() => setShowDropdown(!showDropdown)}
+                            className={`p-1 rounded-full bg-gray-700 bg-opacity-80 hover:bg-opacity-100 transition-all ${
+                                showDropdown ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                            }`}
+                        >
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"/>
+                            </svg>
+                        </button>
+                        
+                        {showDropdown && (
+                            <div className="absolute right-0 mt-1 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 py-1">
+                                <button
+                                    onClick={() => {
+                                        setShowCollectionModal(true);
+                                        setShowDropdown(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center gap-2"
+                                    style={{ alignItems: "center" }}
+                                >
+                                    <span className="flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-library-big-icon lucide-library-big w-4 h-4">
+                                            <rect width="8" height="18" x="3" y="3" rx="1"/>
+                                            <path d="M7 3v18"/>
+                                            <path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"/>
+                                        </svg>
+                                    </span>
+                                    <span className="flex items-center">Add to Collection</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
-    return (
-        <div className="bg-gray-800 text-white rounded-[var(--border-radius-custom)] shadow-lg m-2 w-80 h-[400px] flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-200">
-            <Link href={modUrl} className="block h-44 w-full relative group">
-                <Image
-                    src={imageUrl}
-                    alt={title}
-                    fill
-                    className="object-cover w-full h-full"
-                    sizes="320px"
-                    priority={false}
-                />
-            </Link>
+                <Link href={modUrl} className="block h-44 w-full relative group">
+                    <Image
+                        src={imageUrl}
+                        alt={title}
+                        fill
+                        className="object-cover w-full h-full"
+                        sizes="320px"
+                        priority={false}
+                    />
+                </Link>
             <div className="flex-1 flex flex-col justify-between p-4">
                 <div>
                     <Link href={modUrl} className="text-lg font-bold text-purple-300 hover:underline line-clamp-1">
@@ -122,14 +185,23 @@ const Card = memo(function Card({
                         <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm0 2h12v10H4V5z" /></svg>
                         {size}
                     </span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+                </div>                <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
                     <span title="Uploaded">Uploaded {formattedDates.uploadedWeeksAgo === 0 ? 'this week' : `${formattedDates.uploadedWeeksAgo}w ago`}</span>
                     <span title="Last Updated">Updated {formattedDates.updatedWeeksAgo === 0 ? 'this week' : `${formattedDates.updatedWeeksAgo}w ago`}</span>
                 </div>
             </div>
         </div>
-    );
+          {/* Add to Collection Modal */}
+        <Suspense fallback={<CollectionsModalLoading />}>
+            <AddToCollectionModal
+                isOpen={showCollectionModal}
+                onClose={() => setShowCollectionModal(false)}
+                modId={modId}
+                modTitle={title}
+            />
+        </Suspense>
+    </>
+);
 });
 
 export default Card;

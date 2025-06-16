@@ -4,6 +4,7 @@ import { db } from "../db";
 import { mods, userModRatings } from "../db/schema";
 import { eq, count } from "drizzle-orm";
 import Image from "next/image";
+import UserCollectionsWrapper from "../components/UserCollectionsWrapper";
 
 export default async function ProfilePage() {
     const { user } = await getCurrentSession();
@@ -234,9 +235,16 @@ export default async function ProfilePage() {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                            ))}                        </div>
                     )}
+                </div>
+
+                {/* Collections Section */}
+                <div className="bg-gray-800 rounded-lg p-6 mb-6 shadow-lg">
+                    <h2 className="text-2xl font-bold text-purple-400 mb-4">
+                        My Collections
+                    </h2>
+                    <UserCollectionsWrapper userId={user.id} isOwnProfile={true} />
                 </div>
             </div>
         </div>

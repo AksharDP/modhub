@@ -13,7 +13,6 @@ import { useFormStatus } from "react-dom";
 import { useActionState } from "react";
 import Form from "next/form";
 import { uploadModAction, UploadState } from "./actions";
-import { trpc } from "../lib/trpc";
 import { useSearchParams } from "next/navigation";
 
 const MAX_IMAGES = 10;
@@ -280,13 +279,26 @@ const UploadPage = () => {
 
     const [state, formAction] = useActionState(uploadModAction, initialState);
 
+    const [games, setGames] = useState<{ id: number; name: string; slug: string }[]>([]);
+    const [selectedGame, setSelectedGame] = useState<{ id: number; name: string; slug: string; formSchema?: FormField[] } | null>(null);
+
     // Fetch available games
-    const { data: games } = trpc.game.getPublicGames.useQuery();
+    useEffect(() => {
+        fetch("/api/games")
+            .then((res) => res.json())
+            .then((data) => setGames(data.games || []));
+    }, []);
     
     // Fetch selected game details including form schema
-    const { data: selectedGame } = trpc.game.getGameBySlug.useQuery(
-        { slug: selectedGameSlug },        { enabled: !!selectedGameSlug }
-    );
+    useEffect(() => {
+        if (!selectedGameSlug) {
+            setSelectedGame(null);
+            return;
+        }
+        fetch(`/api/games/${selectedGameSlug}`)
+            .then((res) => res.json())
+            .then((data) => setSelectedGame(data));
+    }, [selectedGameSlug]);
 
     // Handle game selection change
     const handleGameChange = (gameSlug: string) => {

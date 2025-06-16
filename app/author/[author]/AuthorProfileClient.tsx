@@ -1,8 +1,8 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
-import { trpc } from "@/app/lib/trpc";
 import AuthorModActions from "./ModEditActions";
+import UserCollectionsWrapper from "@/app/components/UserCollectionsWrapper";
 import type { Mod, User } from "@/app/db/schema";
 
 // Add suspendedUntil to the user type if available
@@ -15,17 +15,15 @@ interface AuthorProfileClientProps {
 export default function AuthorProfileClient({ currentUser, profileUser, userMods }: AuthorProfileClientProps) {
   const isAdmin = currentUser?.role === "admin";
   const isSelf = currentUser?.id === profileUser.id;
-
-  // Ban/Suspend logic
-  const banUserMutation = trpc.admin.banUser.useMutation();
-  const suspendUserMutation = trpc.admin.suspendUser.useMutation();
   const [banPending, setBanPending] = useState(false);
   const [suspendPending, setSuspendPending] = useState(false);
+  const [unbanPending, setUnbanPending] = useState(false);
+  const [unsuspendPending, setUnsuspendPending] = useState(false);
 
   const handleBanUser = async () => {
     if (confirm("Are you sure you want to permanently ban this user?")) {
       setBanPending(true);
-      await banUserMutation.mutateAsync({ userId: profileUser.id });
+      await fetch(`/api/admin/users/${profileUser.id}/ban`, { method: "POST" });
       setBanPending(false);
       window.location.reload();
     }
@@ -34,27 +32,32 @@ export default function AuthorProfileClient({ currentUser, profileUser, userMods
     const duration = prompt("Enter suspension duration in days (leave blank for indefinite):");
     if (duration !== null) {
       setSuspendPending(true);
-      await suspendUserMutation.mutateAsync({ userId: profileUser.id, duration: duration ? parseInt(duration) : undefined });
+      await fetch(`/api/admin/users/${profileUser.id}/suspend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ duration: duration ? parseInt(duration) : undefined }),
+      });
       setSuspendPending(false);
       window.location.reload();
     }
   };
-
-  // Unban/Unsuspend logic
-  const unbanUserMutation = trpc.admin.updateUserRole.useMutation();
-  const unsuspendUserMutation = trpc.admin.updateUserRole.useMutation();
-  const [unbanPending, setUnbanPending] = useState(false);
-  const [unsuspendPending, setUnsuspendPending] = useState(false);
-
   const handleUnbanUser = async () => {
     setUnbanPending(true);
-    await unbanUserMutation.mutateAsync({ userId: profileUser.id, role: "user" });
+    await fetch(`/api/admin/users/${profileUser.id}/role`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "user" }),
+    });
     setUnbanPending(false);
     window.location.reload();
   };
   const handleUnsuspendUser = async () => {
     setUnsuspendPending(true);
-    await unsuspendUserMutation.mutateAsync({ userId: profileUser.id, role: "user" });
+    await fetch(`/api/admin/users/${profileUser.id}/role`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: "user" }),
+    });
     setUnsuspendPending(false);
     window.location.reload();
   };
@@ -105,8 +108,7 @@ export default function AuthorProfileClient({ currentUser, profileUser, userMods
               </>
             )}
           </div>
-        )}
-        <h2 className="text-2xl font-bold mb-4 text-purple-300">Mods by {profileUser.username}</h2>
+        )}        <h2 className="text-2xl font-bold mb-4 text-purple-300">Mods by {profileUser.username}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {userMods.map((mod) => (
             <div key={mod.id} className="bg-gray-800 rounded-lg p-4 border border-gray-700">
@@ -129,6 +131,12 @@ export default function AuthorProfileClient({ currentUser, profileUser, userMods
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Collections Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4 text-purple-300">{profileUser.username}&apos;s Collections</h2>
+          <UserCollectionsWrapper userId={profileUser.id} isOwnProfile={isSelf} />
         </div>
       </div>
     </div>
