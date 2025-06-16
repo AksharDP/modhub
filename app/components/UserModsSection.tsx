@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Card from "./card";
 
 interface UserMod {
     id: number;
@@ -18,19 +18,30 @@ interface UserModsSectionProps {
     userMods: UserMod[];
 }
 
-function formatDate(date: Date | string) {
-    return new Date(date).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
-}
-
 export default function UserModsSection({ userMods }: UserModsSectionProps) {
+    // Map userMods to CardProps, using placeholders/defaults for missing fields
+    const cards = userMods.map((mod) => {
+        return {
+            modId: mod.id,
+            gameName: "", // Not available, so leave blank or fetch if needed
+            slug: undefined, // Not available
+            title: mod.title,
+            description: mod.description,
+            imageUrl: mod.imageUrl || "/placeholder1.svg",
+            author: "You",
+            authorPFP: "/placeholder1.svg",
+            category: "", // Not available
+            likes: 0, // Not available
+            downloads: 0, // Not available
+            size: "-", // Not available
+            uploaded: mod.createdAt,
+            lastUpdated: mod.updatedAt,
+        };
+    });
     return (
         <div className="bg-gray-800 rounded-lg shadow-xl p-6 border border-gray-700">
             <h2 className="text-2xl font-bold mb-6 text-purple-400">Your Mods</h2>
-            {userMods.length === 0 ? (
+            {cards.length === 0 ? (
                 <div className="text-center py-12">
                     <svg
                         className="mx-auto h-16 w-16 text-gray-500 mb-4"
@@ -53,60 +64,9 @@ export default function UserModsSection({ userMods }: UserModsSectionProps) {
                     </p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {userMods.map((mod) => (
-                        <div
-                            key={mod.id}
-                            className="bg-gray-700 rounded-lg p-4 border border-gray-600 hover:border-purple-500 transition-colors"
-                        >
-                            <div className="flex items-start space-x-3">
-                                {mod.imageUrl && (
-                                    <div className="flex-shrink-0">
-                                        <Image
-                                            src={mod.imageUrl}
-                                            alt={mod.title}
-                                            width={64}
-                                            height={64}
-                                            className="rounded-lg object-cover"
-                                            unoptimized={mod.imageUrl.startsWith("http")}
-                                        />
-                                    </div>
-                                )}
-                                <div className="flex-grow min-w-0">
-                                    <div className="flex items-start justify-between">
-                                        <div className="min-w-0 flex-grow">
-                                            <h3 className="text-lg font-semibold text-white truncate">{mod.title}</h3>
-                                            <p className="text-sm text-gray-400 mb-2">v{mod.version}</p>
-                                        </div>
-                                        <div className="flex space-x-1 ml-2">
-                                            {mod.isFeatured && (
-                                                <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-yellow-600 text-yellow-100">Featured</span>
-                                            )}
-                                            <span
-                                                className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
-                                                    mod.isActive
-                                                        ? "bg-green-600 text-green-100"
-                                                        : "bg-gray-600 text-gray-100"
-                                                }`}
-                                            >
-                                                {mod.isActive ? "Active" : "Inactive"}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <p className="text-sm text-gray-300 line-clamp-2 mb-3">{mod.description}</p>
-                                    <div className="flex items-center justify-between text-xs text-gray-500">
-                                        <span>
-                                            Created {formatDate(mod.createdAt !== null ? mod.createdAt : new Date())}
-                                        </span>
-                                        {mod.updatedAt !== mod.createdAt && (
-                                            <span>
-                                                Updated {formatDate(mod.updatedAt !== null ? mod.updatedAt : new Date())}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                <div className="flex flex-wrap gap-4 justify-start">
+                    {cards.map((card) => (
+                        <Card key={card.modId} {...card} />
                     ))}
                 </div>
             )}

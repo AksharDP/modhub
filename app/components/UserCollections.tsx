@@ -27,7 +27,13 @@ export default function UserCollections({ userId, username, isOwnProfile = false
     const [newCollectionName, setNewCollectionName] = useState("");
     const [newCollectionDescription, setNewCollectionDescription] = useState("");
     const [newCollectionIsPublic, setNewCollectionIsPublic] = useState(false);
-    const [creating, setCreating] = useState(false);    const fetchCollections = useCallback(async () => {
+    const [creating, setCreating] = useState(false);
+    const [page, setPage] = useState(1);
+    const pageSize = 12;
+    const totalPages = Math.ceil(collections.length / pageSize);
+    const pagedCollections = collections.slice((page - 1) * pageSize, page * pageSize);
+
+    const fetchCollections = useCallback(async () => {
         setLoading(true);
         try {
             let url = "/api/user/collections";
@@ -185,12 +191,13 @@ export default function UserCollections({ userId, username, isOwnProfile = false
 
             {/* Collections Grid */}
             {collections.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {collections.map((collection) => (
+                <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {pagedCollections.map((collection) => (
                         <Link
                             key={collection.id}
                             href={`/collections/${collection.id}`}
-                            className="bg-gray-800 rounded-lg p-4 hover:bg-white/10 transition-colors duration-150 hover:shadow-lg block focus:outline-none focus:ring-2 focus:ring-purple-500 group"
+                            className="bg-gray-700 rounded-lg p-4 hover:bg-white/10 transition-colors duration-150 hover:shadow-lg block focus:outline-none focus:ring-2 focus:ring-purple-500 group"
                         >
                             <div className="flex items-start justify-between mb-3">
                                 <h3 className="text-lg font-semibold text-white truncate">
@@ -221,6 +228,26 @@ export default function UserCollections({ userId, username, isOwnProfile = false
                         </Link>
                     ))}
                 </div>
+                {totalPages > 1 && (
+                    <div className="flex justify-center mt-6 space-x-2">
+                        <button
+                            className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
+                            onClick={() => setPage(page - 1)}
+                            disabled={page === 1}
+                        >
+                            Previous
+                        </button>
+                        <span className="px-2 py-1 text-gray-300">Page {page} of {totalPages}</span>
+                        <button
+                            className="px-3 py-1 rounded bg-gray-700 text-white disabled:opacity-50"
+                            onClick={() => setPage(page + 1)}
+                            disabled={page === totalPages}
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
+                </>
             ) : (
                 <div className="text-center text-gray-400 py-8">
                     <p className="text-lg">

@@ -157,7 +157,7 @@ export default function CollectionsClient() {
                                         
                                         <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
                                             <Link 
-                                                href={`/author/${collection.user?.username}`}
+                                                href={`/profile/${collection.user?.username}`}
                                                 className="hover:text-purple-400 transition-colors"
                                             >
                                                 by {collection.user?.username || "Unknown"}

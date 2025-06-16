@@ -74,7 +74,7 @@ const Card = memo(function Card({
     // Use slug and gameName if needed for future features or links
     // For now, modUrl only uses modId as per new routing
     const modUrl = `/mod/${modId}`;
-    const authorUrl = `/author/${encodeURIComponent(author)}/mods`;
+    const authorUrl = `/profile/${encodeURIComponent(author)}`;
 
     // Ensure categories is always an array
     const categories: string[] = Array.isArray(category)

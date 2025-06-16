@@ -3,10 +3,7 @@ import { getCurrentSession } from "../lib/auth";
 import { db } from "../db";
 import { mods, userModRatings } from "../db/schema";
 import { eq, count } from "drizzle-orm";
-import UserProfileHeader from "../components/UserProfileHeader";
-import UserStats from "../components/UserStats";
-import UserModsSection from "../components/UserModsSection";
-import UserCollectionsWrapper from "../components/UserCollectionsWrapper";
+import ProfileClientSections from "./ProfileClientSections";
 
 export default async function ProfilePage() {
     const { user } = await getCurrentSession();
@@ -56,13 +53,6 @@ export default async function ProfilePage() {
         month: "long",
         day: "numeric",
     });
-    const formatDate = (date: Date | string) => {
-        return new Date(date).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-        });
-    };
 
     // Clean up user object for UserProfileHeader
     const userHeader = {
@@ -76,17 +66,16 @@ export default async function ProfilePage() {
     return (
         <div className="bg-gray-900 text-white min-h-screen">
             <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-                <UserProfileHeader user={userHeader} createdAtFormatted={createdAtFormatted} />
-                <UserStats
+                <ProfileClientSections
+                    userHeader={userHeader}
+                    createdAtFormatted={createdAtFormatted}
                     modCount={modCount}
                     activeModCount={activeModCount}
                     featuredModCount={featuredModCount}
                     reviewCount={reviewCount}
+                    userModsClean={userModsClean}
+                    userId={user.id}
                 />
-                <UserModsSection userMods={userModsClean} />
-                <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
-                    <UserCollectionsWrapper userId={user.id} isOwnProfile={true} />
-                </div>
             </div>
         </div>
     );

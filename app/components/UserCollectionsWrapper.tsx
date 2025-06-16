@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import UserCollectionsLoading from "./UserCollectionsLoading";
 
 const UserCollections = dynamic(() => import("./UserCollections"), {
-    ssr: false,
     loading: () => <UserCollectionsLoading />
 });
 
