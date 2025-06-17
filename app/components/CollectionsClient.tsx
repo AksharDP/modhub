@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image"; // Import Image for author profile picture
 
 interface CollectionData {
     id: number;
     name: string;
     description: string | null;
+    imageUrl: string | null;
     isPublic: boolean;
     likes: number;
     createdAt: Date;
@@ -184,30 +186,57 @@ export default function CollectionsClient() {
                             {collections.map((collection) => (
                                 <div
                                     key={collection.id}
-                                    className="bg-gray-800 text-white rounded-[var(--border-radius-custom)] shadow-lg m-1 w-72 h-[260px] flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-200 relative group"
+                                    className="bg-gray-800 text-white rounded-[var(--border-radius-custom)] shadow-lg m-2 w-80 h-[400px] flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-200 relative group"
                                 >
-                                    <div className="flex-1 flex flex-col justify-between p-3">
-                                        <Link
-                                            href={`/collections/${collection.id}`}
-                                            className="text-base font-bold text-purple-300 hover:underline line-clamp-1 mb-0"
-                                        >
-                                            {collection.name}
-                                        </Link>
-                                        <p className="text-gray-300 text-xs line-clamp-2 min-h-[32px] mb-1">
-                                            {collection.description || "No description available."}
-                                        </p>
-                                        <div className="flex items-center justify-between text-xs text-gray-400 mb-1">
+                                    <Link
+                                        href={`/collections/${collection.id}`}
+                                        className="block h-44 w-full relative group"
+                                    >                                        <Image
+                                            src={collection.imageUrl || "https://placehold.co/320x176/4F46E5/FFFFFF/png?text=Collection"}
+                                            alt={collection.name}
+                                            fill
+                                            className="object-cover w-full h-full"
+                                            sizes="320px"
+                                            priority={false}
+                                        />
+                                    </Link>
+                                    <div className="flex-1 flex flex-col justify-between p-4">
+                                        <div>
                                             <Link
-                                                href={`/profile/${collection.user?.username}`}
-                                                className="flex items-center hover:underline text-xs text-gray-200"
+                                                href={`/collections/${collection.id}`}
+                                                className="text-lg font-bold text-purple-300 hover:underline line-clamp-1"
                                             >
-                                                {collection.user?.username || "Unknown"}
+                                                {collection.name}
                                             </Link>
+                                            <p className="text-gray-300 text-sm mt-1 line-clamp-2 min-h-[40px]">
+                                                {collection.description || "No description available."}
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center mt-3 mb-2">
+                                                <Link
+                                                    href={`/profile/${collection.user?.username}`}
+                                                    className="flex items-center hover:underline"
+                                                >
+                                                    <Image
+                                                        src={collection.user?.profilePicture || "https://placehold.co/24x24/7C3AED/FFFFFF/png?text=U"}
+                                                        alt={collection.user?.username || "Unknown"}
+                                                        width={24}
+                                                        height={24}
+                                                        className="rounded-full mr-2 border border-purple-400"
+                                                    />
+                                                    <span className="text-xs text-gray-200">
+                                                        {collection.user?.username || "Unknown"}
+                                                    </span>
+                                                </Link>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-gray-400 mt-2">
                                             <span title="Likes" className="flex items-center gap-1">
                                                 <svg
                                                     xmlns="http://www.w3.org/2000/svg"
-                                                    width="14"
-                                                    height="14"
+                                                    width="24"
+                                                    height="24"
                                                     viewBox="0 0 24 24"
                                                     fill="none"
                                                     stroke="currentColor"
@@ -220,9 +249,12 @@ export default function CollectionsClient() {
                                                 </svg>
                                                 {collection.likes}
                                             </span>
-                                            <span title="Mods" className="flex items-center gap-1">
+                                            <span
+                                                title="Mods"
+                                                className="flex items-center gap-1"
+                                            >
                                                 <svg
-                                                    className="w-3.5 h-3.5 text-blue-400"
+                                                    className="w-4 h-4 text-blue-400"
                                                     fill="currentColor"
                                                     viewBox="0 0 20 20"
                                                 >
@@ -232,7 +264,7 @@ export default function CollectionsClient() {
                                             </span>
                                             <span title="Total Size" className="flex items-center gap-1">
                                                 <svg
-                                                    className="w-3.5 h-3.5 text-green-400"
+                                                    className="w-4 h-4 text-green-400"
                                                     fill="currentColor"
                                                     viewBox="0 0 20 20"
                                                 >
@@ -241,12 +273,22 @@ export default function CollectionsClient() {
                                                 {collection.totalFileSize}
                                             </span>
                                         </div>
-                                        <Link
-                                            href={`/collections/${collection.id}`}
-                                            className="bg-purple-600 hover:bg-purple-700 text-white px-2 py-1 rounded-lg transition-colors text-center mt-1 text-xs"
-                                        >
-                                            View
-                                        </Link>
+                                        <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+                                            <span title="Created">
+                                                Created{" "}
+                                                {new Date(collection.createdAt).toLocaleDateString(
+                                                    undefined,
+                                                    { year: "numeric", month: "long", day: "numeric" }
+                                                )}
+                                            </span>
+                                            <span title="Last Updated">
+                                                Updated{" "}
+                                                {new Date(collection.updatedAt).toLocaleDateString(
+                                                    undefined,
+                                                    { year: "numeric", month: "long", day: "numeric" }
+                                                )}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}

@@ -23,10 +23,8 @@ export async function PUT(
                 { error: "Invalid collection ID" },
                 { status: 400 }
             );
-        }
-
-        const body = await request.json();
-        const { name, description, isPublic } = body;
+        }        const body = await request.json();
+        const { name, description, isPublic, imageUrl } = body;
 
         // Verify user owns the collection
         const collection = await db
@@ -45,10 +43,12 @@ export async function PUT(
             name: string;
             description: string | null;
             isPublic: boolean;
+            imageUrl: string | null;
         }> = {};
         if (name !== undefined) updateData.name = name.trim();
         if (description !== undefined) updateData.description = description?.trim() || null;
         if (isPublic !== undefined) updateData.isPublic = Boolean(isPublic);
+        if (imageUrl !== undefined) updateData.imageUrl = imageUrl?.trim() || null;
 
         if (Object.keys(updateData).length === 0) {
             return NextResponse.json(

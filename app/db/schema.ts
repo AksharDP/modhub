@@ -253,6 +253,7 @@ export const collections = pgTable(
         userId: integer("user_id").references(() => userTable.id, { onDelete: "cascade" }).notNull(),
         name: text("name").notNull(),
         description: text("description"),
+        imageUrl: text("image_url"),
         isPublic: boolean("is_public").default(false).notNull(),
         likes: integer("likes").default(0),
         createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),

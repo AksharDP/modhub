@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
                 id: collections.id,
                 name: collections.name,
                 description: collections.description,
+                imageUrl: collections.imageUrl,
                 isPublic: collections.isPublic,
                 likes: collections.likes,
                 createdAt: collections.createdAt,

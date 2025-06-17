@@ -25,6 +25,7 @@ export async function GET(
                 id: collections.id,
                 name: collections.name,
                 description: collections.description,
+                imageUrl: collections.imageUrl,
                 isPublic: collections.isPublic,
                 createdAt: collections.createdAt,
                 updatedAt: collections.updatedAt,

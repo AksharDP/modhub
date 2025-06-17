@@ -12,6 +12,7 @@ interface CollectionData {
     id: number;
     name: string;
     description: string | null;
+    imageUrl: string | null;
     isPublic: boolean;
     createdAt: Date;
     updatedAt: Date;
@@ -80,11 +81,16 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
     const [collectionId, setCollectionId] = useState<string | null>(null);
     const [isOwner, setIsOwner] = useState(false);
     const [savingOrder, setSavingOrder] = useState(false);
-    const [editMode, setEditMode] = useState(false);
-    const [editingTitle, setEditingTitle] = useState(false);
+    const [editMode, setEditMode] = useState(false);    const [editingTitle, setEditingTitle] = useState(false);
+    const [editingDescription, setEditingDescription] = useState(false);
+    const [editingImage, setEditingImage] = useState(false);
     const [editingPrivacy, setEditingPrivacy] = useState(false);
     const [tempCollectionName, setTempCollectionName] = useState("");
-    const [tempIsPublic, setTempIsPublic] = useState(true);    
+    const [tempDescription, setTempDescription] = useState("");    const [tempImageUrl, setTempImageUrl] = useState("");
+    const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const [imageError, setImageError] = useState<string | null>(null);
+    const [tempIsPublic, setTempIsPublic] = useState(true);
     // Refs to prevent duplicate API calls
     const fetchingRef = useRef(false);
 
@@ -224,7 +230,98 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
         } catch (error) {
             console.error("Error updating collection privacy:", error);
         }
-    };    if (!collection && loading) {
+    };
+
+    const handleUpdateCollectionDescription = async () => {
+        if (!collection) return;
+        
+        try {
+            const response = await fetch(`/api/user/collections/${collection.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    description: tempDescription.trim(),
+                }),
+            });
+            
+            if (response.ok) {
+                setCollection({ ...collection, description: tempDescription.trim() || null });
+                setEditingDescription(false);
+            }
+        } catch (error) {
+            console.error("Error updating collection description:", error);
+        }
+    };    const handleUpdateCollectionImage = async () => {
+        if (!collection) return;
+          try {
+            setUploadingImage(true);
+            setImageError(null);
+            let imageUrl = tempImageUrl.trim();
+            
+            // If a file is selected, upload it first
+            if (selectedImageFile) {
+                const formData = new FormData();
+                formData.append('image', selectedImageFile);
+                formData.append('type', 'collection');
+                
+                const uploadResponse = await fetch('/api/upload/image', {
+                    method: 'POST',
+                    body: formData,
+                });
+                  if (uploadResponse.ok) {
+                    const uploadData = await uploadResponse.json();
+                    imageUrl = uploadData.imageUrl;
+                } else {
+                    const errorData = await uploadResponse.json().catch(() => ({}));
+                    if (uploadResponse.status === 501) {
+                        throw new Error('Image upload feature is not yet implemented. Please use a URL instead.');
+                    }
+                    throw new Error(errorData.error || 'Failed to upload image');
+                }
+            }
+            
+            const response = await fetch(`/api/user/collections/${collection.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    imageUrl: imageUrl,
+                }),
+            });
+            
+            if (response.ok) {
+                setCollection({ ...collection, imageUrl: imageUrl || null });
+                setEditingImage(false);
+                setSelectedImageFile(null);
+                setTempImageUrl("");
+            }        } catch (error) {
+            console.error("Error updating collection image:", error);
+            setImageError(error instanceof Error ? error.message : "Failed to update image");
+        } finally {
+            setUploadingImage(false);
+        }
+    };
+
+    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                alert('Please select an image file');
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB');
+                return;
+            }
+            
+            setSelectedImageFile(file);
+            setTempImageUrl(''); // Clear URL when file is selected
+        }
+    };
+
+    if (!collection && loading) {
         return (
             <div className="bg-gray-900 text-white min-h-screen">
                 <div className="container mx-auto px-4 py-8">
@@ -288,13 +385,15 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                             <span className="mx-1">/</span>
                             <span>{collection.name}</span>
                         </nav>
-                        {isOwner && (
-                            <button
-                                onClick={() => {
+                        {isOwner && (                            <button                                onClick={() => {
                                     setEditMode(!editMode);
                                     if (editMode) {
                                         setEditingTitle(false);
-                                        setEditingPrivacy(false);
+                                        setEditingDescription(false);
+                                        setEditingImage(false);                                        setEditingPrivacy(false);
+                                        setSelectedImageFile(null);
+                                        setTempImageUrl("");
+                                        setImageError(null);
                                     }
                                 }}
                                 className={`px-3 py-1 rounded text-xs transition-colors ${
@@ -304,9 +403,141 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                 }`}
                             >
                                 {editMode ? 'Exit' : 'Edit Collection'}
-                            </button>
+                            </button>                        )}
+                    </div>                    {/* Collection Image/Thumbnail */}
+                    <div className="mb-4">
+                        {editingImage && isOwner ? (
+                            <div className="bg-gray-700 p-4 rounded-lg">
+                                <h3 className="text-sm font-medium text-white mb-3">Update Collection Image</h3>
+                                
+                                {/* File Upload Option */}
+                                <div className="mb-4">
+                                    <label className="block text-sm text-gray-300 mb-2">Upload Image File</label>
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileSelect}
+                                            className="block w-full text-sm text-gray-300 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-purple-600 file:text-white hover:file:bg-purple-700 file:cursor-pointer"
+                                        />
+                                        {selectedImageFile && (
+                                            <span className="text-xs text-green-400">
+                                                {selectedImageFile.name}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-1">
+                                        Max size: 5MB. Recommended: 400x200px (2:1 ratio)
+                                    </p>
+                                </div>
+
+                                {/* Divider */}
+                                <div className="flex items-center my-4">
+                                    <div className="border-t border-gray-600 flex-grow"></div>
+                                    <span className="px-3 text-xs text-gray-400">OR</span>
+                                    <div className="border-t border-gray-600 flex-grow"></div>
+                                </div>
+
+                                {/* URL Input Option */}
+                                <div className="mb-4">
+                                    <label className="block text-sm text-gray-300 mb-2">Image URL</label>
+                                    <input
+                                        type="url"
+                                        value={tempImageUrl}
+                                        onChange={(e) => {
+                                            setTempImageUrl(e.target.value);
+                                            if (e.target.value.trim()) {
+                                                setSelectedImageFile(null); // Clear file when URL is entered
+                                            }
+                                        }}
+                                        placeholder="https://example.com/image.jpg"
+                                        className="w-full text-sm bg-gray-600 text-white px-3 py-2 rounded border border-gray-500 focus:border-purple-400 focus:outline-none"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleUpdateCollectionImage();
+                                            if (e.key === 'Escape') setEditingImage(false);
+                                        }}
+                                    />                                </div>
+
+                                {/* Error Display */}
+                                {imageError && (
+                                    <div className="mb-4 p-3 bg-red-900/50 border border-red-500 rounded text-red-200 text-sm">
+                                        {imageError}
+                                    </div>
+                                )}
+
+                                {/* Action Buttons */}
+                                <div className="flex gap-2 justify-end">
+                                    <button                                        onClick={() => {
+                                            setEditingImage(false);
+                                            setSelectedImageFile(null);
+                                            setTempImageUrl("");
+                                            setImageError(null);
+                                        }}
+                                        className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm transition-colors"
+                                        disabled={uploadingImage}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleUpdateCollectionImage}
+                                        disabled={uploadingImage || (!selectedImageFile && !tempImageUrl.trim())}
+                                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white rounded text-sm transition-colors"
+                                    >
+                                        {uploadingImage ? 'Uploading...' : 'Save Image'}
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="relative group">
+                                {collection.imageUrl ? (
+                                    <div className="relative">
+                                        <Image
+                                            src={collection.imageUrl}
+                                            alt={collection.name}
+                                            width={400}
+                                            height={200}
+                                            className="w-full max-w-md mx-auto rounded-lg object-cover"
+                                            style={{ aspectRatio: '2/1' }}
+                                        />
+                                        {isOwner && (                                            <button
+                                                onClick={() => {                                                    setTempImageUrl(collection.imageUrl || "");
+                                                    setSelectedImageFile(null);
+                                                    setImageError(null);
+                                                    setEditingImage(true);
+                                                }}
+                                                className="absolute top-2 right-2 p-2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full transition-all opacity-0 group-hover:opacity-100"
+                                                title="Edit image"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>
+                                                    <path d="m15 5 4 4"/>
+                                                </svg>
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : isOwner ? (                                    <div
+                                        onClick={() => {                                            setTempImageUrl("");
+                                            setSelectedImageFile(null);
+                                            setImageError(null);
+                                            setEditingImage(true);
+                                        }}
+                                        className="w-full max-w-md mx-auto h-32 border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center cursor-pointer hover:border-purple-400 hover:bg-gray-800 transition-colors"
+                                    >
+                                        <div className="text-center text-gray-400">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-2">
+                                                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                                                <circle cx="9" cy="9" r="2"/>
+                                                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                                            </svg>
+                                            <p className="text-sm">Click to add collection image</p>
+                                        </div>
+                                    </div>
+                                ) : null}
+                            </div>
                         )}
-                    </div><div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                                 {editingTitle && isOwner ? (
@@ -357,11 +588,63 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                         )}
                                     </>
                                 )}
-                            </div>
-                            {collection.description && (
-                                <p className="text-gray-300 text-sm mb-1 truncate">
-                                    {collection.description}
-                                </p>
+                            </div>                            {editingDescription && isOwner ? (
+                                <div className="flex items-start gap-2 mb-2">
+                                    <textarea
+                                        value={tempDescription}
+                                        onChange={(e) => setTempDescription(e.target.value)}
+                                        placeholder="Add a description for your collection..."
+                                        className="text-gray-300 text-sm bg-gray-700 px-2 py-1 rounded flex-1 resize-none"
+                                        rows={2}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Escape') setEditingDescription(false);
+                                        }}
+                                        autoFocus
+                                    />
+                                    <div className="flex flex-col gap-1">
+                                        <button
+                                            onClick={handleUpdateCollectionDescription}
+                                            className="text-green-400 hover:text-green-300"
+                                            title="Save description"
+                                        >
+                                            ✓
+                                        </button>
+                                        <button
+                                            onClick={() => setEditingDescription(false)}
+                                            className="text-red-400 hover:text-red-300"
+                                            title="Cancel"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-start gap-2 mb-1">
+                                    {collection.description ? (
+                                        <p className="text-gray-300 text-sm flex-1">
+                                            {collection.description}
+                                        </p>
+                                    ) : isOwner ? (
+                                        <p className="text-gray-500 text-sm italic flex-1">
+                                            No description added yet
+                                        </p>
+                                    ) : null}
+                                    {isOwner && (
+                                        <button
+                                            onClick={() => {
+                                                setTempDescription(collection.description || "");
+                                                setEditingDescription(true);
+                                            }}
+                                            className="text-gray-400 hover:text-purple-400 transition-colors"
+                                            title="Edit description"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>
+                                                <path d="m15 5 4 4"/>
+                                            </svg>
+                                        </button>
+                                    )}
+                                </div>
                             )}
                             <div className="flex items-center gap-3 text-xs text-gray-400 mt-1 flex-wrap">
                                 <Link 
@@ -419,7 +702,7 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                     ) : (
                                         <div className="flex items-center gap-1 text-gray-400 bg-gray-700 px-2 py-1 rounded text-xs">
                                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2-2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
+                                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 002 2v5a2 2 0 01-2-2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
                                             </svg>
                                             <span>Private</span>
                                         </div>
