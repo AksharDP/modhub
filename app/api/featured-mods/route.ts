@@ -14,12 +14,12 @@ export async function GET(request: NextRequest) {
         const totalCountResult = await db
             .select({ count: count() })
             .from(mods)
-            .where(and(eq(mods.isActive, true)));
+            .where(and(eq(mods.isActive, true), eq(mods.isFeatured, true)));
 
         const totalCount = totalCountResult[0]?.count || 0;
         const totalPages = Math.ceil(totalCount / limit);
 
-        // Get paginated mods
+        // Get paginated featured mods
         const featuredMods = await db
             .select({
                 id: mods.id,
@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
                 version: mods.version,
                 imageUrl: mods.imageUrl,
                 size: mods.size,
+                isAdult: mods.isAdult,
                 createdAt: mods.createdAt,
                 updatedAt: mods.updatedAt,
                 author: {
@@ -59,8 +60,8 @@ export async function GET(request: NextRequest) {
             .leftJoin(games, eq(mods.gameId, games.id))
             .leftJoin(categories, eq(mods.categoryId, categories.id))
             .leftJoin(modStats, eq(mods.id, modStats.modId))
-            .where(and(eq(mods.isActive, true)))
-            .orderBy(desc(modStats.rating))
+            .where(and(eq(mods.isActive, true), eq(mods.isFeatured, true)))
+            .orderBy(desc(mods.createdAt))
             .limit(limit)
             .offset(offset);
 
@@ -75,9 +76,9 @@ export async function GET(request: NextRequest) {
             },
         });
     } catch (error) {
-        console.error("Error fetching paginated mods:", error);
+        console.error("Error fetching featured mods:", error);
         return NextResponse.json(
-            { error: "Failed to fetch mods" },
+            { error: "Failed to fetch featured mods" },
             { status: 500 }
         );
     }

@@ -25,11 +25,17 @@ const Card = memo(function Card({
     size,
     uploaded,
     lastUpdated,
+    isAdult = false,
     hideDropdown = false,
 }: CardProps) {
     const [showDropdown, setShowDropdown] = useState(false);
     const [showCollectionModal, setShowCollectionModal] = useState(false);
+    const [isImageBlurred, setIsImageBlurred] = useState(isAdult);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        setIsImageBlurred(isAdult);
+    }, [isAdult]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -89,9 +95,16 @@ const Card = memo(function Card({
         : category
         ? [category]
         : [];
+
+    const handleImageClick = (e: React.MouseEvent) => {
+        if (isAdult && isImageBlurred) {
+            e.preventDefault();
+            setIsImageBlurred(false);
+        }
+    };
+
     return (
         <>
-            {" "}
             <div className="bg-gray-800 text-white rounded-[var(--border-radius-custom)] shadow-lg m-2 w-80 h-[400px] flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-200 relative group">
                 {!hideDropdown && (
                     <div className="absolute top-2 right-2 z-10">
@@ -125,7 +138,6 @@ const Card = memo(function Card({
                                             setShowDropdown(false);
                                         }}
                                         className="w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 flex items-center gap-2"
-                                        style={{ alignItems: "center" }}
                                     >
                                         <span className="flex items-center">
                                             <svg
@@ -159,20 +171,28 @@ const Card = memo(function Card({
                             )}
                         </div>
                     </div>
-                )}
-
+                )}{" "}
                 <Link
                     href={modUrl}
-                    className="block h-44 w-full relative group"
+                    className="block h-44 w-full relative group overflow-hidden"
+                    onClick={handleImageClick}
                 >
                     <Image
                         src={imageUrl}
                         alt={title}
                         fill
-                        className="object-cover w-full h-full"
+                        className={`object-cover w-full h-full ${
+                            isImageBlurred ? "blur-md" : ""
+                        }`}
                         sizes="320px"
                         priority={false}
                     />
+                    {isAdult && isImageBlurred && (
+                        <div className="absolute inset-0 bg-opacity-50 flex flex-col items-center justify-center cursor-pointer text-white text-lg font-bold">
+                            <span className="text-sm font-normal mb-2">18+</span>
+                            <span>Click to Unblur</span>
+                        </div>
+                    )}
                 </Link>
                 <div className="flex-1 flex flex-col justify-between p-4">
                     <div>
@@ -203,29 +223,38 @@ const Card = memo(function Card({
                                     {author}
                                 </span>
                             </Link>
-                        </div>
+                        </div>{" "}
                         <div
-                            className="flex flex-nowrap gap-2 mt-2 mb-2 overflow-hidden"
-                            style={{
-                                minHeight: "24px",
-                                maxHeight: "24px",
-                            }}
+                            className="flex flex-nowrap items-baseline gap-2 mt-2 overflow-hidden min-h-6 max-h-6"
                             title={categories.join(", ")}
                         >
                             {categories.map((cat, idx) => (
                                 <span
                                     key={cat + idx}
-                                    className="text-xs font-semibold text-purple-300 hover:underline cursor-pointer whitespace-nowrap text-ellipsis overflow-hidden"
-                                    style={{
-                                        maxWidth: "120px",
-                                    }}
+                                    className="text-xs font-semibold text-purple-300 hover:underline cursor-pointer whitespace-nowrap text-ellipsis overflow-hidden max-w-[120px]"
                                 >
                                     {cat}
                                 </span>
-                            ))}
+                            ))}{" "}
+                            {isAdult && categories.length > 0 && (
+                                <span className="text-xs text-gray-400 align-middle">
+                                    •
+                                </span>
+                            )}
+                            {isAdult && (
+                                <Link
+                                    href="/search?adult=true"
+                                    className="text-xs text-red-600 font-semibold whitespace-nowrap hover:underline cursor-pointer align-middle"
+                                    title="Adult content - Click to search adult mods"
+                                >
+                                    Adult
+                                </Link>
+                            )}
                         </div>
                     </div>
-                    <div className="flex items-center justify-between text-xs text-gray-400 mt-2">                        <span title="Likes" className="flex items-center gap-1">
+                    <div className="flex items-center justify-between text-xs text-gray-400 mt-2">
+                        {" "}
+                        <span title="Likes" className="flex items-center gap-1">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="24"
@@ -267,6 +296,7 @@ const Card = memo(function Card({
                         </span>
                     </div>{" "}
                     <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
+                        {" "}
                         <span title="Uploaded">
                             Uploaded{" "}
                             {formattedDates.uploadedWeeksAgo === 0

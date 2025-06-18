@@ -13,6 +13,7 @@ interface ModData {
     version: string | null;
     imageUrl: string | null;
     size: string | null;
+    isAdult: boolean | null;
     createdAt: Date;
     updatedAt: Date;
     author: {
@@ -147,8 +148,7 @@ export default function ModsClient() {
                     </div>
                 ) : mods && mods.length > 0 ? (
                     <>
-                        <div className="flex flex-wrap justify-center">
-                            {mods.map((mod) => (
+                        <div className="flex flex-wrap justify-center">                            {mods.map((mod) => (
                                 <Card
                                     key={mod.id}
                                     modId={mod.id}
@@ -170,6 +170,7 @@ export default function ModsClient() {
                                     size={mod.size || "N/A"}
                                     uploaded={mod.createdAt || new Date()}
                                     lastUpdated={mod.updatedAt || new Date()}
+                                    isAdult={mod.isAdult || false}
                                 />
                             ))}
                         </div>

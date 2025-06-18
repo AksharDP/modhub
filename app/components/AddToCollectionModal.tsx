@@ -8,6 +8,7 @@ interface Collection {
     name: string;
     description: string | null;
     isPublic: boolean;
+    isAdult?: boolean;
     createdAt: Date;
     updatedAt: Date;
 }

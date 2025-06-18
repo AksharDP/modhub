@@ -14,10 +14,10 @@ export interface ModInterface {
     uploaded: Date | string | number;
     lastUpdated: Date | string | number;
     slug?: string;
-    version?: string;
-    downloadUrl?: string;
+    version?: string;    downloadUrl?: string;
     isActive?: boolean;
     isFeatured?: boolean;
+    isAdult?: boolean;
     authorId?: number;
     stats?: {
         totalDownloads: number | null;
@@ -60,9 +60,9 @@ export interface CardProps {
     category: string | string[];
     likes: number;
     downloads: number;
-    size: string;
-    uploaded: string | number | Date;
+    size: string;    uploaded: string | number | Date;
     lastUpdated: string | number | Date;
+    isAdult?: boolean;
     hideDropdown?: boolean; // Add prop to hide dropdown in edit mode
 }
 

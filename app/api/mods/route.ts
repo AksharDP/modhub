@@ -17,9 +17,7 @@ export async function GET(request: NextRequest) {
             .where(and(eq(mods.isActive, true)));
 
         const totalCount = totalCountResult[0]?.count || 0;
-        const totalPages = Math.ceil(totalCount / limit);
-
-        // Get paginated mods
+        const totalPages = Math.ceil(totalCount / limit);        // Get paginated mods
         const allMods = await db
             .select({
                 id: mods.id,
@@ -29,6 +27,7 @@ export async function GET(request: NextRequest) {
                 version: mods.version,
                 imageUrl: mods.imageUrl,
                 size: mods.size,
+                isAdult: mods.isAdult,
                 createdAt: mods.createdAt,
                 updatedAt: mods.updatedAt,
                 author: {

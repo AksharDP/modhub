@@ -102,9 +102,9 @@ export const mods = pgTable(
         version: text("version").notNull().default("1.0.0"),
         imageUrl: text("image_url"),
         downloadUrl: text("download_url"),
-        size: text("size").default("N/A"),
-        isActive: boolean("is_active").default(true),
+        size: text("size").default("N/A"),        isActive: boolean("is_active").default(true),
         isFeatured: boolean("is_featured").default(false),
+        isAdult: boolean("is_adult").default(false),
 
         authorId: integer("author_id")
             .notNull()
@@ -253,8 +253,8 @@ export const collections = pgTable(
         userId: integer("user_id").references(() => userTable.id, { onDelete: "cascade" }).notNull(),
         name: text("name").notNull(),
         description: text("description"),
-        imageUrl: text("image_url"),
-        isPublic: boolean("is_public").default(false).notNull(),
+        imageUrl: text("image_url"),        isPublic: boolean("is_public").default(false).notNull(),
+        isAdult: boolean("is_adult").default(false).notNull(),
         likes: integer("likes").default(0),
         createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
         updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),

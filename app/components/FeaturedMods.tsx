@@ -5,8 +5,7 @@ import { mods, games, categories, modStats, userTable } from "@/app/db/schema";
 import { desc, eq, and } from "drizzle-orm";
 
 export default async function FeaturedMods() {
-    try {
-        const featuredMods = await db
+    try {        const featuredMods = await db
             .select({
                 id: mods.id,
                 title: mods.title,
@@ -15,6 +14,7 @@ export default async function FeaturedMods() {
                 version: mods.version,
                 imageUrl: mods.imageUrl,
                 size: mods.size,
+                isAdult: mods.isAdult,
                 createdAt: mods.createdAt,
                 updatedAt: mods.updatedAt,
                 author: {
@@ -73,10 +73,10 @@ export default async function FeaturedMods() {
                             }
                             category={mod.category?.name || "Uncategorized"}
                             likes={mod.stats?.likes || 0}
-                            downloads={mod.stats?.totalDownloads || 0}
-                            size={mod.size || "N/A"}
+                            downloads={mod.stats?.totalDownloads || 0}                            size={mod.size || "N/A"}
                             uploaded={mod.createdAt || new Date()}
                             lastUpdated={mod.updatedAt || new Date()}
+                            isAdult={mod.isAdult || false}
                         />
                     ))}
                 </div>

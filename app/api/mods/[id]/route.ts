@@ -10,9 +10,7 @@ export async function GET(request: NextRequest) {
     const modId = parseInt(id || "");
     if (isNaN(modId)) {
       return NextResponse.json({ error: "Invalid mod ID" }, { status: 400 });
-    }
-
-    const modData = await db
+    }    const modData = await db
       .select({
         id: mods.id,
         title: mods.title,
@@ -21,6 +19,7 @@ export async function GET(request: NextRequest) {
         version: mods.version,
         imageUrl: mods.imageUrl,
         size: mods.size,
+        isAdult: mods.isAdult,
         createdAt: mods.createdAt,
         updatedAt: mods.updatedAt,
         downloadUrl: mods.downloadUrl,

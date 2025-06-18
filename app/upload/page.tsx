@@ -267,10 +267,10 @@ const UploadPage = () => {
     
     const [selectedGameSlug, setSelectedGameSlug] = useState<string>(gameSlug || "");
     const [customFieldValues, setCustomFieldValues] = useState<Record<string, string | boolean | File | null>>({});
-    
-    const [title, setTitle] = useState<string>("");
+      const [title, setTitle] = useState<string>("");
     const [version, setVersion] = useState<string>("");
     const [tags, setTags] = useState<string>("");
+    const [isAdult, setIsAdult] = useState<boolean>(false);
     const [description, setDescription] = useState<string>("");
     const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit");
     const [selectedImages, setSelectedImages] = useState<ImagePreview[]>([]);
@@ -316,10 +316,10 @@ const UploadPage = () => {
         selectedImagesRef.current = selectedImages;
     }, [selectedImages]);    useEffect(() => {
         if (state.success && state.message) {
-            alert(state.message);
-            setTitle("");
+            alert(state.message);            setTitle("");
             setVersion("");
             setTags("");
+            setIsAdult(false);
             setDescription("");
             setSelectedImages([]);
             setImageError("");
@@ -529,6 +529,21 @@ const UploadPage = () => {
                         />
                         <p className="mt-1 text-xs text-gray-500">
                             Comma-separated values.
+                        </p>                    </div>
+                    <div>
+                        <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-1">
+                            <input
+                                type="checkbox"
+                                name="isAdult"
+                                id="isAdult"
+                                checked={isAdult}
+                                onChange={(e) => setIsAdult(e.target.checked)}
+                                className="rounded border-gray-300 focus:ring-primary focus:border-primary"
+                            />
+                            <span>Adult Content (18+)</span>
+                        </label>
+                        <p className="mt-1 text-xs text-gray-500">
+                            Check this box if your mod contains adult content. Adult mods will be marked as such and their previews will be blurred.
                         </p>
                     </div>
                     <div className="mb-4">

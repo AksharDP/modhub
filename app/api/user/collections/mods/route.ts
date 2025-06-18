@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/app/lib/auth";
 import { db } from "@/app/db";
-import { collections, collectionMods } from "@/app/db/schema";
+import { collections, collectionMods, mods } from "@/app/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 
 // Add mod to collection
@@ -41,14 +41,31 @@ export async function POST(request: NextRequest) {
             .select()
             .from(collectionMods)
             .where(and(eq(collectionMods.collectionId, collectionId), eq(collectionMods.modId, modId)))
-            .limit(1);
-
-        if (existingEntry.length > 0) {
+            .limit(1);        if (existingEntry.length > 0) {
             return NextResponse.json(
                 { error: "Mod is already in this collection" },
                 { status: 400 }
             );
-        }        // Get current max order for this collection
+        }
+
+        // Check if the mod being added is adult
+        const modInfo = await db
+            .select({ isAdult: mods.isAdult })
+            .from(mods)
+            .where(eq(mods.id, modId))
+            .limit(1);
+
+        const isModAdult = modInfo.length > 0 && modInfo[0].isAdult;
+
+        // If mod is adult and collection isn't already adult, mark collection as adult
+        if (isModAdult && !collection[0].isAdult) {
+            await db
+                .update(collections)
+                .set({ isAdult: true })
+                .where(eq(collections.id, collectionId));
+        }
+
+        // Get current max order for this collection
         const maxOrderResult = await db
             .select({ maxOrder: collectionMods.order })
             .from(collectionMods)

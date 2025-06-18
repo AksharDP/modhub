@@ -14,6 +14,7 @@ interface CollectionData {
     description: string | null;
     imageUrl: string | null;
     isPublic: boolean;
+    isAdult?: boolean;
     createdAt: Date;
     updatedAt: Date;
     user: {
@@ -32,10 +33,10 @@ interface ModData {
         version: string;
         size: string | null;
         createdAt: Date;
-        updatedAt: Date;
-        gameId: number;
+        updatedAt: Date;        gameId: number;
         authorId: number;
         categoryId: number;
+        isAdult?: boolean;
     };
     author: {
         id: number | null;
@@ -567,10 +568,18 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                         </button>
                                     </div>
                                 ) : (
-                                    <>
-                                        <h1 className="text-2xl font-bold text-purple-400 mb-1 truncate">
+                                    <>                                        <h1 className="text-2xl font-bold text-purple-400 mb-1 truncate">
                                             {collection.name}
                                         </h1>
+                                        {collection.isAdult && (
+                                            <Link
+                                                href="/search?adult=true"
+                                                className="text-sm font-semibold text-red-400 hover:underline cursor-pointer bg-red-900 bg-opacity-30 px-3 py-1 rounded ml-2"
+                                                title="Adult collection - Click to search adult mods"
+                                            >
+                                                Adult
+                                            </Link>
+                                        )}
                                         {isOwner && (
                                             <button
                                                 onClick={() => {
@@ -765,23 +774,23 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                                             cursor: editMode ? (snapshot.isDragging ? 'grabbing' : 'grab') : 'default',
                                                         }}
                                                     >
-                                                        <div className="relative group">
-                                                            <Card
-                                                                modId={modData.mod.id}
-                                                                gameName={modData.game?.name || "Unknown"}
-                                                                title={modData.mod.title}
-                                                                description={modData.mod.description}
-                                                                imageUrl={modData.mod.imageUrl || "/placeholder1.svg"}
-                                                                author={modData.author?.username || "Unknown"}
-                                                                authorPFP={modData.author?.profilePicture || "/placeholder1.svg"}
-                                                                category={modData.category?.name || "Uncategorized"}
-                                                                likes={modData.stats?.likes || 0}
-                                                                downloads={modData.stats?.totalDownloads || 0}
-                                                                size={modData.mod.size || "N/A"}
-                                                                uploaded={modData.mod.createdAt}
-                                                                lastUpdated={modData.mod.updatedAt}
-                                                                hideDropdown={true}
-                                                            />
+                                                        <div className="relative group">                                                        <Card
+                                                            modId={modData.mod.id}
+                                                            gameName={modData.game?.name || "Unknown"}
+                                                            title={modData.mod.title}
+                                                            description={modData.mod.description}
+                                                            imageUrl={modData.mod.imageUrl || "/placeholder1.svg"}
+                                                            author={modData.author?.username || "Unknown"}
+                                                            authorPFP={modData.author?.profilePicture || "/placeholder1.svg"}
+                                                            category={modData.category?.name || "Uncategorized"}
+                                                            likes={modData.stats?.likes || 0}
+                                                            downloads={modData.stats?.totalDownloads || 0}
+                                                            size={modData.mod.size || "N/A"}
+                                                            uploaded={modData.mod.createdAt}
+                                                            lastUpdated={modData.mod.updatedAt}
+                                                            isAdult={modData.mod.isAdult}
+                                                            hideDropdown={true}
+                                                        />
                                                           <button
                                                               onClick={() => handleDeleteMod(modData.mod.id)}
                                                               className={`absolute top-3 right-3 w-9 h-9 bg-black bg-opacity-50 text-white rounded-full z-10 transition-all hover:bg-red-600 cursor-pointer flex items-center justify-center ${editMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
@@ -802,8 +811,7 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                             </StrictModeDroppable>
                         </DragDropContext>
                     ) : (
-                        <div className="flex flex-wrap justify-center gap-6 mt-8">
-                            {mods.map((modData) => (                                <Card
+                        <div className="flex flex-wrap justify-center gap-6 mt-8">                            {mods.map((modData) => (                                <Card
                                     key={modData.mod.id}
                                     modId={modData.mod.id}
                                     gameName={modData.game?.name || "Unknown"}
@@ -818,6 +826,7 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                                     size={modData.mod.size || "N/A"}
                                     uploaded={modData.mod.createdAt}
                                     lastUpdated={modData.mod.updatedAt}
+                                    isAdult={modData.mod.isAdult}
                                     hideDropdown={false}
                                 />
                             ))}
