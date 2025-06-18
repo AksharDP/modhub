@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Card from "./card";
+import CardSkeleton from "./CardSkeleton";
 import DatabaseError from "./DatabaseError";
 
 interface ModData {
@@ -53,7 +54,27 @@ interface ApiResponse {
     pagination: PaginationData;
 }
 
-export default function ModsClient() {
+interface ModsSectionProps {
+    apiEndpoint: string; // "/api/mods" or "/api/featured-mods"
+    title: string;
+    subtitle?: string;
+    limit?: number;
+    showPagination?: boolean;
+    redirectUrl?: string; // URL to redirect to when changing pages
+    containerClassName?: string;
+    headerClassName?: string;
+}
+
+export default function ModsSection({
+    apiEndpoint,
+    title,
+    subtitle,
+    limit = 12,
+    showPagination = true,
+    redirectUrl = "/mods",
+    containerClassName = "bg-gray-900 min-h-screen flex flex-col",
+    headerClassName = "mb-8 text-center"
+}: ModsSectionProps) {
     const [mods, setMods] = useState<ModData[]>([]);
     const [pagination, setPagination] = useState<PaginationData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -61,16 +82,14 @@ export default function ModsClient() {
     
     const router = useRouter();
     const searchParams = useSearchParams();
-    const currentPage = parseInt(searchParams.get("page") || "1");
-
-    const fetchMods = async (page: number, showInitialLoading = false) => {
+    const currentPage = parseInt(searchParams.get("page") || "1");    const fetchMods = useCallback(async (page: number, showInitialLoading = false) => {
         try {
             if (showInitialLoading) {
                 setLoading(true);
             }
             setError(null);
             
-            const response = await fetch(`/api/mods?page=${page}&limit=12`);
+            const response = await fetch(`${apiEndpoint}?page=${page}&limit=${limit}`);
             if (!response.ok) {
                 throw new Error("Failed to fetch mods");
             }
@@ -83,11 +102,9 @@ export default function ModsClient() {
         } finally {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
+    }, [apiEndpoint, limit]);    useEffect(() => {
         fetchMods(currentPage, true);
-    }, [currentPage]);
+    }, [currentPage, fetchMods]);
 
     const handlePageChange = (newPage: number) => {
         if (newPage === currentPage || !pagination) return;
@@ -103,7 +120,7 @@ export default function ModsClient() {
             params.set("page", newPage.toString());
         }
         
-        const newUrl = params.toString() ? `/mods?${params.toString()}` : "/mods";
+        const newUrl = params.toString() ? `${redirectUrl}?${params.toString()}` : redirectUrl;
         router.push(newUrl, { scroll: false });
     };
 
@@ -112,47 +129,34 @@ export default function ModsClient() {
     }
 
     return (
-        <div className="bg-gray-900 min-h-screen flex flex-col">
+        <div className={containerClassName}>
             <main className="flex-grow container mx-auto px-4 py-8">
-                <header className="mb-8 text-center">
+                <header className={headerClassName}>
                     <h1 className="text-4xl font-bold text-purple-400">
-                        Recent Mods
+                        {title}
                     </h1>
-                    <p className="text-gray-400 mt-2">
-                        Explore the latest additions to our modding community.
-                    </p>
+                    {subtitle && (
+                        <p className="text-gray-400 mt-2">
+                            {subtitle}
+                        </p>
+                    )}
                 </header>
                 
                 {loading ? (
                     <div className="flex flex-wrap justify-center">
-                        {[...Array(12)].map((_, index) => (
-                            <div
-                                key={index}
-                                className="w-80 h-96 m-4 bg-gray-800 rounded-lg animate-pulse"
-                            >
-                                <div className="h-48 bg-gray-700 rounded-t-lg"></div>
-                                <div className="p-4">
-                                    <div className="h-6 bg-gray-700 rounded mb-2"></div>
-                                    <div className="h-4 bg-gray-700 rounded mb-4"></div>
-                                    <div className="flex items-center mb-2">
-                                        <div className="w-8 h-8 bg-gray-700 rounded-full mr-2"></div>
-                                        <div className="h-4 bg-gray-700 rounded w-20"></div>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <div className="h-4 bg-gray-700 rounded w-16"></div>
-                                        <div className="h-4 bg-gray-700 rounded w-20"></div>
-                                    </div>
-                                </div>
-                            </div>
+                        {[...Array(limit)].map((_, index) => (
+                            <CardSkeleton key={index} />
                         ))}
                     </div>
                 ) : mods && mods.length > 0 ? (
                     <>
-                        <div className="flex flex-wrap justify-center">                            {mods.map((mod) => (
+                        <div className="flex flex-wrap justify-center">
+                            {mods.map((mod) => (
                                 <Card
                                     key={mod.id}
                                     modId={mod.id}
                                     gameName={mod.game?.slug || "unknown"}
+                                    slug={mod.slug}
                                     title={mod.title}
                                     description={mod.description || ""}
                                     imageUrl={
@@ -175,7 +179,7 @@ export default function ModsClient() {
                             ))}
                         </div>
                         
-                        {pagination && pagination.totalPages > 1 && (
+                        {showPagination && pagination && pagination.totalPages > 1 && (
                             <div className="flex justify-center items-center mt-8 space-x-2">
                                 <button
                                     onClick={() => handlePageChange(currentPage - 1)}
@@ -238,9 +242,9 @@ export default function ModsClient() {
                             </div>
                         )}
                         
-                        {pagination && (
+                        {showPagination && pagination && (
                             <div className="text-center mt-4 text-gray-400 text-sm">
-                                Showing {((currentPage - 1) * 12) + 1} to {Math.min(currentPage * 12, pagination.totalCount)} of {pagination.totalCount} mods
+                                Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, pagination.totalCount)} of {pagination.totalCount} mods
                             </div>
                         )}
                     </>

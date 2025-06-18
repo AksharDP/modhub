@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import ModsClient from "@/app/components/ModsClient";
+import ModsSection from "@/app/components/ModsSection";
 
 export const revalidate = 60; // ISR: revalidate every 60 seconds
 
@@ -41,7 +41,14 @@ export default function ModsPage() {
                 </main>
             </div>
         }>
-            <ModsClient />
+            <ModsSection
+                apiEndpoint="/api/mods"
+                title="Recent Mods"
+                subtitle="Explore the latest additions to our modding community."
+                limit={12}
+                showPagination={true}
+                redirectUrl="/mods"
+            />
         </Suspense>
     );
 }
