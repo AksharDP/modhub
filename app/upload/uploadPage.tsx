@@ -65,6 +65,7 @@ export default function UploadPage() {
         { id: number; name: string; slug: string; formSchema?: FormField[] }[]
     >([]);
     const [imageError, setImageError] = useState<string>("");
+    const gamesFetchedRef = useRef(false);
 
     const [draggedItem, setDraggedItem] = useState<string | null>(null);
     const [dragOverItem, setDragOverItem] = useState<string | null>(null);
@@ -79,7 +80,10 @@ export default function UploadPage() {
     const [state, formAction] = useActionState(createModAction, initialState);
 
     useEffect(() => {
-        if (games.length > 0) return;
+        if (gamesFetchedRef.current) {
+            return;
+        }
+        gamesFetchedRef.current = true;
 
         fetch("/api/games?forUpload=true")
             .then((res) => res.json())
@@ -90,7 +94,7 @@ export default function UploadPage() {
             .catch((error) => {
                 console.error("Failed to fetch games:", error);
             });
-    }, [games.length]);
+    }, []);
 
     const handleFileUploads = useCallback(
         async (modId: number, gameSlug: string) => {

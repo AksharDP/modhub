@@ -76,22 +76,7 @@ const TagIcon = () => (
         viewBox="0 0 24 24"
         stroke="currentColor"
     >
-        <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-5 5a2 2 0 01-2.828 0l-7-7A2 2 0 013 8V3z"></path>
-    </svg>
-);
-const DownloadFileIcon = () => (
-    <svg
-        className="w-5 h-5 mr-2"
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 20 20"
-        fill="currentColor"
-    >
-        <path
-            fillRule="evenodd"
-            d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-            clipRule="evenodd"
-        />
-    </svg>
+        <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-5 5a2 2 0 01-2.828 0l-7-7A2 2 0 013 8V3z"></path>    </svg>
 );
 
 interface ModDetailsSidebarProps {
@@ -111,8 +96,6 @@ const ModDetailsSidebar: React.FC<ModDetailsSidebarProps> = ({
     mod,
     formatDate,
 }) => {
-    const latestFile = mod.fileVersions.find((f) => f.isLatest);
-
     return (
         <>
             <h2 className="text-2xl font-semibold mb-4 text-purple-300">
@@ -181,18 +164,8 @@ const ModDetailsSidebar: React.FC<ModDetailsSidebarProps> = ({
                                 </span>
                             ))}
                         </div>
-                    </div>
-                )}
+                    </div>                )}
             </div>
-            {latestFile && (
-                <a
-                    href={latestFile.downloadUrl}
-                    className="mt-8 flex items-center justify-center w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded text-center transition-colors shadow-md hover:shadow-lg"
-                >
-                    <DownloadFileIcon />
-                    Download Latest ({latestFile.version})
-                </a>
-            )}
         </>
     );
 };

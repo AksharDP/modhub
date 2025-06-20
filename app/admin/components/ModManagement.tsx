@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import DeleteModConfirmationModal from "./DeleteModConfirmationModal";
 
 const ModEditModal = dynamic(() => import("./ModEditModal"), { ssr: false });
 
@@ -13,6 +14,7 @@ export interface ModWithRelations {
     description: string | null;
     version: string;
     imageUrl: string | null;
+    size: string | null;
     isActive: boolean | null;
     isFeatured: boolean | null;
     createdAt: Date | null;
@@ -54,8 +56,9 @@ export default function ModManagement({
     >(undefined);
     const [searchTerm, setSearchTerm] = useState("");
     const [editModalOpen, setEditModalOpen] = useState(false);
-    const [editingModId, setEditingModId] = useState<number | null>(null);
-    const [isDeletePending, setIsDeletePending] = useState(false);
+    const [editingModId, setEditingModId] = useState<number | null>(null);    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deletingMod, setDeletingMod] = useState<{id: number, title: string} | null>(null);
+    const [isDeletePending, setIsDeletePending] = useState(false);    const [recalculatingModId, setRecalculatingModId] = useState<number | null>(null);
 
     const limit = 20;
     const offset = page * limit;
@@ -116,25 +119,34 @@ export default function ModManagement({
         }
     };
 
-    const handleDeleteMod = async (modId: number, title: string) => {
-        if (
-            confirm(
-                `Are you sure you want to delete mod "${title}"? This action cannot be undone.`
-            )
-        ) {
-            setIsDeletePending(true);
-            try {
-                const res = await fetch(`/api/admin/mods/${modId}`, {
-                    method: "DELETE",
-                });
-                if (!res.ok) throw new Error("Failed to delete mod");
-                fetchMods();
-            } catch (error) {
-                alert("Failed to delete mod: " + (error as Error).message);
-            } finally {
-                setIsDeletePending(false);
-            }
+    const handleDeleteMod = async (deleteFiles: boolean) => {
+        if (!deletingMod) return;
+
+        setIsDeletePending(true);
+        try {
+            const res = await fetch(`/api/mods/${deletingMod.id}`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ deleteFiles }),
+            });
+            if (!res.ok) throw new Error("Failed to delete mod");
+            fetchMods();
+            closeDeleteModal();
+        } catch (error) {
+            alert("Failed to delete mod: " + (error as Error).message);
+        } finally {
+            setIsDeletePending(false);
         }
+    };
+
+    const openDeleteModal = (modId: number, title: string) => {
+        setDeletingMod({ id: modId, title });
+        setIsDeleteModalOpen(true);
+    };
+
+    const closeDeleteModal = () => {
+        setDeletingMod(null);
+        setIsDeleteModalOpen(false);
     };
 
     const openEditModal = (modId: number) => {
@@ -145,11 +157,35 @@ export default function ModManagement({
     const closeEditModal = () => {
         setEditModalOpen(false);
         setEditingModId(null);
-    };
-
-    const handleEditSuccess = () => {
+    };    const handleEditSuccess = () => {
         fetchMods();
         closeEditModal();
+    };    const handleRecalculateSize = async (modId: number) => {
+        setRecalculatingModId(modId);
+        try {
+            const response = await fetch(`/api/admin/mods/${modId}/recalculate-size`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to recalculate size');
+            }
+
+            const result = await response.json();
+            
+            // Show success message (you might want to add a toast notification here)
+            console.log(result.message);
+            
+            // Refresh the mods list to show updated size and wait for it to complete
+            await fetchMods();
+        } catch (error) {
+            console.error('Error recalculating mod size:', error);
+            // You might want to show an error message to the user here        } finally {
+            setRecalculatingModId(null);
+        }
     };
 
     if (isLoading) {
@@ -209,11 +245,9 @@ export default function ModManagement({
                         className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-400"
                     >
                         <option value="">All Featured</option>
-                        <option value="true">Featured</option>
-                        <option value="false">Not Featured</option>
+                        <option value="true">Featured</option>                        <option value="false">Not Featured</option>
                     </select>
-                </div>
-            </div>
+                </div>            </div>
 
             <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
                 <div className="overflow-x-auto">
@@ -265,9 +299,8 @@ export default function ModManagement({
                                             <div className="ml-4">
                                                 <div className="text-sm font-medium text-white">
                                                     {mod.title}
-                                                </div>
-                                                <div className="text-sm text-gray-400">
-                                                    v{mod.version}
+                                                </div>                                                <div className="text-sm text-gray-400">
+                                                    v{mod.version} • {mod.size || 'N/A'}
                                                 </div>
                                                 <div className="text-xs text-gray-500 truncate max-w-xs">
                                                     {mod.description}
@@ -374,7 +407,7 @@ export default function ModManagement({
                                             </a>
                                             <button
                                                 onClick={() =>
-                                                    handleDeleteMod(
+                                                    openDeleteModal(
                                                         mod.id,
                                                         mod.title
                                                     )
@@ -385,14 +418,22 @@ export default function ModManagement({
                                                 }
                                             >
                                                 Delete
-                                            </button>
-                                            <button
+                                            </button>                                            <button
                                                 onClick={() =>
                                                     openEditModal(mod.id)
                                                 }
                                                 className="text-green-400 hover:text-green-300 transition-colors cursor-pointer"
                                             >
                                                 Edit
+                                            </button>
+                                            <button
+                                                onClick={() =>
+                                                    handleRecalculateSize(mod.id)
+                                                }
+                                                disabled={recalculatingModId === mod.id}
+                                                className="text-blue-400 hover:text-blue-300 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {recalculatingModId === mod.id ? 'Recalculating...' : 'Recalc Size'}
                                             </button>
                                         </div>
                                     </td>
@@ -441,6 +482,13 @@ export default function ModManagement({
                     categories={categories}
                 />
             )}
+            <DeleteModConfirmationModal
+                isOpen={isDeleteModalOpen}
+                onClose={closeDeleteModal}
+                onConfirm={handleDeleteMod}
+                modTitle={deletingMod?.title || ""}
+                isPending={isDeletePending}
+            />
         </div>
     );
 }

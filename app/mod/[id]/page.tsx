@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import ModHeader from "@/app/components/modpage/ModHeader";
 import ImageGallery from "@/app/components/modpage/ImageGallery";
@@ -16,6 +16,7 @@ export default function ModPage() {
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<"description" | "files">("description");
     const [showAllFiles, setShowAllFiles] = useState(false);
+    const filesTabRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!id) return;
@@ -104,6 +105,13 @@ export default function ModPage() {
         });
     };
 
+    const handleDownloadClick = () => {
+        setActiveTab("files");
+        setTimeout(() => {
+            filesTabRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100); // A small delay to ensure the tab has rendered
+    };
+
     if (loading) {
         return (
             <div className="container px-32 py-8 bg-gray-900 text-white min-h-screen">
@@ -148,7 +156,7 @@ export default function ModPage() {
                             setActiveTab={setActiveTab}
                             fileCount={mod.fileVersions?.length || 0}
                         />
-                        <div>
+                        <div ref={filesTabRef}>
                             {activeTab === "description" && (
                                 <div className="prose prose-invert max-w-none text-gray-200 bg-gray-800 rounded-lg p-6">
                                     {mod.description ? (
@@ -219,9 +227,44 @@ export default function ModPage() {
                             )}
                         </div>
                     </div>
-                </div>
-                <div className="md:col-span-1">
-                    <ModDetailsSidebar mod={{ ...mod, fileVersions: mod.fileVersions || [] }} formatDate={formatDate} />
+                </div>                <div className="md:col-span-1">
+                    <ModDetailsSidebar 
+                        mod={{
+                            uploaded: mod.uploaded,
+                            lastUpdated: mod.lastUpdated,
+                            likes: mod.likes,
+                            downloads: mod.downloads,
+                            size: mod.size,
+                            tags: mod.tags,
+                            fileVersions: mod.fileVersions || []
+                        }} 
+                        formatDate={formatDate} 
+                    />
+                    {/* Download button moved outside sidebar */}
+                    {mod.fileVersions && mod.fileVersions.length > 0 && (
+                        <button
+                            onClick={handleDownloadClick}
+                            className="mt-4 flex items-center justify-center w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded text-center transition-colors shadow-md hover:shadow-lg"
+                        >
+                            <svg
+                                className="w-5 h-5 mr-2"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                            >
+                                <path
+                                    fillRule="evenodd"
+                                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                                    clipRule="evenodd"
+                                />
+                            </svg>
+                            Download Latest
+                            {(() => {
+                                const latestFile = mod.fileVersions.find((f) => f.isLatest);
+                                return latestFile ? ` (${latestFile.version})` : '';
+                            })()}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

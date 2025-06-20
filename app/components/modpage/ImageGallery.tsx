@@ -24,10 +24,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
                     key={modImages.ImageUrls[currentImageIndex]}
                     src={modImages.ImageUrls[currentImageIndex]}
                     alt={`${modImages.title} - image ${currentImageIndex + 1}`}
-                    layout="fill"
-                    objectFit="contain"
-                    className="rounded-[5px]"
-                    loading="lazy"
+                    fill
+                    className="rounded-[5px] object-contain"
+                    priority={currentImageIndex === 0}
                 />
                 {modImages.ImageUrls.length > 1 && (
                     <>

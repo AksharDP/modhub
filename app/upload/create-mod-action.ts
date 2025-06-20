@@ -30,12 +30,15 @@ export interface CreateModState {
 }
 
 function generateSlug(title: string): string {
-    return title
+    const slug = title
         .toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
         .trim();
+    // Add a random suffix to make the slug unique
+    const randomSuffix = Math.random().toString(36).substring(2, 8);
+    return `${slug}-${randomSuffix}`;
 }
 
 export async function createModAction(

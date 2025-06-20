@@ -22,8 +22,7 @@ export async function POST(req: NextRequest) {
         conditions.push(
             sql`(${mods.title} ILIKE ${`%${search}%`} OR ${mods.description} ILIKE ${`%${search}%`})`
         );
-    }
-    const modsResult = await db
+    }    const modsResult = await db
         .select({
             id: mods.id,
             title: mods.title,
@@ -31,6 +30,7 @@ export async function POST(req: NextRequest) {
             description: mods.description,
             version: mods.version,
             imageUrl: mods.imageUrl,
+            size: mods.size,
             isActive: mods.isActive,
             isFeatured: mods.isFeatured,
             createdAt: mods.createdAt,

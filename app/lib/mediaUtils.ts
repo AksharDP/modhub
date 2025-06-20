@@ -74,6 +74,7 @@ export async function getModFiles(modId: number, activeOnly: boolean = true) {
             fileName: files.fileName,
             originalFileName: files.originalFileName,
             url: files.url,
+            key: files.key,
             version: files.version,
             changelog: files.changelog,
             isMainFile: files.isMainFile,

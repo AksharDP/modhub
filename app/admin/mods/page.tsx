@@ -16,9 +16,7 @@ export default async function AdminModsPage() {
 
     const limit = 20;
     const offset = 0;
-    const conditions: SQLWrapper[] = [];
-
-    const modsResult = await db
+    const conditions: SQLWrapper[] = [];    const modsResult = await db
         .select({
             id: mods.id,
             title: mods.title,
@@ -26,6 +24,7 @@ export default async function AdminModsPage() {
             description: mods.description,
             version: mods.version,
             imageUrl: mods.imageUrl,
+            size: mods.size,
             isActive: mods.isActive,
             isFeatured: mods.isFeatured,
             createdAt: mods.createdAt,
