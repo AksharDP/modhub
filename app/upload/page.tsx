@@ -1,9 +1,9 @@
 import { Suspense } from "react";
-import NewUploadPage from "./new-upload-page";
+import UploadPage from "./uploadPage";
 
 const Page = () => (
     <Suspense>
-        <NewUploadPage />
+        <UploadPage />
     </Suspense>
 );
 
