@@ -6,7 +6,9 @@ import dynamic from "next/dynamic";
 const UserProfileHeader = dynamic(() => import("../components/UserProfileHeader"));
 const UserStats = dynamic(() => import("../components/UserStats"));
 const UserModsSection = dynamic(() => import("../components/UserModsSection"));
-const UserCollectionsWrapper = dynamic(() => import("../components/UserCollectionsWrapper"));
+const UserCollectionsWrapper = dynamic(() => import("../components/UserCollectionsWrapper"), {
+    ssr: false
+});
 
 function UserProfileHeaderFallback() {
     return <div className="h-32 bg-gray-800 rounded-lg animate-pulse mb-4" />;

@@ -97,11 +97,13 @@ export const mods = pgTable(
     {
         id: serial("id").primaryKey(),
         title: text("title").notNull(),
-        slug: text("slug").notNull().unique(),
-        description: text("description").notNull(),
+        slug: text("slug").notNull().unique(),        description: text("description").notNull(),
         version: text("version").notNull().default("1.0.0"),
-        imageUrl: text("image_url"),
+        imageUrl: text("image_url"), // Keep for backward compatibility
+        imageKey: text("image_key"), // S3 key for the image
+        thumbnailImageId: integer("thumbnail_image_id").references(() => images.id), // Reference to main image
         downloadUrl: text("download_url"),
+        downloadKey: text("download_key"), // S3 key for the mod file
         size: text("size").default("N/A"),        isActive: boolean("is_active").default(true),
         isFeatured: boolean("is_featured").default(false),
         isAdult: boolean("is_adult").default(false),
@@ -146,30 +148,73 @@ export const modTags = pgTable("mod_tags", {
     tag: text("tag").notNull(),
 });
 
-export const modImages = pgTable("mod_images", {
-    id: serial("id").primaryKey(),
-    modId: integer("mod_id")
-        .notNull()
-        .references(() => mods.id, { onDelete: "cascade" }),
-    imageUrl: text("image_url").notNull(),
-    caption: text("caption"),
-    order: integer("order").default(0),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
+// Define entity types for images
+export const imageEntityEnum = pgEnum("image_entity", ["mod", "collection", "user", "game"]);
 
-export const modFiles = pgTable("mod_files", {
-    id: serial("id").primaryKey(),
-    modId: integer("mod_id")
-        .notNull()
-        .references(() => mods.id, { onDelete: "cascade" }),
-    fileName: text("file_name").notNull(),
-    fileUrl: text("file_url").notNull(),
-    fileSize: text("file_size"),
-    version: text("version").notNull(),
-    isMainFile: boolean("is_main_file").default(false),
-    downloadCount: integer("download_count").default(0),
-    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
+// Unified images table for all entities
+export const images = pgTable(
+    "images",
+    {
+        id: serial("id").primaryKey(),
+        entityType: imageEntityEnum("entity_type").notNull(),
+        entityId: integer("entity_id").notNull(),
+        url: text("url").notNull(),
+        key: text("key"), // Storage key for deletion
+        fileName: text("file_name"),
+        alt: text("alt"), // Alt text for accessibility
+        caption: text("caption"),
+        isMain: boolean("is_main").default(false), // Main/thumbnail image for the entity
+        order: integer("order").default(0), // Order for multiple images
+        fileSize: integer("file_size"), // In bytes
+        mimeType: text("mime_type"),
+        width: integer("width"),
+        height: integer("height"),
+        uploadedBy: integer("uploaded_by").references(() => userTable.id),
+        createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+        updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+    },
+    (table) => ({
+        entityIdx: index("images_entity_idx").on(table.entityType, table.entityId),
+        mainImageIdx: index("images_main_idx").on(table.entityType, table.entityId, table.isMain),
+        orderIdx: index("images_order_idx").on(table.entityType, table.entityId, table.order),
+        createdAtIdx: index("images_created_at_idx").on(table.createdAt),
+    })
+);
+
+// Files table for downloadable mod files
+export const files = pgTable(
+    "files",
+    {
+        id: serial("id").primaryKey(),
+        modId: integer("mod_id")
+            .notNull()
+            .references(() => mods.id, { onDelete: "cascade" }),
+        fileName: text("file_name").notNull(),
+        originalFileName: text("original_file_name"), // Original upload name
+        url: text("url").notNull(),
+        key: text("key"), // Storage key for deletion
+        version: text("version").notNull(),
+        changelog: text("changelog"), // What's new in this version
+        isMainFile: boolean("is_main_file").default(false),
+        fileSize: integer("file_size"), // In bytes
+        mimeType: text("mime_type"),
+        downloadCount: integer("download_count").default(0),
+        isActive: boolean("is_active").default(true), // Can be disabled without deletion
+        uploadedBy: integer("uploaded_by")
+            .notNull()
+            .references(() => userTable.id),
+        createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+        updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+    },
+    (table) => ({
+        modIdIdx: index("files_mod_id_idx").on(table.modId),
+        // Index for getting newest files first (most important)
+        newestFirstIdx: index("files_newest_first_idx").on(table.modId, table.createdAt.desc()),
+        mainFileIdx: index("files_main_idx").on(table.modId, table.isMainFile),
+        activeIdx: index("files_active_idx").on(table.isActive),
+        downloadCountIdx: index("files_download_count_idx").on(table.downloadCount.desc()),
+    })
+);
 
 export const modStats = pgTable(
     "mod_stats",
@@ -229,7 +274,7 @@ export const userModDownloads = pgTable("user_mod_downloads", {
     modId: integer("mod_id")
         .notNull()
         .references(() => mods.id, { onDelete: "cascade" }),
-    fileId: integer("file_id").references(() => modFiles.id),
+    fileId: integer("file_id").references(() => files.id),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
@@ -250,10 +295,11 @@ export const collections = pgTable(
     "collections",
     {
         id: serial("id").primaryKey(),
-        userId: integer("user_id").references(() => userTable.id, { onDelete: "cascade" }).notNull(),
-        name: text("name").notNull(),
+        userId: integer("user_id").references(() => userTable.id, { onDelete: "cascade" }).notNull(),        name: text("name").notNull(),
         description: text("description"),
-        imageUrl: text("image_url"),        isPublic: boolean("is_public").default(false).notNull(),
+        imageUrl: text("image_url"), // Keep for backward compatibility
+        thumbnailImageId: integer("thumbnail_image_id").references(() => images.id), // Reference to main image
+        isPublic: boolean("is_public").default(false).notNull(),
         isAdult: boolean("is_adult").default(false).notNull(),
         likes: integer("likes").default(0),
         createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
@@ -293,6 +339,18 @@ export const userCollectionLikes = pgTable("user_collection_likes", {
     userCollectionIdx: index("user_collection_likes_idx").on(table.userId, table.collectionId),
 }));
 
+export const systemSettings = pgTable(
+    "system_settings",
+    {
+        id: integer("id").primaryKey(), // Should always be 1
+        maxModFileSize: integer("max_mod_file_size_mb").default(100), // in MB
+        maxImagesPerMod: integer("max_images_per_mod").default(10),
+        maxTotalImageSize: integer("max_total_image_size_mb").default(50), // in MB
+        createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+        updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+    }
+);
+
 export type User = typeof userTable.$inferSelect;
 export type NewUser = typeof userTable.$inferInsert;
 
@@ -311,11 +369,11 @@ export type NewMod = typeof mods.$inferInsert;
 export type ModTag = typeof modTags.$inferSelect;
 export type NewModTag = typeof modTags.$inferInsert;
 
-export type ModImage = typeof modImages.$inferSelect;
-export type NewModImage = typeof modImages.$inferInsert;
+export type Image = typeof images.$inferSelect;
+export type NewImage = typeof images.$inferInsert;
 
-export type ModFile = typeof modFiles.$inferSelect;
-export type NewModFile = typeof modFiles.$inferInsert;
+export type File = typeof files.$inferSelect;
+export type NewFile = typeof files.$inferInsert;
 
 export type ModStats = typeof modStats.$inferSelect;
 export type NewModStats = typeof modStats.$inferInsert;
@@ -340,3 +398,6 @@ export type NewCollectionMod = typeof collectionMods.$inferInsert;
 
 export type UserCollectionLike = typeof userCollectionLikes.$inferSelect;
 export type NewUserCollectionLike = typeof userCollectionLikes.$inferInsert;
+
+export type SystemSettings = typeof systemSettings.$inferSelect;
+export type NewSystemSettings = typeof systemSettings.$inferInsert;

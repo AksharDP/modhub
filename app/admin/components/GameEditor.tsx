@@ -20,7 +20,7 @@ type GameWithSerializedDates = {
 
 interface GameEditorProps {
     game: GameWithSerializedDates | null;
-    onClose: () => void;
+    onClose: (shouldRefetch?: boolean) => void;
 }
 
 export default function GameEditor({ game, onClose }: GameEditorProps) {
@@ -75,9 +75,7 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                 .trim();
             setSlug(newSlug);
         }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
+    };    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
         setIsPending(true);
@@ -91,6 +89,18 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
             setIsPending(false);
             return;
         }
+
+        // Check if any visible properties have changed
+        const hasVisibleChanges = game ? (
+            name.trim() !== game.name ||
+            slug.trim() !== game.slug ||
+            (description.trim() || '') !== (game.description || '') ||
+            (imageUrl.trim() || '') !== (game.imageUrl || '') ||
+            isActive !== (game.isActive ?? true) ||
+            visibleToUsers !== (game.visibleToUsers ?? true) ||
+            visibleToSupporters !== (game.visibleToSupporters ?? true)
+        ) : true; // New game always needs refetch
+
         const gameData = {
             name: name.trim(),
             slug: slug.trim(),
@@ -119,7 +129,7 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            onClose();
+            onClose(hasVisibleChanges);
         } catch (err: unknown) {
             if (err instanceof Error) {
                 setError(err.message || "Failed to save game");
@@ -142,9 +152,8 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                 <div className="flex justify-between items-center p-6 border-b border-gray-700">
                     <h2 className="text-2xl font-bold text-white">
                         {game ? `Edit "${game.name}"` : "Create New Game"}
-                    </h2>
-                    <button
-                        onClick={onClose}
+                    </h2>                    <button
+                        onClick={() => onClose(false)}
                         className="text-gray-400 hover:text-white text-3xl leading-none"
                         aria-label="Close"
                     >
@@ -378,10 +387,9 @@ export default function GameEditor({ game, onClose }: GameEditorProps) {
                         <div className="text-red-500 text-sm mb-2">{error}</div>
                     )}
                     <div className="border-t border-gray-700 p-6 bg-gray-900">
-                        <div className="flex justify-end space-x-4">
-                            <button
+                        <div className="flex justify-end space-x-4">                            <button
                                 type="button"
-                                onClick={onClose}
+                                onClick={() => onClose(false)}
                                 className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors cursor-pointer"
                             >
                                 Cancel

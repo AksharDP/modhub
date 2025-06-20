@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/db";
 import { mods, games, categories, modStats, userTable } from "@/app/db/schema";
 import { eq } from "drizzle-orm";
+import { getEntityImages, getModFiles } from "@/app/lib/mediaUtils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +11,9 @@ export async function GET(request: NextRequest) {
     const modId = parseInt(id || "");
     if (isNaN(modId)) {
       return NextResponse.json({ error: "Invalid mod ID" }, { status: 400 });
-    }    const modData = await db
+    }
+
+    const modData = await db
       .select({
         id: mods.id,
         title: mods.title,
@@ -18,6 +21,7 @@ export async function GET(request: NextRequest) {
         description: mods.description,
         version: mods.version,
         imageUrl: mods.imageUrl,
+        thumbnailImageId: mods.thumbnailImageId,
         size: mods.size,
         isAdult: mods.isAdult,
         createdAt: mods.createdAt,
@@ -57,7 +61,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Mod not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ ...modData[0] });
+    const mod = modData[0];
+
+    // Fetch images from the unified images table
+    const modImages = await getEntityImages('mod', modId);
+
+    // Fetch files from the unified files table (newest first)
+    const modFiles = await getModFiles(modId);
+
+    return NextResponse.json({ 
+      ...mod, 
+      images: modImages,
+      files: modFiles
+    });
   } catch (error) {
     console.error("Error fetching mod by ID:", error);
     return NextResponse.json(

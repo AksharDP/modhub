@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import CollectionsModalLoading from "./CollectionsModalLoading";
+import { fetchUserCollections, updateCollectionsCache } from "../lib/collectionsCache";
 
 interface Collection {
     id: number;
@@ -70,29 +71,22 @@ export default function AddToCollectionModal({
             }
         },
         [modId]
-    );
-
-    const fetchUserCollections = useCallback(async () => {
+    );    const fetchUserCollectionsData = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await fetch("/api/user/collections");
-            if (response.ok) {
-                const data = await response.json();
-                setCollections(data.collections);
-                await checkModInCollections(data.collections);
-            }
+            const data = await fetchUserCollections();
+            setCollections(data);
+            await checkModInCollections(data);
         } catch (error) {
             console.error("Failed to fetch collections:", error);
         } finally {
             setLoading(false);
         }
-    }, [checkModInCollections]);
-
-    useEffect(() => {
+    }, [checkModInCollections]);    useEffect(() => {
         if (isOpen) {
-            fetchUserCollections();
+            fetchUserCollectionsData();
         }
-    }, [isOpen, fetchUserCollections]);
+    }, [isOpen, fetchUserCollectionsData]);
     const handleCollectionToggle = async (collectionId: number) => {
         setProcessingCollection(collectionId);
         const isCurrentlySelected = selectedCollections.has(collectionId);
@@ -141,11 +135,12 @@ export default function AddToCollectionModal({
                     name: newCollectionName.trim(),
                     isPublic: newCollectionIsPublic,
                 }),
-            });
-
-            if (response.ok) {
+            });            if (response.ok) {
                 const data = await response.json();
-                setCollections([...collections, data.collection]);
+                const updatedCollections = [...collections, data.collection];
+                setCollections(updatedCollections);
+                // Update cache
+                updateCollectionsCache(updatedCollections);
                 setNewCollectionName("");
                 setNewCollectionIsPublic(false);
                 setShowCreateForm(false);

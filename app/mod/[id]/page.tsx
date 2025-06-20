@@ -37,7 +37,7 @@ export default function ModPage() {
                     modId: modData.id,
                     title: modData.title,
                     description: modData.description || "",
-                    imageUrl: modData.imageUrl || "https://placehold.co/300x200/4F46E5/FFFFFF/png?text=Mod",
+                    imageUrl: modData.thumbnailUrl || modData.imageUrl || "https://placehold.co/300x200/4F46E5/FFFFFF/png?text=Mod",
                     author: modData.author?.username || "Unknown",
                     authorPFP: modData.author?.profilePicture || "https://placehold.co/30x30/7C3AED/FFFFFF/png?text=U",
                     category: modData.category?.name || "Uncategorized",
@@ -50,16 +50,26 @@ export default function ModPage() {
                     version: modData.version,
                     downloadUrl: modData.downloadUrl || "#",
                     stats: modData.stats,
-                    allImageUrls: modData.images?.map((img: { imageUrl: string }) => img.imageUrl) || [modData.imageUrl || "https://placehold.co/300x200/4F46E5/FFFFFF/png?text=Mod"],
+                    allImageUrls: modData.images?.map((img: { url: string }) => img.url) || [
+                        modData.thumbnailUrl || modData.imageUrl || "https://placehold.co/300x200/4F46E5/FFFFFF/png?text=Mod"
+                    ],
                     tags: modData.tags || [],
-                    game: modData.game || { id: 0, name: modData.game?.name || "Unknown", slug: modData.game?.slug || "unknown" },
-                    fileVersions: modData.files?.map((file: { id: number; version?: string; fileName: string; fileSize?: string; createdAt?: string | Date; fileUrl?: string; changelog?: string; isMainFile?: boolean; }) => ({
+                    game: modData.game || { id: 0, name: modData.game?.name || "Unknown", slug: modData.game?.slug || "unknown" },                    fileVersions: modData.files?.map((file: { 
+                        id: number; 
+                        version?: string; 
+                        fileName: string; 
+                        fileSize?: string; 
+                        createdAt?: string | Date; 
+                        url?: string; 
+                        changelog?: string; 
+                        isMainFile?: boolean; 
+                    }) => ({
                         id: file.id.toString(),
                         version: file.version || "1.0.0",
                         fileName: file.fileName,
                         fileSize: file.fileSize || "N/A",
                         uploadDate: file.createdAt || new Date(),
-                        downloadUrl: file.fileUrl || "#",
+                        downloadUrl: file.url || "#",
                         changelog: file.changelog || "",
                         isLatest: file.isMainFile || false,
                     })) || [],

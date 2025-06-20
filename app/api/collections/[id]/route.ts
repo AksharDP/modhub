@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/app/db";
-import { collections, collectionMods, mods, userTable, modStats, categories, games } from "@/app/db/schema";
+import { collections, collectionMods, mods, userTable, modStats, categories, games, images } from "@/app/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { getCurrentSession, isAdmin } from "@/app/lib/auth";
+import { getEntityImages } from "@/app/lib/mediaUtils";
 
 export async function GET(
     request: NextRequest,
@@ -17,15 +18,16 @@ export async function GET(
                 { error: "Invalid collection ID" },
                 { status: 400 }
             );
-        }
-
-        // Get collection with owner info
+        }        // Get collection with owner info and thumbnail
         const [collection] = await db
             .select({
                 id: collections.id,
                 name: collections.name,
                 description: collections.description,
-                imageUrl: collections.imageUrl,
+                imageUrl: collections.imageUrl, // Fallback for backward compatibility
+                thumbnailImageId: collections.thumbnailImageId,
+                thumbnailUrl: images.url,
+                thumbnailAlt: images.alt,
                 isPublic: collections.isPublic,
                 createdAt: collections.createdAt,
                 updatedAt: collections.updatedAt,
@@ -38,6 +40,7 @@ export async function GET(
             })
             .from(collections)
             .leftJoin(userTable, eq(collections.userId, userTable.id))
+            .leftJoin(images, eq(collections.thumbnailImageId, images.id))
             .where(eq(collections.id, collectionId))
             .limit(1);
 
@@ -57,14 +60,16 @@ export async function GET(
                     { status: 404 }
                 );
             }
-        }        // Get mods in the collection
+        }        // Get mods in the collection with thumbnails
         const collectionModsData = await db
             .select({
                 mod: {
                     id: mods.id,
                     title: mods.title,
                     description: mods.description,
-                    imageUrl: mods.imageUrl,
+                    imageUrl: mods.imageUrl, // Fallback for backward compatibility
+                    thumbnailUrl: images.url,
+                    thumbnailAlt: images.alt,
                     version: mods.version,
                     size: mods.size,
                     createdAt: mods.createdAt,
@@ -105,11 +110,18 @@ export async function GET(
             .leftJoin(games, eq(mods.gameId, games.id))
             .leftJoin(categories, eq(mods.categoryId, categories.id))
             .leftJoin(modStats, eq(mods.id, modStats.modId))
+            .leftJoin(images, eq(mods.thumbnailImageId, images.id))
             .where(eq(collectionMods.collectionId, collectionId))
             .orderBy(collectionMods.order, desc(collectionMods.addedAt));
 
+        // Get collection images
+        const collectionImages = await getEntityImages('collection', collectionId);
+
         return NextResponse.json({
-            collection,
+            collection: {
+                ...collection,
+                images: collectionImages
+            },
             mods: collectionModsData,
         });
         

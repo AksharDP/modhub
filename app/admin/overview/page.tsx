@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentSession } from "../../lib/auth";
 import StatsOverview from "../components/StatsOverview";
 import AdminNavigation from "../components/AdminNavigation";
+import StorageStatus from "../../components/StorageStatus";
 import { db } from "../../db";
 import { userTable, mods, games, categories, modStats } from "../../db/schema";
 import { count, eq, sum } from "drizzle-orm";
@@ -47,14 +48,15 @@ export default async function AdminOverviewPage() {
         games: Number(totalGames),
         categories: Number(totalCategories),
         totalDownloads: Number(totalDownloads),
-    };
-
-    return (
+    };    return (
         <div className="min-h-screen bg-gray-900 text-white">
             <div className="container mx-auto px-4 py-8">
                 <h1 className="text-3xl font-bold mb-8">Admin Panel</h1>
                 <AdminNavigation />
                 <StatsOverview initialStats={stats} />
+                <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <StorageStatus showDetails={true} />
+                </div>
             </div>
         </div>
     );

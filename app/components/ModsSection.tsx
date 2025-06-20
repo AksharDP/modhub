@@ -1,10 +1,11 @@
+// app/components/ModsSection.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Card from "./card";
 import CardSkeleton from "./CardSkeleton";
 import DatabaseError from "./DatabaseError";
+import { usePaginatedFetch } from "@/app/hooks/useFetch";
 
 interface ModData {
     id: number;
@@ -13,6 +14,8 @@ interface ModData {
     description: string | null;
     version: string | null;
     imageUrl: string | null;
+    thumbnailUrl: string | null;
+    thumbnailAlt: string | null;
     size: string | null;
     isAdult: boolean | null;
     createdAt: Date;
@@ -36,8 +39,8 @@ interface ModData {
     stats: {
         totalDownloads: number | null;
         likes: number | null;
+        views: number | null;
         rating: number | null;
-        ratingCount: number | null;
     };
 }
 
@@ -75,36 +78,19 @@ export default function ModsSection({
     containerClassName = "bg-gray-900 min-h-screen flex flex-col",
     headerClassName = "mb-8 text-center"
 }: ModsSectionProps) {
-    const [mods, setMods] = useState<ModData[]>([]);
-    const [pagination, setPagination] = useState<PaginationData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    
     const router = useRouter();
     const searchParams = useSearchParams();
-    const currentPage = parseInt(searchParams.get("page") || "1");    const fetchMods = useCallback(async (page: number, showInitialLoading = false) => {
-        try {
-            if (showInitialLoading) {
-                setLoading(true);
-            }
-            setError(null);
-            
-            const response = await fetch(`${apiEndpoint}?page=${page}&limit=${limit}`);
-            if (!response.ok) {
-                throw new Error("Failed to fetch mods");
-            }
-            
-            const data: ApiResponse = await response.json();
-            setMods(data.mods);
-            setPagination(data.pagination);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to load mods");
-        } finally {
-            setLoading(false);
-        }
-    }, [apiEndpoint, limit]);    useEffect(() => {
-        fetchMods(currentPage, true);
-    }, [currentPage, fetchMods]);
+    const currentPage = parseInt(searchParams.get("page") || "1");
+
+    // Rely solely on usePaginatedFetch for data and loading state
+    const { data, loading, error } = usePaginatedFetch<ApiResponse>(
+        apiEndpoint,
+        currentPage,
+        limit
+    );
+
+    const mods = data?.mods || [];
+    const pagination = data?.pagination || null;
 
     const handlePageChange = (newPage: number) => {
         if (newPage === currentPage || !pagination) return;
@@ -122,9 +108,7 @@ export default function ModsSection({
         
         const newUrl = params.toString() ? `${redirectUrl}?${params.toString()}` : redirectUrl;
         router.push(newUrl, { scroll: false });
-    };
-
-    if (error) {
+    };    if (error) {
         return <DatabaseError error={error} />;
     }
 
@@ -158,8 +142,8 @@ export default function ModsSection({
                                     gameName={mod.game?.slug || "unknown"}
                                     slug={mod.slug}
                                     title={mod.title}
-                                    description={mod.description || ""}
-                                    imageUrl={
+                                    description={mod.description || ""}                                    imageUrl={
+                                        mod.thumbnailUrl || 
                                         mod.imageUrl ||
                                         "https://placehold.co/300x200/4F46E5/FFFFFF/png?text=Mod"
                                     }

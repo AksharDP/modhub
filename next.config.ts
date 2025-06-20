@@ -74,6 +74,15 @@ const nextConfig: NextConfig = {
   // Compression
   compress: true,
   
+  // Redirects configuration
+  redirects: async () => [
+    {
+      source: '/admin',
+      destination: '/admin/overview',
+      permanent: false, // Use temporary redirect to avoid caching issues
+    },
+  ],
+  
   // Performance headers
   headers: async () => [
     {

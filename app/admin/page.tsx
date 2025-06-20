@@ -8,5 +8,17 @@ export default async function AdminPage() {
         redirect("/login");
     }
 
+    // This page should not be reached due to Next.js config redirect
+    // But keep this as a fallback
     redirect("/admin/overview");
 }
+
+// Prevent this page from being cached
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+// Add metadata
+export const metadata = {
+    title: "Admin - ModHub",
+    robots: "noindex, nofollow"
+};

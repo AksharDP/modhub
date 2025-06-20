@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { fetchUserCollections, updateCollectionsCache } from "../lib/collectionsCache";
 
 interface Collection {
     id: number;
@@ -31,33 +32,48 @@ export default function UserCollections({ userId, username, isOwnProfile = false
     const [page, setPage] = useState(1);
     const pageSize = 12;
     const totalPages = Math.ceil(collections.length / pageSize);
-    const pagedCollections = collections.slice((page - 1) * pageSize, page * pageSize);
+    const pagedCollections = collections.slice((page - 1) * pageSize, page * pageSize);    useEffect(() => {
+        let isMounted = true;
+        
+        const loadCollections = async () => {
+            setLoading(true);
+            try {
+                if (isOwnProfile) {
+                    // Use cache for own profile
+                    const data = await fetchUserCollections();
+                    if (isMounted) {
+                        setCollections(data);
+                    }
+                } else {
+                    // For other users, make direct API call
+                    const url = `/api/user/${userId}/collections`;
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (isMounted) {
+                            setCollections(data.collections);
+                        }
+                    } else {
+                        throw new Error("Failed to fetch collections");
+                    }
+                }
+            } catch (err) {
+                if (isMounted) {
+                    setError(err instanceof Error ? err.message : "Failed to load collections");
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        };
 
-    const fetchCollections = useCallback(async () => {
-        setLoading(true);
-        try {
-            let url = "/api/user/collections";
-            if (!isOwnProfile && userId) {
-                url = `/api/user/${userId}/collections`;
-            }
-            
-            const response = await fetch(url);
-            if (response.ok) {
-                const data = await response.json();
-                setCollections(data.collections);
-            } else {
-                throw new Error("Failed to fetch collections");
-            }
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to load collections");
-        } finally {
-            setLoading(false);
-        }
+        loadCollections();
+
+        return () => {
+            isMounted = false;
+        };
     }, [userId, isOwnProfile]);
-
-    useEffect(() => {
-        fetchCollections();
-    }, [fetchCollections]);
 
     const handleCreateCollection = async () => {
         if (!newCollectionName.trim()) return;
@@ -72,11 +88,14 @@ export default function UserCollections({ userId, username, isOwnProfile = false
                     description: newCollectionDescription.trim() || null,
                     isPublic: newCollectionIsPublic,
                 }),
-            });
-
-            if (response.ok) {
+            });            if (response.ok) {
                 const data = await response.json();
-                setCollections([data.collection, ...collections]);
+                const updatedCollections = [data.collection, ...collections];
+                setCollections(updatedCollections);
+                // Update cache if this is own profile
+                if (isOwnProfile) {
+                    updateCollectionsCache(updatedCollections);
+                }
                 setNewCollectionName("");
                 setNewCollectionDescription("");
                 setNewCollectionIsPublic(false);

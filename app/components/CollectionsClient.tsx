@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image"; // Import Image for author profile picture
+import Image from "next/image";
+import { usePaginatedFetch } from "@/app/hooks/useFetch";
 
 interface CollectionData {
     id: number;
@@ -35,52 +35,18 @@ interface ApiResponse {
 }
 
 export default function CollectionsClient() {
-    const [collections, setCollections] = useState<CollectionData[]>([]);
-    const [pagination, setPagination] = useState<PaginationData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentPage = parseInt(searchParams.get("page") || "1");
-    const hasFetched = useRef(false);
 
-    const fetchCollections = async (
-        page: number,
-        showInitialLoading = false
-    ) => {
-        try {
-            if (showInitialLoading) {
-                setLoading(true);
-            }
-            setError(null);
+    const { data, loading, error } = usePaginatedFetch<ApiResponse>(
+        "/api/collections",
+        currentPage,
+        12
+    );
 
-            const response = await fetch(
-                `/api/collections?page=${page}&limit=12`
-            );
-            if (!response.ok) {
-                throw new Error("Failed to fetch collections");
-            }
-
-            const data: ApiResponse = await response.json();
-            setCollections(data.collections);
-            setPagination(data.pagination);
-        } catch (err) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : "Failed to load collections"
-            );
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (hasFetched.current) return;
-        hasFetched.current = true;
-        fetchCollections(currentPage, true);
-    }, [currentPage]);
+    const collections = data?.collections || [];
+    const pagination = data?.pagination || null;
 
     const handlePageChange = (newPage: number) => {
         if (newPage === currentPage || !pagination) return;
@@ -98,13 +64,11 @@ export default function CollectionsClient() {
             ? `/collections?${params.toString()}`
             : "/collections";
         router.push(newUrl, { scroll: false });
-    };
-
-    if (error) {
+    };    if (error) {
         return (
             <div className="bg-gray-900 text-white min-h-screen flex justify-center items-center">
                 <p className="text-xl text-red-500">
-                    Failed to load collections.
+                    Failed to load collections: {error}
                 </p>
             </div>
         );

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { usePaginatedFetch } from "@/app/hooks/useFetch";
 
 interface GameData {
     id: number;
@@ -12,6 +12,7 @@ interface GameData {
     description: string | null;
     imageUrl: string | null;
     modCount: number;
+    totalDownloads: number;
 }
 
 interface PaginationData {
@@ -28,40 +29,18 @@ interface ApiResponse {
 }
 
 export default function GamesClient() {
-    const [games, setGames] = useState<GameData[]>([]);
-    const [pagination, setPagination] = useState<PaginationData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentPage = parseInt(searchParams.get("page") || "1");
 
-    const fetchGames = async (page: number, showInitialLoading = false) => {
-        try {
-            if (showInitialLoading) {
-                setLoading(true);
-            }
-            setError(null);
-            
-            const response = await fetch(`/api/games?page=${page}&limit=12`);
-            if (!response.ok) {
-                throw new Error("Failed to fetch games");
-            }
-            
-            const data: ApiResponse = await response.json();
-            setGames(data.games);
-            setPagination(data.pagination);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Failed to load games");
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { data, loading, error } = usePaginatedFetch<ApiResponse>(
+        "/api/games",
+        currentPage,
+        12
+    );
 
-    useEffect(() => {
-        fetchGames(currentPage, true);
-    }, [currentPage]);
+    const games = data?.games || [];
+    const pagination = data?.pagination || null;
 
     const handlePageChange = (newPage: number) => {
         if (newPage === currentPage || !pagination) return;
@@ -79,12 +58,10 @@ export default function GamesClient() {
         
         const newUrl = params.toString() ? `/games?${params.toString()}` : "/games";
         router.push(newUrl, { scroll: false });
-    };
-
-    if (error) {
+    };    if (error) {
         return (
             <div className="bg-gray-900 text-white min-h-screen flex justify-center items-center">
-                <p className="text-xl text-red-500">Failed to load games.</p>
+                <p className="text-xl text-red-500">Failed to load games: {error}</p>
             </div>
         );
     }
@@ -150,9 +127,12 @@ export default function GamesClient() {
                                             {game.description ||
                                                 "No description available."}
                                         </p>
-                                        <div className="mt-auto">
-                                            <span className="text-xs font-semibold bg-gray-700 text-gray-300 px-2.5 py-1 rounded-full transition-colors duration-300">
+                                        <div className="mt-auto flex justify-between items-center text-xs font-semibold text-gray-300">
+                                            <span className="bg-gray-700 px-2.5 py-1 rounded-full">
                                                 {game.modCount.toLocaleString()} Mods
+                                            </span>
+                                            <span className="bg-gray-700 px-2.5 py-1 rounded-full">
+                                                {game.totalDownloads.toLocaleString()} Downloads
                                             </span>
                                         </div>
                                     </div>

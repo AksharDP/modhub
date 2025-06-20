@@ -71,12 +71,12 @@ export default function GamesManagement({
                 alert(errorMessage);
             }
         }
-    };
-
-    const handleCloseEditor = () => {
+    };    const handleCloseEditor = (shouldRefetch: boolean = false) => {
         setIsEditorOpen(false);
         setSelectedGame(null);
-        fetchGames();
+        if (shouldRefetch) {
+            fetchGames();
+        }
     };
 
     if (isLoading) {
@@ -92,10 +92,9 @@ export default function GamesManagement({
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-white">
                     Game Management
-                </h2>
-                <button
+                </h2>                <button
                     onClick={handleCreateGame}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer"
+                    className="bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/80 text-white px-4 py-2 rounded-[var(--border-radius-button)] transition-colors duration-200 cursor-pointer"
                 >
                     + Add New Game
                 </button>
@@ -192,10 +191,9 @@ export default function GamesManagement({
                     </h3>
                     <p className="text-gray-500 mb-4">
                         Create your first game to get started
-                    </p>
-                    <button
+                    </p>                    <button
                         onClick={handleCreateGame}
-                        className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-colors duration-200"
+                        className="bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/80 text-white px-6 py-3 rounded-[var(--border-radius-button)] transition-colors duration-200"
                     >
                         Add Your First Game
                     </button>

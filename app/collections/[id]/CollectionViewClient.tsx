@@ -4,15 +4,15 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Card from "@/app/components/card";
-import { DragDropContext, Draggable, DropResult, DraggableProvided, DraggableStateSnapshot, DroppableProvided } from "react-beautiful-dnd";
 import { useAuth } from "@/app/contexts/AuthContext";
-import { StrictModeDroppable } from "@/app/components/StrictModeDroppable";
 
 interface CollectionData {
     id: number;
     name: string;
     description: string | null;
     imageUrl: string | null;
+    thumbnailUrl?: string | null;
+    thumbnailAlt?: string | null;
     isPublic: boolean;
     isAdult?: boolean;
     createdAt: Date;
@@ -30,6 +30,8 @@ interface ModData {
         title: string;
         description: string;
         imageUrl: string | null;
+        thumbnailUrl?: string | null;
+        thumbnailAlt?: string | null;
         version: string;
         size: string | null;
         createdAt: Date;
@@ -82,7 +84,11 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
     const [collectionId, setCollectionId] = useState<string | null>(null);
     const [isOwner, setIsOwner] = useState(false);
     const [savingOrder, setSavingOrder] = useState(false);
-    const [editMode, setEditMode] = useState(false);    const [editingTitle, setEditingTitle] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [draggedModId, setDraggedModId] = useState<number | null>(null);
+    const [dragOverModId, setDragOverModId] = useState<number | null>(null);
+    const [originalMods, setOriginalMods] = useState<ModData[] | null>(null);
+    const [editingTitle, setEditingTitle] = useState(false);
     const [editingDescription, setEditingDescription] = useState(false);
     const [editingImage, setEditingImage] = useState(false);
     const [editingPrivacy, setEditingPrivacy] = useState(false);
@@ -148,29 +154,57 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
             setIsOwner(false);
         }
     }, [collection, user]);
-    const onDragEnd = async (result: DropResult) => {
-        if (!result.destination) return;
-        const originalMods = [...mods];
-        const reordered = Array.from(mods);
-        const [removed] = reordered.splice(result.source.index, 1);
-        reordered.splice(result.destination.index, 0, removed);
-        setMods(reordered); // Optimistic update
-        setSavingOrder(true);
-        try {
-            const resp = await fetch("/api/user/collections/mods", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    collectionId: collectionId,
-                    order: reordered.map((m) => m.mod.id),
-                }),
+
+    const handleDragStart = (e: React.DragEvent<HTMLDivElement>, modId: number) => {
+        setDraggedModId(modId);
+        setOriginalMods([...mods]);
+    };
+
+    const handleDragEnter = (modId: number) => {
+        setDragOverModId(modId);
+        if (draggedModId && draggedModId !== modId) {
+            setMods(currentMods => {
+                const draggedIndex = currentMods.findIndex(m => m.mod.id === draggedModId);
+                const dragOverIndex = currentMods.findIndex(m => m.mod.id === modId);
+
+                if (draggedIndex === -1 || dragOverIndex === -1) return currentMods;
+
+                const reordered = [...currentMods];
+                const [removed] = reordered.splice(draggedIndex, 1);
+                reordered.splice(dragOverIndex, 0, removed);
+                return reordered;
             });
-            if (!resp.ok) throw new Error("Failed to save order");
-        } catch {
-            setMods(originalMods); // Revert on error
-        } finally {
-            setSavingOrder(false);
         }
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+    };
+
+    const handleDrop = async () => {
+        if (draggedModId && originalMods) {
+            setSavingOrder(true);
+            try {
+                const resp = await fetch("/api/user/collections/mods", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        collectionId: collectionId,
+                        order: mods.map((m) => m.mod.id),
+                    }),
+                });
+                if (!resp.ok) throw new Error("Failed to save order");
+            } catch {
+                if (originalMods) {
+                    setMods(originalMods); // Revert on error
+                }
+            } finally {
+                setSavingOrder(false);
+            }
+        }
+        setDraggedModId(null);
+        setDragOverModId(null);
+        setOriginalMods(null);
     };
 
     const handleDeleteMod = async (modId: number) => {
@@ -738,86 +772,65 @@ export default function CollectionViewClient({ params }: CollectionViewClientPro
                 </div>                {/* Mods Grid */}
                 {mods.length > 0 ? (
                     isOwner && editMode ? (
-                        <DragDropContext onDragEnd={onDragEnd}>
-                            <StrictModeDroppable
-                                droppableId="mods-grid"
-                                direction="horizontal"
-                                isDropDisabled={false}
-                                isCombineEnabled={false}
-                                ignoreContainerClipping={false}
-                                renderClone={undefined}
-                                getContainerForClone={undefined}
-                            >
-                                {(provided: DroppableProvided) => (
+                        <div
+                            className="flex flex-wrap justify-center gap-6 mt-8"
+                            onDragOver={handleDragOver}
+                        >
+                            {mods.map((modData) => {
+                                const isDragging = draggedModId === modData.mod.id;
+                                const isDragOver = dragOverModId === modData.mod.id;
+                                return (
                                     <div
-                                        className="flex flex-wrap justify-center gap-6 mt-8"
-                                        ref={provided.innerRef}
-                                        {...provided.droppableProps}
+                                        key={modData.mod.id}
+                                        draggable={editMode}
+                                        onDragStart={(e) => handleDragStart(e, modData.mod.id)}
+                                        onDragEnter={() => handleDragEnter(modData.mod.id)}
+                                        onDragEnd={handleDrop}
+                                        className={`transition-all ${isDragging ? 'opacity-50 scale-105' : ''} ${isDragOver ? 'ring-2 ring-purple-500 rounded-lg' : ''}`}
+                                        style={{ cursor: editMode ? 'grab' : 'default' }}
                                     >
-                                        {mods.map((modData, idx) => (
-                                            <Draggable
-                                                key={modData.mod.id}
-                                                draggableId={modData.mod.id.toString()}
-                                                index={idx}
-                                                isDragDisabled={false}
-                                                disableInteractiveElementBlocking={true}
-                                                shouldRespectForcePress={false}
+                                        <div className="relative group">
+                                            <Card
+                                                modId={modData.mod.id}
+                                                gameName={modData.game?.name || "Unknown"}
+                                                title={modData.mod.title}
+                                                description={modData.mod.description}
+                                                imageUrl={modData.mod.imageUrl || "/placeholder1.svg"}
+                                                author={modData.author?.username || "Unknown"}
+                                                authorPFP={modData.author?.profilePicture || "/placeholder1.svg"}
+                                                category={modData.category?.name || "Uncategorized"}
+                                                likes={modData.stats?.likes || 0}
+                                                downloads={modData.stats?.totalDownloads || 0}
+                                                size={modData.mod.size || "N/A"}
+                                                uploaded={modData.mod.createdAt}
+                                                lastUpdated={modData.mod.updatedAt}
+                                                isAdult={modData.mod.isAdult}
+                                                hideDropdown={true}
+                                            />
+                                            <button
+                                                onClick={() => handleDeleteMod(modData.mod.id)}
+                                                className={`absolute top-3 right-3 w-9 h-9 bg-black bg-opacity-50 text-white rounded-full z-10 transition-all hover:bg-red-600 cursor-pointer flex items-center justify-center ${editMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                                title="Remove from collection"
                                             >
-                                                {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
-                                                    <div
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                        style={{
-                                                            ...provided.draggableProps.style,
-                                                            opacity: snapshot.isDragging ? 0.7 : 1,
-                                                            cursor: editMode ? (snapshot.isDragging ? 'grabbing' : 'grab') : 'default',
-                                                        }}
-                                                    >
-                                                        <div className="relative group">                                                        <Card
-                                                            modId={modData.mod.id}
-                                                            gameName={modData.game?.name || "Unknown"}
-                                                            title={modData.mod.title}
-                                                            description={modData.mod.description}
-                                                            imageUrl={modData.mod.imageUrl || "/placeholder1.svg"}
-                                                            author={modData.author?.username || "Unknown"}
-                                                            authorPFP={modData.author?.profilePicture || "/placeholder1.svg"}
-                                                            category={modData.category?.name || "Uncategorized"}
-                                                            likes={modData.stats?.likes || 0}
-                                                            downloads={modData.stats?.totalDownloads || 0}
-                                                            size={modData.mod.size || "N/A"}
-                                                            uploaded={modData.mod.createdAt}
-                                                            lastUpdated={modData.mod.updatedAt}
-                                                            isAdult={modData.mod.isAdult}
-                                                            hideDropdown={true}
-                                                        />
-                                                          <button
-                                                              onClick={() => handleDeleteMod(modData.mod.id)}
-                                                              className={`absolute top-3 right-3 w-9 h-9 bg-black bg-opacity-50 text-white rounded-full z-10 transition-all hover:bg-red-600 cursor-pointer flex items-center justify-center ${editMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                                                              title="Remove from collection"
-                                                          >
-                                                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                                  <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                                              </svg>
-                                                          </button>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </Draggable>
-                                        ))}
-                                        {provided.placeholder}
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                                </svg>
+                                            </button>
+                                        </div>
                                     </div>
-                                )}
-                            </StrictModeDroppable>
-                        </DragDropContext>
+                                );
+                            })}
+                        </div>
                     ) : (
-                        <div className="flex flex-wrap justify-center gap-6 mt-8">                            {mods.map((modData) => (                                <Card
+                        <div className="flex flex-wrap justify-center gap-6 mt-8">
+                            {mods.map((modData) => (
+                                <Card
                                     key={modData.mod.id}
                                     modId={modData.mod.id}
                                     gameName={modData.game?.name || "Unknown"}
                                     title={modData.mod.title}
                                     description={modData.mod.description}
-                                    imageUrl={modData.mod.imageUrl || "/placeholder1.svg"}
+                                    imageUrl={modData.mod.thumbnailUrl || modData.mod.imageUrl || "/placeholder1.svg"}
                                     author={modData.author?.username || "Unknown"}
                                     authorPFP={modData.author?.profilePicture || "/placeholder1.svg"}
                                     category={modData.category?.name || "Uncategorized"}

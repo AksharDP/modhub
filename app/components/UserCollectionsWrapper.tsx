@@ -5,7 +5,8 @@ import dynamic from "next/dynamic";
 import UserCollectionsLoading from "./UserCollectionsLoading";
 
 const UserCollections = dynamic(() => import("./UserCollections"), {
-    loading: () => <UserCollectionsLoading />
+    loading: () => <UserCollectionsLoading />,
+    ssr: false
 });
 
 interface UserCollectionsWrapperProps {

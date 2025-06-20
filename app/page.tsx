@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import ModsSection from "./components/ModsSection";
+import FeaturedModsSection from "./components/FeaturedModsSection";
 
 export default function Home() {
     return (
@@ -33,15 +33,9 @@ export default function Home() {
                             ))}
                         </div>
                     </div>
-                }>
-                    <ModsSection
-                        apiEndpoint="/api/featured-mods"
-                        title="Featured Mods"
+                }>                    <FeaturedModsSection
                         limit={8}
                         showPagination={true}
-                        redirectUrl="/"
-                        containerClassName="p-8 text-white"
-                        headerClassName="mb-8 text-center"
                     />
                 </Suspense>
             </main>

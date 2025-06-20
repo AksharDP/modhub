@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import QuickActions from "./QuickActions";
 
 interface StatCard {
     title: string;
@@ -97,9 +98,7 @@ export default function StatsOverview({ initialStats }: StatsOverviewProps) {
                         </div>
                     </div>
                 ))}
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+            </div>            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
                 <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                     <h3 className="text-lg font-semibold text-white mb-4">
                         Platform Health
@@ -148,31 +147,7 @@ export default function StatsOverview({ initialStats }: StatsOverviewProps) {
                     </div>
                 </div>
 
-                <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-                    <h3 className="text-lg font-semibold text-white mb-4">
-                        Quick Actions
-                    </h3>
-                    <div className="space-y-3">
-                        <button className="w-full text-left p-3 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors">
-                            <div className="flex items-center space-x-3">
-                                <span>👥</span>
-                                <span>Manage Users</span>
-                            </div>
-                        </button>
-                        <button className="w-full text-left p-3 rounded-lg bg-green-600 hover:bg-green-700 transition-colors">
-                            <div className="flex items-center space-x-3">
-                                <span>🎮</span>
-                                <span>Review Pending Mods</span>
-                            </div>
-                        </button>
-                        <button className="w-full text-left p-3 rounded-lg bg-purple-600 hover:bg-purple-700 transition-colors">
-                            <div className="flex items-center space-x-3">
-                                <span>⚙️</span>
-                                <span>System Settings</span>
-                            </div>
-                        </button>
-                    </div>
-                </div>
+                <QuickActions />
             </div>
         </div>
     );
